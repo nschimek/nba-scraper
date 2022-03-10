@@ -26,11 +26,11 @@ func Schedule(season string, startDate, endDate time.Time) (map[string]string, e
 	}
 
 	c := colly.NewCollector()
-	schedules := make([]ScrapedSchedule, 0)
+	schedules := []ScrapedSchedule{}
 
 	c.OnHTML("body #wrap #content #all_schedule #div_schedule table tbody", func(tbl *colly.HTMLElement) {
 		tbl.ForEach("tr", func(_ int, tr *colly.HTMLElement) {
-			schedules = append(schedules, parseScheduleRows(tr)...)
+			schedules = append(schedules, parseScheduleRows(tr, startDate, endDate)...)
 		})
 	})
 
@@ -41,27 +41,30 @@ func Schedule(season string, startDate, endDate time.Time) (map[string]string, e
 	return buildGameMap(schedules), nil
 }
 
-func parseScheduleRows(tr *colly.HTMLElement) []ScrapedSchedule {
-	schedules := make([]ScrapedSchedule, 0)
+func parseScheduleRows(tr *colly.HTMLElement, startDate, endDate time.Time) []ScrapedSchedule {
+	schedules := []ScrapedSchedule{}
 
 	if tr.Attr("class") != "thead" {
 		schedule := ScrapedSchedule{}
 		var parsedDate, parsedTime string
+
+		parsedDate = tr.ChildText("th a")
 
 		tr.ForEach("td", func(_ int, td *colly.HTMLElement) {
 			switch td.Attr("data-stat") {
 			case "box_score_text":
 				schedule.GameUrl = td.ChildAttr("a", "href")
 				schedule.GameId = strings.Replace(strings.Split(td.ChildAttr("a", "href"), "/")[2], ".html", "", 1)
-			case "date_game":
-				parsedDate = td.ChildText("a")
 			case "game_start_time":
-				parsedTime = td.Text
+				parsedTime = strings.Replace(td.Text, "p", " PM EST", 1)
 			}
 		})
 
-		schedule.StartTime, _ = time.Parse("Mon, Jan 2, 2006 3:30 PM EDT", parsedDate+" "+parsedTime)
-		schedules = append(schedules, schedule)
+		schedule.StartTime, _ = time.ParseInLocation("Mon, Jan 2, 2006 3:04 PM EST", parsedDate+" "+parsedTime, EST)
+
+		if schedule.StartTime.After(startDate) && schedule.StartTime.Before(endDate) {
+			schedules = append(schedules, schedule)
+		}
 	}
 
 	return schedules
@@ -85,7 +88,7 @@ func getMonths(startDate, endDate time.Time) ([]time.Month, error) {
 		return nil, errors.New("end date is before start date")
 	}
 
-	months := make([]time.Month, 0)
+	months := []time.Month{}
 	startMonth := time.Date(startDate.Year(), startDate.Month(), 1, 0, 0, 0, 0, time.Local)
 	endMonth := time.Date(endDate.Year(), endDate.Month(), 1, 0, 0, 0, 0, time.Local)
 

@@ -19,15 +19,8 @@ var LimitRule = colly.LimitRule{
 	RandomDelay: 5 * time.Second,
 }
 
-type Schedule struct {
-	StartTime time.Time
-	VisitorId string
-	HomeId    string
-	GameId    string
-}
-
 func main() {
-	startDate, _ := time.Parse("2006-01-02", "2021-10-01")
-	endDate, _ := time.Parse("2006-01-02", "2021-10-15")
+	startDate, _ := time.Parse("2006-01-02", "2021-10-20")
+	endDate, _ := time.Parse("2006-01-02", "2021-10-25")
 	fmt.Println(scraper.Schedule("2022", startDate, endDate))
 }
