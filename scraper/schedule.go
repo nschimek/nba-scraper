@@ -9,73 +9,132 @@ import (
 )
 
 const (
-	BasePath = "leagues"
+	BasePath         = "leagues"
+	baseTableElement = "body #wrap #content #all_schedule #div_schedule table tbody" // targets the main schedule table
 )
 
-type ScrapedSchedule struct {
-	StartTime time.Time
-	GameId    string
-	GameUrl   string
+type Schedule struct {
+	StartTime                         time.Time
+	GameId, VisitorTeamId, HomeTeamId string
+	Played                            bool
 }
 
-func Schedule(season string, startDate, endDate time.Time) (map[string]string, error) {
-	months, err := getMonths(startDate, endDate)
+type ScheduleScraper struct {
+	colly       colly.Collector
+	season      string
+	dateRange   DateRange
+	urls        []string
+	ScrapedData []Schedule
+	Errors      []error
+	Child       Scraper
+	childUrls   map[string]string
+}
+
+type DateRange struct {
+	startDate, endDate time.Time
+}
+
+func CreateScheduleScraperWithDates(c *colly.Collector, season string, startDate, endDate time.Time) (ScheduleScraper, error) {
+	dateRange := DateRange{startDate: startDate, endDate: endDate}
+	urls, err := dateRangeToUrls(season, dateRange)
+
+	if err != nil {
+		return ScheduleScraper{}, err
+	}
+
+	scraper := CreateScheduleScraper(c, season)
+	scraper.dateRange = dateRange
+	scraper.urls = urls
+
+	return scraper, nil
+}
+
+func CreateScheduleScraper(c *colly.Collector, season string) ScheduleScraper {
+	return ScheduleScraper{
+		colly:     *c,
+		season:    season,
+		childUrls: make(map[string]string),
+	}
+}
+
+func (s *ScheduleScraper) GetData() []Schedule {
+	return s.ScrapedData
+}
+
+func (s *ScheduleScraper) AttachChild(scraper *Scraper) {
+	s.Child = *scraper
+}
+
+func (s *ScheduleScraper) GetChild() Scraper {
+	return s.Child
+}
+
+func (s *ScheduleScraper) Scrape(urls ...string) {
+	s.urls = append(s.urls, urls...)
+
+	s.colly.OnHTML(baseTableElement, func(tbl *colly.HTMLElement) {
+		tbl.ForEach("tr", func(_ int, tr *colly.HTMLElement) {
+			s.parseRow(tr)
+		})
+	})
+
+	for _, url := range s.urls {
+		s.colly.Visit(url)
+	}
+
+	if s.GetChild() != nil && len(s.childUrls) > 0 {
+		urls := []string{}
+		for _, url := range s.childUrls {
+			urls = append(urls, url)
+		}
+		s.GetChild().Scrape(urls...)
+	}
+}
+
+func dateRangeToUrls(season string, dateRange DateRange) ([]string, error) {
+	months, err := getMonths(dateRange.startDate, dateRange.endDate)
 
 	if err != nil {
 		return nil, err
 	}
 
-	c := colly.NewCollector()
-	schedules := []ScrapedSchedule{}
-
-	c.OnHTML("body #wrap #content #all_schedule #div_schedule table tbody", func(tbl *colly.HTMLElement) {
-		tbl.ForEach("tr", func(_ int, tr *colly.HTMLElement) {
-			schedules = append(schedules, parseScheduleRows(tr, startDate, endDate)...)
-		})
-	})
+	urls := []string{}
 
 	for _, month := range months {
-		c.Visit(getMonthUrl(month, season))
+		urls = append(urls, getMonthUrl(month, season))
 	}
 
-	return buildGameMap(schedules), nil
+	return urls, nil
 }
 
-func parseScheduleRows(tr *colly.HTMLElement, startDate, endDate time.Time) []ScrapedSchedule {
-	schedules := []ScrapedSchedule{}
-
+func (s *ScheduleScraper) parseRow(tr *colly.HTMLElement) {
 	if tr.Attr("class") != "thead" {
-		schedule := ScrapedSchedule{}
+		schedule := Schedule{}
 		var parsedDate, parsedTime string
 
 		parsedDate = tr.ChildText("th a")
 
-		tr.ForEach("td", func(_ int, td *colly.HTMLElement) {
-			switch td.Attr("data-stat") {
-			case "box_score_text":
-				schedule.GameUrl = td.ChildAttr("a", "href")
-				schedule.GameId = strings.Replace(strings.Split(td.ChildAttr("a", "href"), "/")[2], ".html", "", 1)
-			case "game_start_time":
-				parsedTime = strings.Replace(td.Text, "p", " PM EST", 1)
-			}
-		})
+		tr.ForEach("td", parseColumnCallback(schedule, parsedTime, s.childUrls))
 
 		schedule.StartTime, _ = time.ParseInLocation("Mon, Jan 2, 2006 3:04 PM EST", parsedDate+" "+parsedTime, EST)
 
-		if schedule.StartTime.After(startDate) && schedule.StartTime.Before(endDate) {
-			schedules = append(schedules, schedule)
+		if schedule.StartTime.After(s.dateRange.startDate) && schedule.StartTime.Before(s.dateRange.endDate) {
+			s.ScrapedData = append(s.ScrapedData, schedule)
 		}
 	}
-
-	return schedules
 }
 
-func buildGameMap(schedules []ScrapedSchedule) map[string]string {
-	gameMap := make(map[string]string)
-	for _, schedule := range schedules {
-		gameMap[schedule.GameId] = schedule.GameUrl
+func parseColumnCallback(schedule Schedule, parsedTime string, gameUrls map[string]string) func(int, *colly.HTMLElement) {
+	return func(_ int, td *colly.HTMLElement) {
+		switch td.Attr("data-stat") {
+		case "box_score_text":
+			gameUrl := td.ChildAttr("a", "href")
+			schedule.GameId = strings.Replace(strings.Split(td.ChildAttr("a", "href"), "/")[2], ".html", "", 1)
+			gameUrls[schedule.GameId] = gameUrl
+		case "game_start_time":
+			parsedTime = strings.Replace(td.Text, "p", " PM EST", 1)
+		}
 	}
-	return gameMap
 }
 
 func getMonthUrl(month time.Month, season string) string {

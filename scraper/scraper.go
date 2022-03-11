@@ -1,7 +1,8 @@
 package scraper
 
 type Scraper interface {
-	Scrape(urls []string)
-	getData() interface{}
-	attachChild(scraper *Scraper)
+	Scrape(urls ...string)
+	GetData() interface{}
+	AttachChild(scraper *Scraper)
+	GetChild() Scraper
 }
