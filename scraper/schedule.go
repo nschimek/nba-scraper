@@ -26,7 +26,7 @@ type ScheduleScraper struct {
 	urls        []string
 	ScrapedData []Schedule
 	Errors      []error
-	Child       Scraper
+	child       Scraper
 	childUrls   map[string]string
 }
 
@@ -57,16 +57,20 @@ func CreateScheduleScraper(c *colly.Collector, season string) ScheduleScraper {
 	}
 }
 
-func (s *ScheduleScraper) GetData() []Schedule {
+func (s *ScheduleScraper) GetData() interface{} {
 	return s.ScrapedData
 }
 
 func (s *ScheduleScraper) AttachChild(scraper *Scraper) {
-	s.Child = *scraper
+	s.child = *scraper
 }
 
 func (s *ScheduleScraper) GetChild() Scraper {
-	return s.Child
+	return s.child
+}
+
+func (s *ScheduleScraper) GetChildUrls() []string {
+	return urlsMapToArray(s.childUrls)
 }
 
 func (s *ScheduleScraper) Scrape(urls ...string) {
@@ -74,7 +78,13 @@ func (s *ScheduleScraper) Scrape(urls ...string) {
 
 	s.colly.OnHTML(baseTableElement, func(tbl *colly.HTMLElement) {
 		tbl.ForEach("tr", func(_ int, tr *colly.HTMLElement) {
-			s.parseRow(tr)
+			row := parseRow(tr)
+			schedule := row.toSchedule()
+
+			if schedule.Played && schedule.StartTime.After(s.dateRange.startDate) && schedule.StartTime.Before(s.dateRange.endDate) {
+				s.ScrapedData = append(s.ScrapedData, schedule)
+				s.childUrls[schedule.GameId] = row.gameUrl
+			}
 		})
 	})
 
@@ -82,13 +92,7 @@ func (s *ScheduleScraper) Scrape(urls ...string) {
 		s.colly.Visit(url)
 	}
 
-	if s.GetChild() != nil && len(s.childUrls) > 0 {
-		urls := []string{}
-		for _, url := range s.childUrls {
-			urls = append(urls, url)
-		}
-		s.GetChild().Scrape(urls...)
-	}
+	scrapeChild(s)
 }
 
 func dateRangeToUrls(season string, dateRange DateRange) ([]string, error) {
@@ -107,34 +111,43 @@ func dateRangeToUrls(season string, dateRange DateRange) ([]string, error) {
 	return urls, nil
 }
 
-func (s *ScheduleScraper) parseRow(tr *colly.HTMLElement) {
+type ScheduleRow struct {
+	date, time, visitorUrl, homeUrl, gameUrl string
+}
+
+func parseRow(tr *colly.HTMLElement) (sr ScheduleRow) {
 	if tr.Attr("class") != "thead" {
-		schedule := Schedule{}
-		var parsedDate, parsedTime string
+		sr.date = tr.ChildText("th a")
 
-		parsedDate = tr.ChildText("th a")
+		tr.ForEach("td", func(_ int, td *colly.HTMLElement) {
+			sr.parseColumn(td)
+		})
+	}
+	return sr
+}
 
-		tr.ForEach("td", parseColumnCallback(schedule, parsedTime, s.childUrls))
-
-		schedule.StartTime, _ = time.ParseInLocation("Mon, Jan 2, 2006 3:04 PM EST", parsedDate+" "+parsedTime, EST)
-
-		if schedule.StartTime.After(s.dateRange.startDate) && schedule.StartTime.Before(s.dateRange.endDate) {
-			s.ScrapedData = append(s.ScrapedData, schedule)
-		}
+func (sr *ScheduleRow) parseColumn(td *colly.HTMLElement) {
+	switch td.Attr("data-stat") {
+	case "game_start_time":
+		sr.time = strings.Replace(td.Text, "p", " PM EST", 1)
+	case "visitor_team_name":
+		sr.visitorUrl = td.ChildAttr("a", "href")
+	case "home_team_name":
+		sr.homeUrl = td.ChildAttr("a", "href")
+	case "box_score_text":
+		sr.gameUrl = td.ChildAttr("a", "href")
 	}
 }
 
-func parseColumnCallback(schedule Schedule, parsedTime string, gameUrls map[string]string) func(int, *colly.HTMLElement) {
-	return func(_ int, td *colly.HTMLElement) {
-		switch td.Attr("data-stat") {
-		case "box_score_text":
-			gameUrl := td.ChildAttr("a", "href")
-			schedule.GameId = strings.Replace(strings.Split(td.ChildAttr("a", "href"), "/")[2], ".html", "", 1)
-			gameUrls[schedule.GameId] = gameUrl
-		case "game_start_time":
-			parsedTime = strings.Replace(td.Text, "p", " PM EST", 1)
-		}
+func (sr *ScheduleRow) toSchedule() (schedule Schedule) {
+	schedule.HomeTeamId = parseTeamId(sr.homeUrl)
+	schedule.VisitorTeamId = parseTeamId(sr.visitorUrl)
+	if sr.gameUrl != "" {
+		schedule.GameId = parseGameId(sr.gameUrl)
+		schedule.Played = true
 	}
+	schedule.StartTime, _ = time.ParseInLocation("Mon, Jan 2, 2006 3:04 PM EST", sr.date+" "+sr.time, EST)
+	return
 }
 
 func getMonthUrl(month time.Month, season string) string {
@@ -157,4 +170,12 @@ func getMonths(startDate, endDate time.Time) ([]time.Month, error) {
 	}
 
 	return months, nil
+}
+
+func parseGameId(link string) string {
+	return strings.Replace(strings.Split(link, "/")[2], ".html", "", 1)
+}
+
+func parseTeamId(link string) string {
+	return strings.Split(link, "/")[2]
 }

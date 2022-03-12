@@ -19,4 +19,5 @@ func main() {
 
 	scheduleScraper.Scrape()
 	fmt.Println(scheduleScraper.GetData())
+	fmt.Println(scheduleScraper.GetChildUrls())
 }
