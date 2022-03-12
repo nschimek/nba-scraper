@@ -10,11 +10,7 @@ type Scraper interface {
 
 func scrapeChild(s Scraper) {
 	if s.GetChild() != nil && len(s.GetChildUrls()) > 0 {
-		urls := []string{}
-		for _, url := range s.GetChildUrls() {
-			urls = append(urls, url)
-		}
-		s.GetChild().Scrape(urls...)
+		s.GetChild().Scrape(s.GetChildUrls()...)
 	}
 }
 
