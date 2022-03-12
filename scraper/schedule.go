@@ -95,22 +95,6 @@ func (s *ScheduleScraper) Scrape(urls ...string) {
 	scrapeChild(s)
 }
 
-func dateRangeToUrls(season string, dateRange DateRange) ([]string, error) {
-	months, err := getMonths(dateRange.startDate, dateRange.endDate)
-
-	if err != nil {
-		return nil, err
-	}
-
-	urls := []string{}
-
-	for _, month := range months {
-		urls = append(urls, getMonthUrl(month, season))
-	}
-
-	return urls, nil
-}
-
 type ScheduleRow struct {
 	date, time, visitorUrl, homeUrl, gameUrl string
 }
@@ -123,7 +107,7 @@ func parseRow(tr *colly.HTMLElement) (sr ScheduleRow) {
 			sr.parseColumn(td)
 		})
 	}
-	return sr
+	return
 }
 
 func (sr *ScheduleRow) parseColumn(td *colly.HTMLElement) {
@@ -148,6 +132,22 @@ func (sr *ScheduleRow) toSchedule() (schedule Schedule) {
 	}
 	schedule.StartTime, _ = time.ParseInLocation("Mon, Jan 2, 2006 3:04 PM EST", sr.date+" "+sr.time, EST)
 	return
+}
+
+func dateRangeToUrls(season string, dateRange DateRange) ([]string, error) {
+	months, err := getMonths(dateRange.startDate, dateRange.endDate)
+
+	if err != nil {
+		return nil, err
+	}
+
+	urls := []string{}
+
+	for _, month := range months {
+		urls = append(urls, getMonthUrl(month, season))
+	}
+
+	return urls, nil
 }
 
 func getMonthUrl(month time.Month, season string) string {
