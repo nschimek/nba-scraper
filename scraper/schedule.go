@@ -9,7 +9,7 @@ import (
 )
 
 const (
-	BasePath         = "leagues"
+	basePath         = "leagues"
 	baseTableElement = "body #wrap #content #all_schedule #div_schedule table tbody" // targets the main schedule table
 )
 
@@ -57,6 +57,7 @@ func CreateScheduleScraper(c *colly.Collector, season string) ScheduleScraper {
 	}
 }
 
+// Scraper interface methods
 func (s *ScheduleScraper) GetData() interface{} {
 	return s.ScrapedData
 }
@@ -77,15 +78,7 @@ func (s *ScheduleScraper) Scrape(urls ...string) {
 	s.urls = append(s.urls, urls...)
 
 	s.colly.OnHTML(baseTableElement, func(tbl *colly.HTMLElement) {
-		tbl.ForEach("tr", func(_ int, tr *colly.HTMLElement) {
-			row := parseRow(tr)
-			schedule := row.toSchedule()
-
-			if schedule.Played && schedule.StartTime.After(s.dateRange.startDate) && schedule.StartTime.Before(s.dateRange.endDate) {
-				s.ScrapedData = append(s.ScrapedData, schedule)
-				s.childUrls[schedule.GameId] = row.gameUrl
-			}
-		})
+		s.parseTable(tbl)
 	})
 
 	for _, url := range s.urls {
@@ -93,6 +86,18 @@ func (s *ScheduleScraper) Scrape(urls ...string) {
 	}
 
 	scrapeChild(s)
+}
+
+func (s *ScheduleScraper) parseTable(tbl *colly.HTMLElement) {
+	tbl.ForEach("tr", func(_ int, tr *colly.HTMLElement) {
+		row := parseRow(tr)
+		schedule := row.toSchedule()
+
+		if schedule.Played && schedule.StartTime.After(s.dateRange.startDate) && schedule.StartTime.Before(s.dateRange.endDate) {
+			s.ScrapedData = append(s.ScrapedData, schedule)
+			s.childUrls[schedule.GameId] = row.gameUrl
+		}
+	})
 }
 
 type ScheduleRow struct {
@@ -152,7 +157,7 @@ func dateRangeToUrls(season string, dateRange DateRange) ([]string, error) {
 
 func getMonthUrl(month time.Month, season string) string {
 	monthString := strings.ToLower(month.String())
-	return BaseHttp + "/" + BasePath + "/NBA_" + season + "_games-" + monthString + ".html"
+	return BaseHttp + "/" + basePath + "/NBA_" + season + "_games-" + monthString + ".html"
 }
 
 func getMonths(startDate, endDate time.Time) ([]time.Month, error) {
