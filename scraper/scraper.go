@@ -1,5 +1,7 @@
 package scraper
 
+import "github.com/gocolly/colly/v2"
+
 type Scraper interface {
 	Scrape(urls ...string)
 	GetData() interface{}
@@ -19,4 +21,8 @@ func urlsMapToArray(urlsMap map[string]string) (urlsArray []string) {
 		urlsArray = append(urlsArray, url)
 	}
 	return
+}
+
+func parseLink(e *colly.HTMLElement) string {
+	return e.ChildAttr("a", "href")
 }

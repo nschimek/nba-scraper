@@ -26,8 +26,8 @@ type Game struct {
 }
 
 type GameLineScore struct {
-	TeamId                                 string
-	Quarter1, Quarter2, Quarter3, Quarter4 int
+	TeamId, Quarter string
+	Score           int
 }
 
 type GameFourFactors struct {
@@ -36,13 +36,11 @@ type GameFourFactors struct {
 }
 
 type GamePlayer struct {
-	GameId, TeamId, PlayerId string
-	Status                   string
+	GameId, TeamId, PlayerId, Status string
 }
 
 type GamePlayerBasicStats struct {
-	GameId, TeamId, PlayerId                                                                                string
-	Quarter                                                                                                 int
+	GameId, TeamId, PlayerId, Quarter                                                                       string
 	TimePlayed                                                                                              time.Duration
 	FieldGoals, FieldGoalsAttempted, ThreePointers, ThreePointersAttempted, FreeThrows, FreeThrowsAttempted int
 	FieldGoalPct, ThreePointersPct, FreeThrowsPct                                                           float64

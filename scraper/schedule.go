@@ -78,7 +78,7 @@ func (s *ScheduleScraper) Scrape(urls ...string) {
 	s.urls = append(s.urls, urls...)
 
 	s.colly.OnHTML(baseTableElement, func(tbl *colly.HTMLElement) {
-		s.parseTable(tbl)
+		s.parseScheduleTable(tbl)
 	})
 
 	for _, url := range s.urls {
@@ -88,54 +88,32 @@ func (s *ScheduleScraper) Scrape(urls ...string) {
 	scrapeChild(s)
 }
 
-func (s *ScheduleScraper) parseTable(tbl *colly.HTMLElement) {
-	tbl.ForEach("tr", func(_ int, tr *colly.HTMLElement) {
-		row := parseRow(tr)
-		schedule := row.toSchedule()
-
+func (s *ScheduleScraper) parseScheduleTable(tbl *colly.HTMLElement) {
+	for _, row := range ParseTable(tbl) {
+		schedule, gameUrl := mapScheduleRow(row)
 		if schedule.Played && schedule.StartTime.After(s.dateRange.startDate) && schedule.StartTime.Before(s.dateRange.endDate) {
 			s.ScrapedData = append(s.ScrapedData, schedule)
-			s.childUrls[schedule.GameId] = row.gameUrl
+			s.childUrls[schedule.GameId] = gameUrl
 		}
-	})
-}
-
-type ScheduleRow struct {
-	date, time, visitorUrl, homeUrl, gameUrl string
-}
-
-func parseRow(tr *colly.HTMLElement) (sr ScheduleRow) {
-	if tr.Attr("class") != "thead" {
-		sr.date = tr.ChildText("th a")
-
-		tr.ForEach("td", func(_ int, td *colly.HTMLElement) {
-			sr.parseColumn(td)
-		})
-	}
-	return
-}
-
-func (sr *ScheduleRow) parseColumn(td *colly.HTMLElement) {
-	switch td.Attr("data-stat") {
-	case "game_start_time":
-		sr.time = strings.Replace(td.Text, "p", " PM EST", 1)
-	case "visitor_team_name":
-		sr.visitorUrl = td.ChildAttr("a", "href")
-	case "home_team_name":
-		sr.homeUrl = td.ChildAttr("a", "href")
-	case "box_score_text":
-		sr.gameUrl = td.ChildAttr("a", "href")
 	}
 }
 
-func (sr *ScheduleRow) toSchedule() (schedule Schedule) {
-	schedule.HomeTeamId = parseTeamId(sr.homeUrl)
-	schedule.VisitorTeamId = parseTeamId(sr.visitorUrl)
-	if sr.gameUrl != "" {
-		schedule.GameId = parseGameId(sr.gameUrl)
-		schedule.Played = true
+// the row map here has the data-stat attribute as the key and the colly HTML Element (cell) as the value
+func mapScheduleRow(r map[string]*colly.HTMLElement) (s Schedule, gameUrl string) {
+	parsedDate := r["date_game"].ChildText("a")
+	parsedTime := strings.Replace(r["game_start_time"].Text, "p", " PM EST", 1)
+
+	s.StartTime, _ = time.ParseInLocation("Mon, Jan 2, 2006 3:04 PM EST", parsedDate+" "+parsedTime, EST)
+	s.VisitorTeamId = parseTeamId(parseLink(r["visitor_team_name"]))
+	s.HomeTeamId = parseTeamId(parseLink(r["home_team_name"]))
+
+	gameUrl = parseLink(r["box_score_text"])
+
+	if gameUrl != "" {
+		s.GameId = parseGameId(gameUrl)
+		s.Played = true
 	}
-	schedule.StartTime, _ = time.ParseInLocation("Mon, Jan 2, 2006 3:04 PM EST", sr.date+" "+sr.time, EST)
+
 	return
 }
 
