@@ -20,4 +20,8 @@ func main() {
 	scheduleScraper.Scrape()
 	fmt.Println(scheduleScraper.GetData())
 	fmt.Println(scheduleScraper.GetChildUrls())
+
+	// gameScraper := scraper.CreateGameScraper(c)
+	// gameScraper.Scrape("https://www.basketball-reference.com/boxscores/202110200TOR.html", "https://www.basketball-reference.com/boxscores/202110240NYK.html")
+
 }

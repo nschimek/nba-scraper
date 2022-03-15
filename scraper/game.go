@@ -1,6 +1,7 @@
 package scraper
 
 import (
+	"fmt"
 	"time"
 
 	"github.com/gocolly/colly/v2"
@@ -23,6 +24,19 @@ type Game struct {
 	GamePlayers                                    []GamePlayer
 	GamePlayersBasicStats                          []GamePlayerBasicStats
 	GamePlayersAdvancedStats                       []GamePlayerAdvancedStats
+}
+
+// return a new game object with all child objects and arrys initialized
+func newGame() Game {
+	return Game{
+		HomeLineScore:            GameLineScore{},
+		VisitorLineScore:         GameLineScore{},
+		HomeFourFactors:          GameFourFactors{},
+		VisitorFourFactors:       GameFourFactors{},
+		GamePlayers:              make([]GamePlayer, 0),
+		GamePlayersBasicStats:    make([]GamePlayerBasicStats, 0),
+		GamePlayersAdvancedStats: make([]GamePlayerAdvancedStats, 0),
+	}
 }
 
 type GameLineScore struct {
@@ -56,7 +70,7 @@ type GamePlayerAdvancedStats struct {
 
 type GameScraper struct {
 	colly       colly.Collector
-	ScrapedData Game
+	ScrapedData []Game
 	Errors      []error
 	child       Scraper
 	childUrls   map[string]string
@@ -85,11 +99,28 @@ func (s *GameScraper) GetChildUrls() []string {
 	return urlsMapToArray(s.childUrls)
 }
 
+// Testing the approach for scraping Game pages, as these are more complex
 func (s *GameScraper) Scrape(urls ...string) {
 
+	var test []string
+
 	for _, url := range urls {
-		s.colly.Visit(url)
+		test = append(test, s.visitGame(url))
 	}
 
+	fmt.Println(test)
+
 	scrapeChild(s)
+}
+
+func (s *GameScraper) visitGame(url string) string {
+	var test string
+
+	s.colly.OnRequest(func(r *colly.Request) {
+		test = r.URL.String()
+	})
+
+	s.colly.Visit(url)
+
+	return test
 }

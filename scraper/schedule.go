@@ -93,7 +93,7 @@ func (s *ScheduleScraper) parseScheduleTable(tbl *colly.HTMLElement) {
 		schedule, gameUrl := mapScheduleRow(row)
 		if schedule.Played && schedule.StartTime.After(s.dateRange.startDate) && schedule.StartTime.Before(s.dateRange.endDate) {
 			s.ScrapedData = append(s.ScrapedData, schedule)
-			s.childUrls[schedule.GameId] = gameUrl
+			s.childUrls[schedule.GameId] = tbl.Request.AbsoluteURL(gameUrl)
 		}
 	}
 }
