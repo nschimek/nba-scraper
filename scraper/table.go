@@ -21,6 +21,7 @@ func ParseTable(tbl *colly.HTMLElement) []map[string]*colly.HTMLElement {
 func (t *TableParser) parseRow(tr *colly.HTMLElement) {
 	if tr.Attr("class") != "thead" { // exclude table headers (these are someties in the middle of the table)
 		columnMap := make(map[string]*colly.HTMLElement)
+
 		tr.ForEach("th", func(_ int, th *colly.HTMLElement) {
 			t.parseColumn(columnMap, th)
 		})

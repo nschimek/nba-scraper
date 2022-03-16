@@ -154,11 +154,3 @@ func getMonths(startDate, endDate time.Time) ([]time.Month, error) {
 
 	return months, nil
 }
-
-func parseGameId(link string) string {
-	return strings.Replace(strings.Split(link, "/")[2], ".html", "", 1)
-}
-
-func parseTeamId(link string) string {
-	return strings.Split(link, "/")[2]
-}

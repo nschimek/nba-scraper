@@ -14,12 +14,14 @@ const (
 	fourFactorsTableElement = baseBodyElement + " .content_grid div #all_four_factors #div_four_factors table tbody"
 )
 
+var overtimes = []string{"OT", "OT1", "OT2", "OT3", "OT4", "OT5", "OT6", "OT7", "OT8", "OT9", "OT10"}
+
 type Game struct {
 	HomeId, VisitorId, Location, WinnerId, LoserId string
 	HomeScore, VisitorScore, Attendance            int
 	StartTime                                      time.Time
 	TimeOfGame                                     time.Duration
-	HomeLineScore, VisitorLineScore                GameLineScore   // these will end up in their own table due to the possiblity of OT
+	HomeLineScore, VisitorLineScore                []GameLineScore // these will end up in their own table due to the possiblity of OT
 	HomeFourFactors, VisitorFourFactors            GameFourFactors // also probably their own table
 	GamePlayers                                    []GamePlayer
 	GamePlayersBasicStats                          []GamePlayerBasicStats
@@ -29,8 +31,8 @@ type Game struct {
 // return a new game object with all child objects and arrys initialized
 func newGame() Game {
 	return Game{
-		HomeLineScore:            GameLineScore{},
-		VisitorLineScore:         GameLineScore{},
+		HomeLineScore:            make([]GameLineScore, 0),
+		VisitorLineScore:         make([]GameLineScore, 0),
 		HomeFourFactors:          GameFourFactors{},
 		VisitorFourFactors:       GameFourFactors{},
 		GamePlayers:              make([]GamePlayer, 0),
@@ -102,25 +104,48 @@ func (s *GameScraper) GetChildUrls() []string {
 // Testing the approach for scraping Game pages, as these are more complex
 func (s *GameScraper) Scrape(urls ...string) {
 
-	var test []string
-
 	for _, url := range urls {
-		test = append(test, s.visitGame(url))
+		s.ScrapedData = append(s.ScrapedData, s.parseGamePage(url))
 	}
 
-	fmt.Println(test)
+	fmt.Println(s.ScrapedData)
 
 	scrapeChild(s)
 }
 
-func (s *GameScraper) visitGame(url string) string {
-	var test string
+func (s *GameScraper) parseGamePage(url string) Game {
+	game := Game{}
+	c := s.colly.Clone()
 
-	s.colly.OnRequest(func(r *colly.Request) {
-		test = r.URL.String()
+	c.OnRequest(func(r *colly.Request) {
+		fmt.Println("Visiting ", r.URL.String())
 	})
 
-	s.colly.Visit(url)
+	c.OnHTML(scoreboxElement, func(div *colly.HTMLElement) {
+		game.StartTime, _ = time.ParseInLocation("3:04 PM, January 2, 2006", div.ChildText("div:first-child"), EST)
+		game.Location = div.ChildText("div:nth-child(2)")
+	})
 
-	return test
+	c.OnHTML(lineScoreTableElement, func(tbl *colly.HTMLElement) {
+		game.HomeLineScore, game.VisitorLineScore = parseLineScoreTable(tbl)
+	})
+
+	c.Visit(url)
+
+	return game
+}
+
+func parseLineScoreTable(tbl *colly.HTMLElement) (home []GameLineScore, visitor []GameLineScore) {
+	tableMaps := ParseTable(tbl) // row 0 will be away, row 1 will be home
+
+	visitor = lineScoreFromRow(tableMaps[0])
+	home = lineScoreFromRow(tableMaps[1])
+
+	return
+}
+
+func lineScoreFromRow(rowMap map[string]*colly.HTMLElement) (scores []GameLineScore) {
+	// TODO: create one row per quarter or OT column in the table map and return
+
+	return
 }
