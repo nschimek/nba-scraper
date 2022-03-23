@@ -2,6 +2,7 @@ package main
 
 import (
 	"github.com/gocolly/colly/v2"
+
 	"github.com/nschimek/nba-scraper/scraper"
 )
 
@@ -19,6 +20,6 @@ func main() {
 	// fmt.Println(scheduleScraper.GetChildUrls())
 
 	gameScraper := scraper.CreateGameScraper(c)
-	gameScraper.Scrape("https://www.basketball-reference.com/boxscores/202110200TOR.html", "https://www.basketball-reference.com/boxscores/202110240NYK.html")
+	gameScraper.Scrape("https://www.basketball-reference.com/boxscores/202110300WAS.html")
 
 }

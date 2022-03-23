@@ -1,20 +1,22 @@
 package scraper
 
 import (
+	"bytes"
 	"fmt"
+	"strconv"
+	"strings"
 	"time"
 
+	"github.com/PuerkitoBio/goquery"
 	"github.com/gocolly/colly/v2"
 )
 
 const (
 	baseBodyElement         = "body #wrap #content"
 	scoreboxElement         = baseBodyElement + " .scorebox .scorebox_meta"
-	lineScoreTableElement   = baseBodyElement + " .content_grid div #all_line_score #div_line_score table tbody"
+	lineScoreTableElement   = baseBodyElement + " .content_grid div:first-child #all_line_score #div_line_score table tbody"
 	fourFactorsTableElement = baseBodyElement + " .content_grid div #all_four_factors #div_four_factors table tbody"
 )
-
-var overtimes = []string{"OT", "OT1", "OT2", "OT3", "OT4", "OT5", "OT6", "OT7", "OT8", "OT9", "OT10"}
 
 type Game struct {
 	HomeId, VisitorId, Location, WinnerId, LoserId string
@@ -42,8 +44,8 @@ func newGame() Game {
 }
 
 type GameLineScore struct {
-	TeamId, Quarter string
-	Score           int
+	TeamId         string
+	Quarter, Score int
 }
 
 type GameFourFactors struct {
@@ -56,7 +58,8 @@ type GamePlayer struct {
 }
 
 type GamePlayerBasicStats struct {
-	GameId, TeamId, PlayerId, Quarter                                                                       string
+	GameId, TeamId, PlayerId                                                                                string
+	Quarter                                                                                                 int
 	TimePlayed                                                                                              time.Duration
 	FieldGoals, FieldGoalsAttempted, ThreePointers, ThreePointersAttempted, FreeThrows, FreeThrowsAttempted int
 	FieldGoalPct, ThreePointersPct, FreeThrowsPct                                                           float64
@@ -126,7 +129,13 @@ func (s *GameScraper) parseGamePage(url string) Game {
 		game.Location = div.ChildText("div:nth-child(2)")
 	})
 
-	c.OnHTML(lineScoreTableElement, func(tbl *colly.HTMLElement) {
+	// unfortunately, the line score and four factor tables are commented out, so we have to get our hands dirty
+	c.OnHTML("body #wrap #content .content_grid div:nth-child(1) div#all_line_score.table_wrapper", func(div *colly.HTMLElement) {
+		html, _ := div.DOM.Html()
+		doc, _ := goquery.NewDocumentFromReader(bytes.NewBufferString(strings.Replace(strings.Replace(html, "<!--", "", 1), "-->", "", 1)))
+		sel := doc.Find("div#div_line_score.table_container table tbody")
+		tbl := colly.NewHTMLElementFromSelectionNode(div.Response, sel, sel.Get(0), 0)
+
 		game.HomeLineScore, game.VisitorLineScore = parseLineScoreTable(tbl)
 	})
 
@@ -141,11 +150,41 @@ func parseLineScoreTable(tbl *colly.HTMLElement) (home []GameLineScore, visitor 
 	visitor = lineScoreFromRow(tableMaps[0])
 	home = lineScoreFromRow(tableMaps[1])
 
+	fmt.Println(visitor)
+	fmt.Println(home)
+
 	return
 }
 
 func lineScoreFromRow(rowMap map[string]*colly.HTMLElement) (scores []GameLineScore) {
-	// TODO: create one row per quarter or OT column in the table map and return
+	teamId := parseTeamId(parseLink(rowMap["team"]))
+
+	for key, cell := range rowMap {
+		// loop through all non-team and total columns; those that remain are the quarters
+		if key != "team" && key != "T" {
+			score, _ := strconv.Atoi(cell.Text)
+			scores = append(scores, GameLineScore{
+				TeamId:  teamId,
+				Quarter: lineScoreQuarter(key),
+				Score:   score,
+			})
+		}
+	}
 
 	return
+}
+
+func lineScoreQuarter(c string) int {
+	// if we can parse an int out, then it's quarters 1-4
+	if i, err := strconv.Atoi(c); err == nil {
+		return i
+	} else {
+		// remove OT, then parse what is left...an error indicates OT1 (5), as it will be blank
+		ot, err := strconv.Atoi(strings.Replace(c, "OT", "", 1))
+		if err != nil {
+			return 5
+		} else {
+			return ot + 5
+		}
+	}
 }
