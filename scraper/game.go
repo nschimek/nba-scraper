@@ -184,7 +184,7 @@ func lineScoreQuarter(c string) int {
 		if err != nil {
 			return 5
 		} else {
-			return ot + 5
+			return ot + 4
 		}
 	}
 }
