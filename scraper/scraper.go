@@ -1,8 +1,10 @@
 package scraper
 
 import (
+	"bytes"
 	"strings"
 
+	"github.com/PuerkitoBio/goquery"
 	"github.com/gocolly/colly/v2"
 )
 
@@ -37,4 +39,15 @@ func parseGameId(link string) string {
 
 func parseTeamId(link string) string {
 	return strings.Split(link, "/")[2]
+}
+
+func transformHtmlElement(element *colly.HTMLElement, query string, transform func(html string) string) *colly.HTMLElement {
+	html, _ := element.DOM.Html()
+	doc, _ := goquery.NewDocumentFromReader(bytes.NewBufferString(transform(html)))
+	sel := doc.Find(query)
+	return colly.NewHTMLElementFromSelectionNode(element.Response, sel, sel.Get(0), 0)
+}
+
+func removeCommentsSyntax(html string) string {
+	return strings.ReplaceAll(strings.ReplaceAll(html, "<!--", ""), "-->", "")
 }

@@ -1,21 +1,21 @@
 package scraper
 
 import (
-	"bytes"
 	"fmt"
 	"strconv"
 	"strings"
 	"time"
 
-	"github.com/PuerkitoBio/goquery"
 	"github.com/gocolly/colly/v2"
 )
 
 const (
-	baseBodyElement         = "body #wrap #content"
-	scoreboxElement         = baseBodyElement + " .scorebox .scorebox_meta"
-	lineScoreTableElement   = baseBodyElement + " .content_grid div:first-child #all_line_score #div_line_score table tbody"
-	fourFactorsTableElement = baseBodyElement + " .content_grid div #all_four_factors #div_four_factors table tbody"
+	baseBodyElement             = "body #wrap #content"
+	scoreboxElement             = baseBodyElement + " .scorebox .scorebox_meta"
+	lineScoreTableElementBase   = baseBodyElement + " .content_grid div:nth-child(1) div#all_line_score.table_wrapper"
+	lineScoreTableElement       = "div#div_line_score.table_container table tbody"
+	fourFactorsTableElementBase = baseBodyElement + " .content_grid div:nth-child(2) div#all_four_factors.table_wrapper #div_four_factors table tbody"
+	fourFactorsTableElement     = "div#div_four_factors.table_container table tbody"
 )
 
 type Game struct {
@@ -28,19 +28,6 @@ type Game struct {
 	GamePlayers                                    []GamePlayer
 	GamePlayersBasicStats                          []GamePlayerBasicStats
 	GamePlayersAdvancedStats                       []GamePlayerAdvancedStats
-}
-
-// return a new game object with all child objects and arrys initialized
-func newGame() Game {
-	return Game{
-		HomeLineScore:            make([]GameLineScore, 0),
-		VisitorLineScore:         make([]GameLineScore, 0),
-		HomeFourFactors:          GameFourFactors{},
-		VisitorFourFactors:       GameFourFactors{},
-		GamePlayers:              make([]GamePlayer, 0),
-		GamePlayersBasicStats:    make([]GamePlayerBasicStats, 0),
-		GamePlayersAdvancedStats: make([]GamePlayerAdvancedStats, 0),
-	}
 }
 
 type GameLineScore struct {
@@ -129,13 +116,8 @@ func (s *GameScraper) parseGamePage(url string) Game {
 		game.Location = div.ChildText("div:nth-child(2)")
 	})
 
-	// unfortunately, the line score and four factor tables are commented out, so we have to get our hands dirty
-	c.OnHTML("body #wrap #content .content_grid div:nth-child(1) div#all_line_score.table_wrapper", func(div *colly.HTMLElement) {
-		html, _ := div.DOM.Html()
-		doc, _ := goquery.NewDocumentFromReader(bytes.NewBufferString(strings.Replace(strings.Replace(html, "<!--", "", 1), "-->", "", 1)))
-		sel := doc.Find("div#div_line_score.table_container table tbody")
-		tbl := colly.NewHTMLElementFromSelectionNode(div.Response, sel, sel.Get(0), 0)
-
+	c.OnHTML(lineScoreTableElementBase, func(div *colly.HTMLElement) {
+		tbl := transformHtmlElement(div, lineScoreTableElement, removeCommentsSyntax)
 		game.HomeLineScore, game.VisitorLineScore = parseLineScoreTable(tbl)
 	})
 
