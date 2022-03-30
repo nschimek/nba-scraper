@@ -2,6 +2,7 @@ package scraper
 
 import (
 	"bytes"
+	"errors"
 	"strings"
 
 	"github.com/PuerkitoBio/goquery"
@@ -41,11 +42,16 @@ func parseTeamId(link string) string {
 	return strings.Split(link, "/")[2]
 }
 
-func transformHtmlElement(element *colly.HTMLElement, query string, transform func(html string) string) *colly.HTMLElement {
+func transformHtmlElement(element *colly.HTMLElement, query string, transform func(html string) string) (*colly.HTMLElement, error) {
 	html, _ := element.DOM.Html()
 	doc, _ := goquery.NewDocumentFromReader(bytes.NewBufferString(transform(html)))
 	sel := doc.Find(query)
-	return colly.NewHTMLElementFromSelectionNode(element.Response, sel, sel.Get(0), 0)
+
+	if len(sel.Nodes) == 0 {
+		return nil, errors.New("could not find any search elements in transformed table")
+	}
+
+	return colly.NewHTMLElementFromSelectionNode(element.Response, sel, sel.Get(0), 0), nil
 }
 
 func removeCommentsSyntax(html string) string {

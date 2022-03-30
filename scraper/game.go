@@ -14,13 +14,13 @@ const (
 	scoreboxElement             = baseBodyElement + " .scorebox .scorebox_meta"
 	lineScoreTableElementBase   = baseBodyElement + " .content_grid div:nth-child(1) div#all_line_score.table_wrapper"
 	lineScoreTableElement       = "div#div_line_score.table_container table tbody"
-	fourFactorsTableElementBase = baseBodyElement + " .content_grid div:nth-child(2) div#all_four_factors.table_wrapper #div_four_factors table tbody"
+	fourFactorsTableElementBase = baseBodyElement + " .content_grid div:nth-child(2) div#all_four_factors.table_wrapper"
 	fourFactorsTableElement     = "div#div_four_factors.table_container table tbody"
 )
 
 type Game struct {
 	HomeId, VisitorId, Location, WinnerId, LoserId string
-	HomeScore, VisitorScore, Attendance            int
+	Season, HomeScore, VisitorScore, Attendance    int
 	StartTime                                      time.Time
 	TimeOfGame                                     time.Duration
 	HomeLineScore, VisitorLineScore                []GameLineScore // these will end up in their own table due to the possiblity of OT
@@ -36,8 +36,8 @@ type GameLineScore struct {
 }
 
 type GameFourFactors struct {
-	TeamId                                                       string
-	Pace, EffectiveFgPct, TurnoverPct, FtPerFga, OffensiveRating float64
+	TeamId                                                                       string
+	Pace, EffectiveFgPct, TurnoverPct, OffensiveRbPct, FtPerFga, OffensiveRating float64
 }
 
 type GamePlayer struct {
@@ -117,8 +117,13 @@ func (s *GameScraper) parseGamePage(url string) Game {
 	})
 
 	c.OnHTML(lineScoreTableElementBase, func(div *colly.HTMLElement) {
-		tbl := transformHtmlElement(div, lineScoreTableElement, removeCommentsSyntax)
+		tbl, _ := transformHtmlElement(div, lineScoreTableElement, removeCommentsSyntax)
 		game.HomeLineScore, game.VisitorLineScore = parseLineScoreTable(tbl)
+	})
+
+	c.OnHTML(fourFactorsTableElementBase, func(div *colly.HTMLElement) {
+		tbl, _ := transformHtmlElement(div, fourFactorsTableElement, removeCommentsSyntax)
+		game.HomeFourFactors, game.VisitorFourFactors = parseFourFactorsTable(tbl)
 	})
 
 	c.Visit(url)
@@ -131,9 +136,6 @@ func parseLineScoreTable(tbl *colly.HTMLElement) (home []GameLineScore, visitor 
 
 	visitor = lineScoreFromRow(tableMaps[0])
 	home = lineScoreFromRow(tableMaps[1])
-
-	fmt.Println(visitor)
-	fmt.Println(home)
 
 	return
 }
@@ -169,4 +171,25 @@ func lineScoreQuarter(c string) int {
 			return ot + 4
 		}
 	}
+}
+
+func parseFourFactorsTable(tbl *colly.HTMLElement) (home GameFourFactors, visitor GameFourFactors) {
+	tableMaps := ParseTable(tbl) // row 0 will be away, row 1 will be home
+
+	visitor = gameFourFactorsFromRow(tableMaps[0])
+	home = gameFourFactorsFromRow(tableMaps[1])
+
+	return
+}
+
+func gameFourFactorsFromRow(rowMap map[string]*colly.HTMLElement) (factors GameFourFactors) {
+	factors.TeamId = parseTeamId(parseLink(rowMap["team_id"]))
+	factors.Pace, _ = strconv.ParseFloat(rowMap["pace"].Text, 64)
+	factors.EffectiveFgPct, _ = strconv.ParseFloat(rowMap["efg_pct"].Text, 64)
+	factors.TurnoverPct, _ = strconv.ParseFloat(rowMap["tov_pct"].Text, 64)
+	factors.OffensiveRbPct, _ = strconv.ParseFloat(rowMap["orb_pct"].Text, 64)
+	factors.FtPerFga, _ = strconv.ParseFloat(rowMap["ft_rate"].Text, 64)
+	factors.OffensiveRating, _ = strconv.ParseFloat(rowMap["off_rtg"].Text, 64)
+
+	return
 }
