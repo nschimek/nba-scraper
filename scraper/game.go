@@ -16,18 +16,19 @@ const (
 	lineScoreTableElement       = "div#div_line_score.table_container table tbody"
 	fourFactorsTableElementBase = baseBodyElement + " .content_grid div:nth-child(2) div#all_four_factors.table_wrapper"
 	fourFactorsTableElement     = "div#div_four_factors.table_container table tbody"
+	basicBoxScoreTables         = "div.section_wrapper.toggleable div.section_content div.table_wrapper div.table_container table"
 )
 
 type Game struct {
-	HomeId, VisitorId, Location, WinnerId, LoserId string
-	Season, HomeScore, VisitorScore, Attendance    int
-	StartTime                                      time.Time
-	TimeOfGame                                     time.Duration
-	HomeLineScore, VisitorLineScore                []GameLineScore // these will end up in their own table due to the possiblity of OT
-	HomeFourFactors, VisitorFourFactors            GameFourFactors // also probably their own table
-	GamePlayers                                    []GamePlayer
-	GamePlayersBasicStats                          []GamePlayerBasicStats
-	GamePlayersAdvancedStats                       []GamePlayerAdvancedStats
+	HomeId, VisitorId, Location, WinnerId, LoserId        string
+	Season, HomeScore, VisitorScore, Quarters, Attendance int
+	StartTime                                             time.Time
+	TimeOfGame                                            time.Duration
+	HomeLineScore, VisitorLineScore                       []GameLineScore // these will end up in their own table due to the possiblity of OT
+	HomeFourFactors, VisitorFourFactors                   GameFourFactors // also probably their own table
+	GamePlayers                                           []GamePlayer
+	GamePlayersBasicStats                                 []GamePlayerBasicStats
+	GamePlayersAdvancedStats                              []GamePlayerAdvancedStats
 }
 
 type GameLineScore struct {
@@ -119,6 +120,7 @@ func (s *GameScraper) parseGamePage(url string) Game {
 	c.OnHTML(lineScoreTableElementBase, func(div *colly.HTMLElement) {
 		tbl, _ := transformHtmlElement(div, lineScoreTableElement, removeCommentsSyntax)
 		game.HomeLineScore, game.VisitorLineScore = parseLineScoreTable(tbl)
+		game.setTotalsFromLineScore()
 	})
 
 	c.OnHTML(fourFactorsTableElementBase, func(div *colly.HTMLElement) {
@@ -126,9 +128,52 @@ func (s *GameScraper) parseGamePage(url string) Game {
 		game.HomeFourFactors, game.VisitorFourFactors = parseFourFactorsTable(tbl)
 	})
 
+	c.OnHTML(baseBodyElement, func(div *colly.HTMLElement) {
+		div.ForEach(basicBoxScoreTables, func(_ int, box *colly.HTMLElement) {
+			// TODO: handle box score tables
+		})
+	})
+
 	c.Visit(url)
 
 	return game
+}
+
+func (g *Game) setTotalsFromLineScore() {
+
+	g.HomeId = g.HomeLineScore[0].TeamId
+	g.VisitorId = g.VisitorLineScore[0].TeamId
+
+	g.Quarters = len(g.HomeLineScore)
+
+	for _, ls := range g.HomeLineScore {
+		g.HomeScore = g.HomeScore + ls.Score
+	}
+	for _, ls := range g.VisitorLineScore {
+		g.VisitorScore = g.VisitorScore + ls.Score
+	}
+
+	// I looked this up: there can be no ties in the NBA!
+	if g.HomeScore > g.VisitorScore {
+		g.WinnerId = g.HomeId
+		g.LoserId = g.VisitorId
+	} else {
+		g.WinnerId = g.VisitorId
+		g.LoserId = g.HomeId
+	}
+
+}
+
+func (g *Game) setBoxScoreCallbacks(c *colly.Collector) {
+	q := 1
+	for q <= g.Quarters {
+		// fmt.Println(basicBoxScoreTableSelector(g.HomeId, q))
+
+		c.OnHTML(baseBodyElement, func(tbl *colly.HTMLElement) {
+			fmt.Println(tbl.DOM.Html())
+		})
+		q++
+	}
 }
 
 func parseLineScoreTable(tbl *colly.HTMLElement) (home []GameLineScore, visitor []GameLineScore) {
@@ -192,4 +237,16 @@ func gameFourFactorsFromRow(rowMap map[string]*colly.HTMLElement) (factors GameF
 	factors.OffensiveRating, _ = strconv.ParseFloat(rowMap["off_rtg"].Text, 64)
 
 	return
+}
+
+func basicBoxScoreTableSelector(teamId string, quarter int) string {
+	var q string
+
+	if quarter <= 4 {
+		q = fmt.Sprintf("q%d", quarter)
+	} else {
+		q = fmt.Sprintf("ot%d", quarter-4)
+	}
+
+	return "div#all_box-" + teamId + "-" + q + "-basic div.section_content div.table_wrapper div.table_container table tbody"
 }
