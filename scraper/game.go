@@ -2,6 +2,7 @@ package scraper
 
 import (
 	"fmt"
+	"math"
 	"strconv"
 	"strings"
 	"time"
@@ -11,16 +12,16 @@ import (
 
 const (
 	baseBodyElement             = "body #wrap #content"
-	scoreboxElement             = baseBodyElement + " .scorebox .scorebox_meta"
+	scoreboxMetaElement         = baseBodyElement + " .scorebox .scorebox_meta"
 	lineScoreTableElementBase   = baseBodyElement + " .content_grid div:nth-child(1) div#all_line_score.table_wrapper"
 	lineScoreTableElement       = "div#div_line_score.table_container table tbody"
 	fourFactorsTableElementBase = baseBodyElement + " .content_grid div:nth-child(2) div#all_four_factors.table_wrapper"
 	fourFactorsTableElement     = "div#div_four_factors.table_container table tbody"
-	basicBoxScoreTables         = "div.section_wrapper.toggleable div.section_content div.table_wrapper div.table_container table"
+	basicBoxScoreTables         = "div.section_wrapper div.section_content div.table_wrapper div.table_container table"
 )
 
 type Game struct {
-	HomeId, VisitorId, Location, WinnerId, LoserId        string
+	Id, HomeId, VisitorId, Location, WinnerId, LoserId    string
 	Season, HomeScore, VisitorScore, Quarters, Attendance int
 	StartTime                                             time.Time
 	TimeOfGame                                            time.Duration
@@ -55,10 +56,10 @@ type GamePlayerBasicStats struct {
 }
 
 type GamePlayerAdvancedStats struct {
-	GameId, TeamId, PlayerId                                                                        string
-	TrueShootingPct, EffectiveFgPct, ThreePtAttemptRate, OffensiveRbPct, DefensiveRbPct, TotalRbPct float64
-	AssistPct, StealPct, BlockPct, TurnoverPct, UsagePct, BoxPlusMinus                              float64
-	OffensiveRating, DefensiveRating                                                                int
+	GameId, TeamId, PlayerId                                                                                              string
+	TrueShootingPct, EffectiveFgPct, ThreePtAttemptRate, FreeThrowAttemptRate, OffensiveRbPct, DefensiveRbPct, TotalRbPct float64
+	AssistPct, StealPct, BlockPct, TurnoverPct, UsagePct, BoxPlusMinus                                                    float64
+	OffensiveRating, DefensiveRating                                                                                      int
 }
 
 type GameScraper struct {
@@ -96,7 +97,10 @@ func (s *GameScraper) GetChildUrls() []string {
 func (s *GameScraper) Scrape(urls ...string) {
 
 	for _, url := range urls {
-		s.ScrapedData = append(s.ScrapedData, s.parseGamePage(url))
+		game, homeUrl, visitorUrl := s.parseGamePage(url)
+		s.ScrapedData = append(s.ScrapedData, game)
+		s.childUrls[game.HomeId] = homeUrl
+		s.childUrls[game.VisitorId] = visitorUrl
 	}
 
 	fmt.Println(s.ScrapedData)
@@ -104,22 +108,24 @@ func (s *GameScraper) Scrape(urls ...string) {
 	scrapeChild(s)
 }
 
-func (s *GameScraper) parseGamePage(url string) Game {
-	game := Game{}
+func (s *GameScraper) parseGamePage(url string) (game Game, homeUrl, visitorUrl string) {
+	game = Game{}
 	c := s.colly.Clone()
+
+	game.Id = parseGameId(url)
 
 	c.OnRequest(func(r *colly.Request) {
 		fmt.Println("Visiting ", r.URL.String())
 	})
 
-	c.OnHTML(scoreboxElement, func(div *colly.HTMLElement) {
+	c.OnHTML(scoreboxMetaElement, func(div *colly.HTMLElement) {
 		game.StartTime, _ = time.ParseInLocation("3:04 PM, January 2, 2006", div.ChildText("div:first-child"), EST)
 		game.Location = div.ChildText("div:nth-child(2)")
 	})
 
 	c.OnHTML(lineScoreTableElementBase, func(div *colly.HTMLElement) {
 		tbl, _ := transformHtmlElement(div, lineScoreTableElement, removeCommentsSyntax)
-		game.HomeLineScore, game.VisitorLineScore = parseLineScoreTable(tbl)
+		game.HomeLineScore, game.VisitorLineScore, homeUrl, visitorUrl = parseLineScoreTable(tbl)
 		game.setTotalsFromLineScore()
 	})
 
@@ -130,13 +136,20 @@ func (s *GameScraper) parseGamePage(url string) Game {
 
 	c.OnHTML(baseBodyElement, func(div *colly.HTMLElement) {
 		div.ForEach(basicBoxScoreTables, func(_ int, box *colly.HTMLElement) {
-			// TODO: handle box score tables
+			teamId, boxType, quarter := parseBoxScoreTableProperties(box.Attr("id"))
+			box.ForEach("tbody", func(_ int, tbl *colly.HTMLElement) {
+				if boxType == "basic" && quarter > 0 && quarter < math.MaxInt {
+					game.GamePlayersBasicStats = append(game.GamePlayersBasicStats, parseBasicBoxScoreTable(tbl, game.Id, teamId, quarter)...)
+				} else if boxType == "advanced" {
+					game.GamePlayersAdvancedStats = append(game.GamePlayersAdvancedStats, parseAdvancedBoxScoreTable(tbl, game.Id, teamId)...)
+				}
+			})
 		})
 	})
 
 	c.Visit(url)
 
-	return game
+	return
 }
 
 func (g *Game) setTotalsFromLineScore() {
@@ -164,29 +177,18 @@ func (g *Game) setTotalsFromLineScore() {
 
 }
 
-func (g *Game) setBoxScoreCallbacks(c *colly.Collector) {
-	q := 1
-	for q <= g.Quarters {
-		// fmt.Println(basicBoxScoreTableSelector(g.HomeId, q))
-
-		c.OnHTML(baseBodyElement, func(tbl *colly.HTMLElement) {
-			fmt.Println(tbl.DOM.Html())
-		})
-		q++
-	}
-}
-
-func parseLineScoreTable(tbl *colly.HTMLElement) (home []GameLineScore, visitor []GameLineScore) {
+func parseLineScoreTable(tbl *colly.HTMLElement) (home []GameLineScore, visitor []GameLineScore, homeUrl, visitorUrl string) {
 	tableMaps := ParseTable(tbl) // row 0 will be away, row 1 will be home
 
-	visitor = lineScoreFromRow(tableMaps[0])
-	home = lineScoreFromRow(tableMaps[1])
+	visitor, visitorUrl = lineScoreFromRow(tableMaps[0])
+	home, homeUrl = lineScoreFromRow(tableMaps[1])
 
 	return
 }
 
-func lineScoreFromRow(rowMap map[string]*colly.HTMLElement) (scores []GameLineScore) {
-	teamId := parseTeamId(parseLink(rowMap["team"]))
+func lineScoreFromRow(rowMap map[string]*colly.HTMLElement) (scores []GameLineScore, teamUrl string) {
+	teamUrl = parseLink(rowMap["team"])
+	teamId := parseTeamId(teamUrl)
 
 	for key, cell := range rowMap {
 		// loop through all non-team and total columns; those that remain are the quarters
@@ -239,14 +241,102 @@ func gameFourFactorsFromRow(rowMap map[string]*colly.HTMLElement) (factors GameF
 	return
 }
 
-func basicBoxScoreTableSelector(teamId string, quarter int) string {
-	var q string
+func parseBoxScoreTableProperties(id string) (team, boxType string, quarter int) {
+	parts := strings.Split(id, "-") // expected format: box-TEAM-q/ot#-basic
+	team = parts[1]
+	boxType = parts[3]
 
-	if quarter <= 4 {
-		q = fmt.Sprintf("q%d", quarter)
-	} else {
-		q = fmt.Sprintf("ot%d", quarter-4)
+	if boxType == "basic" {
+		if q := parts[2]; strings.HasPrefix(q, "q") {
+			quarter, _ = strconv.Atoi(strings.ReplaceAll(q, "q", ""))
+		} else if strings.HasPrefix(q, "ot") {
+			quarter, _ = strconv.Atoi(strings.ReplaceAll(q, "ot", ""))
+			quarter = quarter + 4 // adjust for OT
+		} else if q == "game" {
+			quarter = math.MaxInt
+		}
 	}
 
-	return "div#all_box-" + teamId + "-" + q + "-basic div.section_content div.table_wrapper div.table_container table tbody"
+	// quarter will be 0 for other box types, such as advanced
+
+	return
+}
+
+func parseBasicBoxScoreTable(tbl *colly.HTMLElement, gameId, teamId string, quarter int) []GamePlayerBasicStats {
+	tableMaps := ParseTable(tbl)
+	stats := make([]GamePlayerBasicStats, 12)
+
+	for _, rowMap := range tableMaps {
+		stats = append(stats, gamePlayerBasicStatsFromRow(rowMap, gameId, teamId, quarter))
+	}
+
+	return stats
+}
+
+func gamePlayerBasicStatsFromRow(rowMap map[string]*colly.HTMLElement, gameId, teamId string, quarter int) (gpbs GamePlayerBasicStats) {
+	gpbs.GameId = gameId
+	gpbs.TeamId = teamId
+	gpbs.Quarter = quarter
+	gpbs.PlayerId = parsePlayerId(parseLink(rowMap["player"]))
+
+	if _, ok := rowMap["reason"]; !ok { // a "reason" column indicates the player did not play
+		gpbs.TimePlayed, _ = parseDuration(rowMap["mp"].Text)
+		gpbs.FieldGoals, _ = strconv.Atoi(rowMap["fg"].Text)
+		gpbs.FieldGoalsAttempted, _ = strconv.Atoi(rowMap["fga"].Text)
+		gpbs.FieldGoalPct, _ = parseFloatStat(rowMap["fg_pct"].Text)
+		gpbs.ThreePointers, _ = strconv.Atoi(rowMap["fg3"].Text)
+		gpbs.ThreePointersAttempted, _ = strconv.Atoi(rowMap["fg3a"].Text)
+		gpbs.ThreePointersPct, _ = parseFloatStat(rowMap["fg3_pct"].Text)
+		gpbs.FreeThrows, _ = strconv.Atoi(rowMap["ft"].Text)
+		gpbs.FreeThrowsAttempted, _ = strconv.Atoi(rowMap["fta"].Text)
+		gpbs.FreeThrowsPct, _ = parseFloatStat(rowMap["ft_pct"].Text)
+		gpbs.OffensiveRB, _ = strconv.Atoi(rowMap["orb"].Text)
+		gpbs.DefensiveRB, _ = strconv.Atoi(rowMap["drb"].Text)
+		gpbs.TotalRB, _ = strconv.Atoi(rowMap["trb"].Text)
+		gpbs.Assists, _ = strconv.Atoi(rowMap["ast"].Text)
+		gpbs.Steals, _ = strconv.Atoi(rowMap["stl"].Text)
+		gpbs.Blocks, _ = strconv.Atoi(rowMap["blk"].Text)
+		gpbs.PersonalFouls, _ = strconv.Atoi(rowMap["pf"].Text)
+		gpbs.Points, _ = strconv.Atoi(rowMap["pts"].Text)
+		gpbs.PlusMinus, _ = strconv.Atoi(strings.Replace(rowMap["plus_minus"].Text, "+", "", 1))
+	}
+
+	return
+}
+
+func parseAdvancedBoxScoreTable(tbl *colly.HTMLElement, gameId, teamId string) []GamePlayerAdvancedStats {
+	tableMaps := ParseTable(tbl)
+	stats := make([]GamePlayerAdvancedStats, 12)
+
+	for _, rowMap := range tableMaps {
+		stats = append(stats, gamePlayerAdvancedStatsFromRow(rowMap, gameId, teamId))
+	}
+
+	return stats
+}
+
+func gamePlayerAdvancedStatsFromRow(rowMap map[string]*colly.HTMLElement, gameId, teamId string) (gpas GamePlayerAdvancedStats) {
+	gpas.GameId = gameId
+	gpas.TeamId = teamId
+	gpas.PlayerId = parsePlayerId(parseLink(rowMap["player"]))
+
+	if _, ok := rowMap["reason"]; !ok { // a "reason" column indicates the player did not play
+		gpas.TrueShootingPct, _ = parseFloatStat(rowMap["ts_pct"].Text)
+		gpas.EffectiveFgPct, _ = parseFloatStat(rowMap["efg_pct"].Text)
+		gpas.ThreePtAttemptRate, _ = parseFloatStat(rowMap["fg3a_per_fga_pct"].Text)
+		gpas.FreeThrowAttemptRate, _ = parseFloatStat(rowMap["fta_per_fga_pct"].Text)
+		gpas.OffensiveRbPct, _ = parseFloatStat(rowMap["orb_pct"].Text)
+		gpas.DefensiveRbPct, _ = parseFloatStat(rowMap["drb_pct"].Text)
+		gpas.TotalRbPct, _ = parseFloatStat(rowMap["trb_pct"].Text)
+		gpas.AssistPct, _ = parseFloatStat(rowMap["ast_pct"].Text)
+		gpas.StealPct, _ = parseFloatStat(rowMap["stl_pct"].Text)
+		gpas.BlockPct, _ = parseFloatStat(rowMap["blk_pct"].Text)
+		gpas.TurnoverPct, _ = parseFloatStat(rowMap["tov_pct"].Text)
+		gpas.UsagePct, _ = parseFloatStat(rowMap["usg_pct"].Text)
+		gpas.OffensiveRating, _ = strconv.Atoi(rowMap["off_rtg"].Text)
+		gpas.DefensiveRating, _ = strconv.Atoi(rowMap["def_rtg"].Text)
+		gpas.BoxPlusMinus, _ = parseFloatStat(rowMap["bpm"].Text)
+	}
+
+	return
 }
