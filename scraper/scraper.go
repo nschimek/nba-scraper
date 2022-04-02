@@ -37,7 +37,8 @@ func parseLink(e *colly.HTMLElement) string {
 }
 
 func parseGameId(link string) string {
-	return strings.Replace(strings.Split(link, "/")[2], ".html", "", 1)
+	s := strings.Split(link, "/")
+	return strings.Replace(s[len(s)-1], ".html", "", 1)
 }
 
 func parseTeamId(link string) string {

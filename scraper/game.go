@@ -72,7 +72,8 @@ type GameScraper struct {
 
 func CreateGameScraper(c *colly.Collector) GameScraper {
 	return GameScraper{
-		colly: *c,
+		colly:     *c,
+		childUrls: make(map[string]string),
 	}
 }
 
@@ -140,6 +141,8 @@ func (s *GameScraper) parseGamePage(url string) (game Game, homeUrl, visitorUrl 
 			box.ForEach("tbody", func(_ int, tbl *colly.HTMLElement) {
 				if boxType == "basic" && quarter > 0 && quarter < math.MaxInt {
 					game.GamePlayersBasicStats = append(game.GamePlayersBasicStats, parseBasicBoxScoreTable(tbl, game.Id, teamId, quarter)...)
+				} else if boxType == "basic" && quarter == math.MaxInt {
+					game.GamePlayers = append(game.GamePlayers, parseBasicBoxScoreGameTable(tbl, game.Id, teamId)...)
 				} else if boxType == "advanced" {
 					game.GamePlayersAdvancedStats = append(game.GamePlayersAdvancedStats, parseAdvancedBoxScoreTable(tbl, game.Id, teamId)...)
 				}
@@ -257,14 +260,14 @@ func parseBoxScoreTableProperties(id string) (team, boxType string, quarter int)
 		}
 	}
 
-	// quarter will be 0 for other box types, such as advanced
+	// quarter will be 0 for half basic boxes and advanced boxes
 
 	return
 }
 
 func parseBasicBoxScoreTable(tbl *colly.HTMLElement, gameId, teamId string, quarter int) []GamePlayerBasicStats {
 	tableMaps := ParseTable(tbl)
-	stats := make([]GamePlayerBasicStats, 12)
+	stats := []GamePlayerBasicStats{}
 
 	for _, rowMap := range tableMaps {
 		stats = append(stats, gamePlayerBasicStatsFromRow(rowMap, gameId, teamId, quarter))
@@ -306,7 +309,7 @@ func gamePlayerBasicStatsFromRow(rowMap map[string]*colly.HTMLElement, gameId, t
 
 func parseAdvancedBoxScoreTable(tbl *colly.HTMLElement, gameId, teamId string) []GamePlayerAdvancedStats {
 	tableMaps := ParseTable(tbl)
-	stats := make([]GamePlayerAdvancedStats, 12)
+	stats := []GamePlayerAdvancedStats{}
 
 	for _, rowMap := range tableMaps {
 		stats = append(stats, gamePlayerAdvancedStatsFromRow(rowMap, gameId, teamId))
@@ -336,6 +339,35 @@ func gamePlayerAdvancedStatsFromRow(rowMap map[string]*colly.HTMLElement, gameId
 		gpas.OffensiveRating, _ = strconv.Atoi(rowMap["off_rtg"].Text)
 		gpas.DefensiveRating, _ = strconv.Atoi(rowMap["def_rtg"].Text)
 		gpas.BoxPlusMinus, _ = parseFloatStat(rowMap["bpm"].Text)
+	}
+
+	return
+}
+
+func parseBasicBoxScoreGameTable(tbl *colly.HTMLElement, gameId, teamId string) []GamePlayer {
+	tableMaps := ParseTable(tbl)
+	players := []GamePlayer{}
+
+	for i, rowMap := range tableMaps {
+		players = append(players, gamePlayerFromRow(rowMap, gameId, teamId, i))
+	}
+
+	return players
+}
+
+func gamePlayerFromRow(rowMap map[string]*colly.HTMLElement, gameId, teamId string, index int) (gp GamePlayer) {
+	gp.GameId = gameId
+	gp.TeamId = teamId
+	gp.PlayerId = parsePlayerId(parseLink(rowMap["player"]))
+
+	if _, ok := rowMap["reason"]; !ok { // a "reason" column indicates the player did not play
+		if index < 5 { // the first 5 players are the starters
+			gp.Status = "S"
+		} else { // the rest are reserves
+			gp.Status = "R"
+		}
+	} else {
+		gp.Status = "D"
 	}
 
 	return
