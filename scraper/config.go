@@ -15,5 +15,3 @@ var LimitRule = colly.LimitRule{
 	Parallelism: 2,
 	RandomDelay: 5 * time.Second,
 }
-
-var EST, _ = time.LoadLocation("America/New_York")

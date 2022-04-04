@@ -1,13 +1,13 @@
-package scraper
+package parser
 
 import "github.com/gocolly/colly/v2"
 
-type TableParser struct {
+type tableParser struct {
 	columnMaps []map[string]*colly.HTMLElement
 }
 
-func ParseTable(tbl *colly.HTMLElement) []map[string]*colly.HTMLElement {
-	p := TableParser{
+func Table(tbl *colly.HTMLElement) []map[string]*colly.HTMLElement {
+	p := tableParser{
 		columnMaps: make([]map[string]*colly.HTMLElement, 0),
 	}
 
@@ -18,7 +18,7 @@ func ParseTable(tbl *colly.HTMLElement) []map[string]*colly.HTMLElement {
 	return p.columnMaps
 }
 
-func (t *TableParser) parseRow(tr *colly.HTMLElement) {
+func (t *tableParser) parseRow(tr *colly.HTMLElement) {
 	if tr.Attr("class") != "thead" { // exclude table headers (these are someties in the middle of the table)
 		columnMap := make(map[string]*colly.HTMLElement)
 
@@ -34,7 +34,7 @@ func (t *TableParser) parseRow(tr *colly.HTMLElement) {
 	}
 }
 
-func (t *TableParser) parseColumn(columnMap map[string]*colly.HTMLElement, td *colly.HTMLElement) {
+func (t *tableParser) parseColumn(columnMap map[string]*colly.HTMLElement, td *colly.HTMLElement) {
 	if dataStat := td.Attr("data-stat"); dataStat != "" {
 		columnMap[dataStat] = td
 	}

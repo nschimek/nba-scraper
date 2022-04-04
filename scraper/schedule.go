@@ -6,6 +6,7 @@ import (
 	"time"
 
 	"github.com/gocolly/colly/v2"
+	"github.com/nschimek/nba-scraper/parser"
 )
 
 const (
@@ -24,7 +25,7 @@ type ScheduleScraper struct {
 	season      string
 	dateRange   DateRange
 	urls        []string
-	ScrapedData []Schedule
+	ScrapedData []parser.Schedule
 	Errors      []error
 	child       Scraper
 	childUrls   map[string]string
@@ -78,7 +79,10 @@ func (s *ScheduleScraper) Scrape(urls ...string) {
 	s.urls = append(s.urls, urls...)
 
 	s.colly.OnHTML(baseTableElement, func(tbl *colly.HTMLElement) {
-		s.parseScheduleTable(tbl)
+		for _, ps := range parser.ScheduleTable(tbl, s.dateRange.startDate, s.dateRange.endDate) {
+			s.ScrapedData = append(s.ScrapedData, ps)
+			s.childUrls[ps.GameId] = tbl.Request.AbsoluteURL(ps.GameUrl)
+		}
 	})
 
 	for _, url := range s.urls {
@@ -86,35 +90,6 @@ func (s *ScheduleScraper) Scrape(urls ...string) {
 	}
 
 	scrapeChild(s)
-}
-
-func (s *ScheduleScraper) parseScheduleTable(tbl *colly.HTMLElement) {
-	for _, row := range ParseTable(tbl) {
-		schedule, gameUrl := mapScheduleRow(row)
-		if schedule.Played && schedule.StartTime.After(s.dateRange.startDate) && schedule.StartTime.Before(s.dateRange.endDate) {
-			s.ScrapedData = append(s.ScrapedData, schedule)
-			s.childUrls[schedule.GameId] = tbl.Request.AbsoluteURL(gameUrl)
-		}
-	}
-}
-
-// the row map here has the data-stat attribute as the key and the colly HTML Element (cell) as the value
-func mapScheduleRow(r map[string]*colly.HTMLElement) (s Schedule, gameUrl string) {
-	parsedDate := r["date_game"].ChildText("a")
-	parsedTime := strings.Replace(r["game_start_time"].Text, "p", " PM EST", 1)
-
-	s.StartTime, _ = time.ParseInLocation("Mon, Jan 2, 2006 3:04 PM EST", parsedDate+" "+parsedTime, EST)
-	s.VisitorTeamId = parseTeamId(parseLink(r["visitor_team_name"]))
-	s.HomeTeamId = parseTeamId(parseLink(r["home_team_name"]))
-
-	gameUrl = parseLink(r["box_score_text"])
-
-	if gameUrl != "" {
-		s.GameId = parseGameId(gameUrl)
-		s.Played = true
-	}
-
-	return
 }
 
 func dateRangeToUrls(season string, dateRange DateRange) ([]string, error) {
