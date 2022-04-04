@@ -2,6 +2,8 @@ package parser
 
 import (
 	"math"
+	"strconv"
+	"strings"
 	"time"
 
 	"github.com/gocolly/colly/v2"
@@ -43,6 +45,10 @@ func (g *Game) ScoreboxStatTable(box *colly.HTMLElement) {
 			g.GamePlayersAdvancedStats = append(g.GamePlayersAdvancedStats, ParseAdvancedBoxScoreTable(tbl, g.Id, teamId)...)
 		}
 	})
+}
+
+func (g *Game) ScheduleLink(li *colly.HTMLElement) {
+	g.Season, _ = strconv.Atoi(strings.Split(li.Text, "-")[0])
 }
 
 func (g *Game) setTotalsFromLineScore() {

@@ -15,6 +15,7 @@ const (
 	fourFactorsTableElementBase = baseBodyElement + " .content_grid div:nth-child(2) div#all_four_factors.table_wrapper"
 	fourFactorsTableElement     = "div#div_four_factors.table_container table tbody"
 	basicBoxScoreTables         = "div.section_wrapper div.section_content div.table_wrapper div.table_container table"
+	seasonLinkElement           = baseBodyElement + " div#bottom_nav.section_wrapper div#bottom_nav_container.section_content ul li:nth-child(3)"
 )
 
 type GameScraper struct {
@@ -90,6 +91,10 @@ func (s *GameScraper) parseGamePage(url string) (game parser.Game) {
 		div.ForEach(basicBoxScoreTables, func(_ int, box *colly.HTMLElement) {
 			game.ScoreboxStatTable(box)
 		})
+	})
+
+	c.OnHTML(seasonLinkElement, func(li *colly.HTMLElement) {
+		game.ScheduleLink(li)
 	})
 
 	c.Visit(url)
