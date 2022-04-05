@@ -103,6 +103,7 @@ func gamePlayerBasicStatsFromRow(rowMap map[string]*colly.HTMLElement, gameId, t
 		gpbs.Assists, _ = strconv.Atoi(rowMap["ast"].Text)
 		gpbs.Steals, _ = strconv.Atoi(rowMap["stl"].Text)
 		gpbs.Blocks, _ = strconv.Atoi(rowMap["blk"].Text)
+		gpbs.Turnovers, _ = strconv.Atoi(rowMap["tov"].Text)
 		gpbs.PersonalFouls, _ = strconv.Atoi(rowMap["pf"].Text)
 		gpbs.Points, _ = strconv.Atoi(rowMap["pts"].Text)
 		gpbs.PlusMinus, _ = strconv.Atoi(strings.Replace(rowMap["plus_minus"].Text, "+", "", 1))
