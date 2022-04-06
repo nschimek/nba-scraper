@@ -9,13 +9,14 @@ import (
 
 const (
 	baseBodyElement             = "body #wrap #content"
+	scoreboxElement             = baseBodyElement + " div.scorebox"
 	scoreboxMetaElement         = baseBodyElement + " .scorebox .scorebox_meta"
 	lineScoreTableElementBase   = baseBodyElement + " .content_grid div:nth-child(1) div#all_line_score.table_wrapper"
 	lineScoreTableElement       = "div#div_line_score.table_container table tbody"
 	fourFactorsTableElementBase = baseBodyElement + " .content_grid div:nth-child(2) div#all_four_factors.table_wrapper"
 	fourFactorsTableElement     = "div#div_four_factors.table_container table tbody"
 	basicBoxScoreTables         = "div.section_wrapper div.section_content div.table_wrapper div.table_container table"
-	seasonLinkElement           = baseBodyElement + " div#bottom_nav.section_wrapper div#bottom_nav_container.section_content ul li:nth-child(3)"
+	seasonLinkElement           = baseBodyElement + " div#bottom_nav.section_wrapper div#bottom_nav_container.section_content ul li:nth-child(3) a"
 )
 
 type GameScraper struct {
@@ -55,8 +56,8 @@ func (s *GameScraper) Scrape(urls ...string) {
 	for _, url := range urls {
 		game := s.parseGamePage(url)
 		s.ScrapedData = append(s.ScrapedData, game)
-		s.childUrls[game.HomeId] = game.HomeUrl
-		s.childUrls[game.VisitorId] = game.VisitorUrl
+		s.childUrls[game.HomeTeam.TeamId] = game.HomeTeam.TeamUrl
+		s.childUrls[game.AwayTeam.TeamId] = game.AwayTeam.TeamUrl
 	}
 
 	fmt.Printf("%+v\n", s.ScrapedData)
@@ -71,6 +72,16 @@ func (s *GameScraper) parseGamePage(url string) (game parser.Game) {
 
 	c.OnRequest(func(r *colly.Request) {
 		fmt.Println("Visiting ", r.URL.String())
+	})
+
+	// TODO: clean this up
+	c.OnHTML("body #wrap #content div.scorebox > div:nth-child(1)", func(div *colly.HTMLElement) {
+		game.TeamScorebox(div, 0)
+	})
+
+	c.OnHTML("body #wrap #content div.scorebox > div:nth-child(2)", func(div *colly.HTMLElement) {
+		game.TeamScorebox(div, 1)
+		game.SetResultAndAdjust()
 	})
 
 	c.OnHTML(scoreboxMetaElement, func(div *colly.HTMLElement) {

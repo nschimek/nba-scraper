@@ -10,71 +10,69 @@ import (
 )
 
 type Game struct {
-	Id, HomeId, VisitorId, HomeUrl, VisitorUrl, Location, WinnerId, LoserId string
-	Season, HomeScore, VisitorScore, Quarters                               int
-	StartTime                                                               time.Time
-	HomeLineScore, VisitorLineScore                                         []GameLineScore // these will end up in their own table due to the possiblity of OT
-	HomeFourFactors, VisitorFourFactors                                     GameFourFactors // also probably their own table
-	GamePlayers                                                             []GamePlayer
-	GamePlayersBasicStats                                                   []GamePlayerBasicStats
-	GamePlayersAdvancedStats                                                []GamePlayerAdvancedStats
+	Id, Location                     string
+	Season, Quarters                 int
+	StartTime                        time.Time
+	HomeTeam, AwayTeam               GameTeam
+	HomeLineScore, AwayLineScore     []GameLineScore // these will end up in their own table due to the possiblity of OT
+	HomeFourFactors, AwayFourFactors GameFourFactors // also probably their own table
+	GamePlayers                      []GamePlayer
+	GamePlayersBasicStats            []GamePlayerBasicStats
+	GamePlayersAdvancedStats         []GamePlayerAdvancedStats
 }
 
-func (g *Game) MetaScorebox(div *colly.HTMLElement) {
-	g.StartTime, _ = time.ParseInLocation("3:04 PM, January 2, 2006", div.ChildText("div:first-child"), EST)
-	g.Location = div.ChildText("div:nth-child(2)")
+func (g *Game) TeamScorebox(box *colly.HTMLElement, index int) {
+	if index == 0 { // away team is first
+		g.AwayTeam = ParseScorebox(box)
+	} else if index == 1 { // home team is second
+		g.HomeTeam = ParseScorebox(box)
+	}
+}
+
+func (g *Game) MetaScorebox(box *colly.HTMLElement) {
+	g.StartTime, _ = time.ParseInLocation("3:04 PM, January 2, 2006", box.ChildText("div:first-child"), EST)
+	g.Location = box.ChildText("div:nth-child(2)")
 }
 
 func (g *Game) LineScoreTable(tbl *colly.HTMLElement) {
-	g.HomeLineScore, g.VisitorLineScore = ParseLineScoreTable(tbl)
-	g.setTotalsFromLineScore()
+	g.HomeLineScore, g.AwayLineScore = ParseLineScoreTable(tbl)
+	g.Quarters = len(g.HomeLineScore)
 }
 
 func (g *Game) FourFactorsTable(tbl *colly.HTMLElement) {
-	g.HomeFourFactors, g.VisitorFourFactors = ParseFourFactorsTable(tbl)
+	g.HomeFourFactors, g.AwayFourFactors = ParseFourFactorsTable(tbl)
 }
 
 func (g *Game) ScoreboxStatTable(box *colly.HTMLElement) {
 	teamId, boxType, quarter := parseBoxScoreTableProperties(box.Attr("id"))
 	box.ForEach("tbody", func(_ int, tbl *colly.HTMLElement) {
 		if boxType == "basic" && quarter > 0 && quarter < math.MaxInt {
-			g.GamePlayersBasicStats = append(g.GamePlayersBasicStats, ParseBasicBoxScoreTable(tbl, g.Id, teamId, quarter)...)
+			g.GamePlayersBasicStats = append(g.GamePlayersBasicStats, ParseBasicBoxScoreTable(tbl, teamId, quarter)...)
 		} else if boxType == "basic" && quarter == math.MaxInt {
-			g.GamePlayers = append(g.GamePlayers, ParseBasicBoxScoreGameTable(tbl, g.Id, teamId)...)
+			g.GamePlayers = append(g.GamePlayers, ParseBasicBoxScoreGameTable(tbl, teamId)...)
 		} else if boxType == "advanced" {
-			g.GamePlayersAdvancedStats = append(g.GamePlayersAdvancedStats, ParseAdvancedBoxScoreTable(tbl, g.Id, teamId)...)
+			g.GamePlayersAdvancedStats = append(g.GamePlayersAdvancedStats, ParseAdvancedBoxScoreTable(tbl, teamId)...)
 		}
 	})
 }
 
-func (g *Game) ScheduleLink(li *colly.HTMLElement) {
-	g.Season, _ = strconv.Atoi(strings.Split(li.Text, "-")[0])
-}
-
-func (g *Game) setTotalsFromLineScore() {
-
-	g.HomeId = g.HomeLineScore[0].TeamId
-	g.HomeUrl = g.HomeLineScore[0].TeamUrl
-	g.VisitorId = g.VisitorLineScore[0].TeamId
-	g.VisitorUrl = g.VisitorLineScore[0].TeamUrl
-
-	g.Quarters = len(g.HomeLineScore)
-
-	for _, ls := range g.HomeLineScore {
-		g.HomeScore = g.HomeScore + ls.Score
-	}
-	for _, ls := range g.VisitorLineScore {
-		g.VisitorScore = g.VisitorScore + ls.Score
-	}
-
-	g.WinnerId, g.LoserId = g.getResult()
+func (g *Game) ScheduleLink(a *colly.HTMLElement) {
+	// link format: /leagues/NBA_2022_games.html (we want the 2022 obviously)
+	g.Season, _ = strconv.Atoi(strings.Split(a.Attr("href"), "_")[1])
 }
 
 // I looked this up: there can be no ties in the NBA!
-func (g *Game) getResult() (winnerId, loserId string) {
-	if g.HomeScore > g.VisitorScore {
-		return g.HomeId, g.VisitorId
+// Also, the W-L we scraped are including this game; we want them as of before this game.  So we simply adjust.
+func (g *Game) SetResultAndAdjust() {
+	if g.HomeTeam.Score > g.AwayTeam.Score {
+		g.HomeTeam.Result = "W"
+		g.AwayTeam.Result = "L"
+		g.HomeTeam.Wins--
+		g.AwayTeam.Losses--
 	} else {
-		return g.VisitorId, g.HomeId
+		g.HomeTeam.Result = "L"
+		g.AwayTeam.Result = "W"
+		g.HomeTeam.Losses--
+		g.AwayTeam.Wins--
 	}
 }

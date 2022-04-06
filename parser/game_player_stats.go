@@ -10,11 +10,11 @@ import (
 )
 
 type GamePlayer struct {
-	GameId, TeamId, PlayerId, Status string
+	TeamId, PlayerId, Status string
 }
 
 type GamePlayerBasicStats struct {
-	GameId, TeamId, PlayerId                                                                                string
+	TeamId, PlayerId                                                                                        string
 	Quarter                                                                                                 int
 	TimePlayed                                                                                              time.Duration
 	FieldGoals, FieldGoalsAttempted, ThreePointers, ThreePointersAttempted, FreeThrows, FreeThrowsAttempted int
@@ -23,37 +23,37 @@ type GamePlayerBasicStats struct {
 }
 
 type GamePlayerAdvancedStats struct {
-	GameId, TeamId, PlayerId                                                                                              string
+	TeamId, PlayerId                                                                                                      string
 	TrueShootingPct, EffectiveFgPct, ThreePtAttemptRate, FreeThrowAttemptRate, OffensiveRbPct, DefensiveRbPct, TotalRbPct float64
 	AssistPct, StealPct, BlockPct, TurnoverPct, UsagePct, BoxPlusMinus                                                    float64
 	OffensiveRating, DefensiveRating                                                                                      int
 }
 
-func ParseBasicBoxScoreTable(tbl *colly.HTMLElement, gameId, teamId string, quarter int) []GamePlayerBasicStats {
+func ParseBasicBoxScoreTable(tbl *colly.HTMLElement, teamId string, quarter int) []GamePlayerBasicStats {
 	stats := []GamePlayerBasicStats{}
 
 	for _, rowMap := range Table(tbl) {
-		stats = append(stats, gamePlayerBasicStatsFromRow(rowMap, gameId, teamId, quarter))
+		stats = append(stats, gamePlayerBasicStatsFromRow(rowMap, teamId, quarter))
 	}
 
 	return stats
 }
 
-func ParseAdvancedBoxScoreTable(tbl *colly.HTMLElement, gameId, teamId string) []GamePlayerAdvancedStats {
+func ParseAdvancedBoxScoreTable(tbl *colly.HTMLElement, teamId string) []GamePlayerAdvancedStats {
 	stats := []GamePlayerAdvancedStats{}
 
 	for _, rowMap := range Table(tbl) {
-		stats = append(stats, gamePlayerAdvancedStatsFromRow(rowMap, gameId, teamId))
+		stats = append(stats, gamePlayerAdvancedStatsFromRow(rowMap, teamId))
 	}
 
 	return stats
 }
 
-func ParseBasicBoxScoreGameTable(tbl *colly.HTMLElement, gameId, teamId string) []GamePlayer {
+func ParseBasicBoxScoreGameTable(tbl *colly.HTMLElement, teamId string) []GamePlayer {
 	players := []GamePlayer{}
 
 	for i, rowMap := range Table(tbl) {
-		players = append(players, gamePlayerFromRow(rowMap, gameId, teamId, i))
+		players = append(players, gamePlayerFromRow(rowMap, teamId, i))
 	}
 
 	return players
@@ -80,8 +80,7 @@ func parseBoxScoreTableProperties(id string) (team, boxType string, quarter int)
 	return
 }
 
-func gamePlayerBasicStatsFromRow(rowMap map[string]*colly.HTMLElement, gameId, teamId string, quarter int) (gpbs GamePlayerBasicStats) {
-	gpbs.GameId = gameId
+func gamePlayerBasicStatsFromRow(rowMap map[string]*colly.HTMLElement, teamId string, quarter int) (gpbs GamePlayerBasicStats) {
 	gpbs.TeamId = teamId
 	gpbs.Quarter = quarter
 	gpbs.PlayerId = parsePlayerId(parseLink(rowMap["player"]))
@@ -112,8 +111,7 @@ func gamePlayerBasicStatsFromRow(rowMap map[string]*colly.HTMLElement, gameId, t
 	return
 }
 
-func gamePlayerAdvancedStatsFromRow(rowMap map[string]*colly.HTMLElement, gameId, teamId string) (gpas GamePlayerAdvancedStats) {
-	gpas.GameId = gameId
+func gamePlayerAdvancedStatsFromRow(rowMap map[string]*colly.HTMLElement, teamId string) (gpas GamePlayerAdvancedStats) {
 	gpas.TeamId = teamId
 	gpas.PlayerId = parsePlayerId(parseLink(rowMap["player"]))
 
@@ -138,8 +136,7 @@ func gamePlayerAdvancedStatsFromRow(rowMap map[string]*colly.HTMLElement, gameId
 	return
 }
 
-func gamePlayerFromRow(rowMap map[string]*colly.HTMLElement, gameId, teamId string, index int) (gp GamePlayer) {
-	gp.GameId = gameId
+func gamePlayerFromRow(rowMap map[string]*colly.HTMLElement, teamId string, index int) (gp GamePlayer) {
 	gp.TeamId = teamId
 	gp.PlayerId = parsePlayerId(parseLink(rowMap["player"]))
 

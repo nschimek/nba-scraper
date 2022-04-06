@@ -7,6 +7,11 @@ import (
 	"github.com/gocolly/colly/v2"
 )
 
+type GameTeam struct {
+	TeamId, TeamUrl, Result string
+	Wins, Losses, Score     int
+}
+
 type GameFourFactors struct {
 	TeamId, TeamUrl                                                              string
 	Pace, EffectiveFgPct, TurnoverPct, OffensiveRbPct, FtPerFga, OffensiveRating float64
@@ -15,6 +20,18 @@ type GameFourFactors struct {
 type GameLineScore struct {
 	TeamId, TeamUrl string
 	Quarter, Score  int
+}
+
+func ParseScorebox(box *colly.HTMLElement) (gt GameTeam) {
+	gt.TeamUrl = box.ChildAttr("div:first-child strong a", "href")
+	gt.TeamId = parseTeamId(gt.TeamUrl)
+	gt.Score, _ = strconv.Atoi(box.ChildText("div.scores div.score"))
+
+	wl := strings.Split(box.ChildText("div:nth-child(3)"), "-")
+	gt.Wins, _ = strconv.Atoi(wl[0])
+	gt.Losses, _ = strconv.Atoi(wl[1])
+
+	return
 }
 
 func ParseLineScoreTable(tbl *colly.HTMLElement) (home, visitor []GameLineScore) {
