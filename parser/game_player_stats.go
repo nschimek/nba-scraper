@@ -29,7 +29,7 @@ type GamePlayerAdvancedStats struct {
 	OffensiveRating, DefensiveRating                                                                                      int
 }
 
-func ParseBasicBoxScoreTable(tbl *colly.HTMLElement, teamId string, quarter int) []GamePlayerBasicStats {
+func parseBasicBoxScoreTable(tbl *colly.HTMLElement, teamId string, quarter int) []GamePlayerBasicStats {
 	stats := []GamePlayerBasicStats{}
 
 	for _, rowMap := range Table(tbl) {
@@ -39,7 +39,7 @@ func ParseBasicBoxScoreTable(tbl *colly.HTMLElement, teamId string, quarter int)
 	return stats
 }
 
-func ParseAdvancedBoxScoreTable(tbl *colly.HTMLElement, teamId string) []GamePlayerAdvancedStats {
+func parseAdvancedBoxScoreTable(tbl *colly.HTMLElement, teamId string) []GamePlayerAdvancedStats {
 	stats := []GamePlayerAdvancedStats{}
 
 	for _, rowMap := range Table(tbl) {
@@ -49,7 +49,7 @@ func ParseAdvancedBoxScoreTable(tbl *colly.HTMLElement, teamId string) []GamePla
 	return stats
 }
 
-func ParseBasicBoxScoreGameTable(tbl *colly.HTMLElement, teamId string) []GamePlayer {
+func parseBasicBoxScoreGameTable(tbl *colly.HTMLElement, teamId string) []GamePlayer {
 	players := []GamePlayer{}
 
 	for i, rowMap := range Table(tbl) {

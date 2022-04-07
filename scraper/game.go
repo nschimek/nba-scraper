@@ -9,8 +9,7 @@ import (
 
 const (
 	baseBodyElement             = "body #wrap #content"
-	scoreboxElement             = baseBodyElement + " div.scorebox"
-	scoreboxMetaElement         = baseBodyElement + " .scorebox .scorebox_meta"
+	scoreboxElements            = "div.scorebox > div"
 	lineScoreTableElementBase   = baseBodyElement + " .content_grid div:nth-child(1) div#all_line_score.table_wrapper"
 	lineScoreTableElement       = "div#div_line_score.table_container table tbody"
 	fourFactorsTableElementBase = baseBodyElement + " .content_grid div:nth-child(2) div#all_four_factors.table_wrapper"
@@ -74,18 +73,11 @@ func (s *GameScraper) parseGamePage(url string) (game parser.Game) {
 		fmt.Println("Visiting ", r.URL.String())
 	})
 
-	// TODO: clean this up
-	c.OnHTML("body #wrap #content div.scorebox > div:nth-child(1)", func(div *colly.HTMLElement) {
-		game.TeamScorebox(div, 0)
-	})
-
-	c.OnHTML("body #wrap #content div.scorebox > div:nth-child(2)", func(div *colly.HTMLElement) {
-		game.TeamScorebox(div, 1)
+	c.OnHTML(baseBodyElement, func(div *colly.HTMLElement) {
+		div.ForEach(scoreboxElements, func(i int, box *colly.HTMLElement) {
+			game.Scorebox(box, i)
+		})
 		game.SetResultAndAdjust()
-	})
-
-	c.OnHTML(scoreboxMetaElement, func(div *colly.HTMLElement) {
-		game.MetaScorebox(div)
 	})
 
 	c.OnHTML(lineScoreTableElementBase, func(div *colly.HTMLElement) {

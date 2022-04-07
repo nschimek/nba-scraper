@@ -22,7 +22,7 @@ type GameLineScore struct {
 	Quarter, Score  int
 }
 
-func ParseScorebox(box *colly.HTMLElement) (gt GameTeam) {
+func parseScorebox(box *colly.HTMLElement) (gt GameTeam) {
 	gt.TeamUrl = box.ChildAttr("div:first-child strong a", "href")
 	gt.TeamId = parseTeamId(gt.TeamUrl)
 	gt.Score, _ = strconv.Atoi(box.ChildText("div.scores div.score"))
@@ -34,7 +34,7 @@ func ParseScorebox(box *colly.HTMLElement) (gt GameTeam) {
 	return
 }
 
-func ParseLineScoreTable(tbl *colly.HTMLElement) (home, visitor []GameLineScore) {
+func parseLineScoreTable(tbl *colly.HTMLElement) (home, visitor []GameLineScore) {
 	tableMaps := Table(tbl) // row 0 will be away, row 1 will be home
 
 	visitor = lineScoreFromRow(tableMaps[0])
@@ -43,7 +43,7 @@ func ParseLineScoreTable(tbl *colly.HTMLElement) (home, visitor []GameLineScore)
 	return
 }
 
-func ParseFourFactorsTable(tbl *colly.HTMLElement) (home, visitor GameFourFactors) {
+func parseFourFactorsTable(tbl *colly.HTMLElement) (home, visitor GameFourFactors) {
 	tableMaps := Table(tbl) // row 0 will be away, row 1 will be home
 
 	visitor = gameFourFactorsFromRow(tableMaps[0])
