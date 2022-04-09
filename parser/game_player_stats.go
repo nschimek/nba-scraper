@@ -33,7 +33,10 @@ func parseBasicBoxScoreTable(tbl *colly.HTMLElement, teamId string, quarter int)
 	stats := []GamePlayerBasicStats{}
 
 	for _, rowMap := range Table(tbl) {
-		stats = append(stats, gamePlayerBasicStatsFromRow(rowMap, teamId, quarter))
+		gpbs := gamePlayerBasicStatsFromRow(rowMap, teamId, quarter)
+		if gpbs != nil {
+			stats = append(stats, *gpbs)
+		}
 	}
 
 	return stats
@@ -43,7 +46,10 @@ func parseAdvancedBoxScoreTable(tbl *colly.HTMLElement, teamId string) []GamePla
 	stats := []GamePlayerAdvancedStats{}
 
 	for _, rowMap := range Table(tbl) {
-		stats = append(stats, gamePlayerAdvancedStatsFromRow(rowMap, teamId))
+		gpas := gamePlayerAdvancedStatsFromRow(rowMap, teamId)
+		if gpas != nil {
+			stats = append(stats, *gpas)
+		}
 	}
 
 	return stats
@@ -53,7 +59,7 @@ func parseBasicBoxScoreGameTable(tbl *colly.HTMLElement, teamId string) []GamePl
 	players := []GamePlayer{}
 
 	for i, rowMap := range Table(tbl) {
-		players = append(players, gamePlayerFromRow(rowMap, teamId, i))
+		players = append(players, *gamePlayerFromRow(rowMap, teamId, i))
 	}
 
 	return players
@@ -80,12 +86,12 @@ func parseBoxScoreTableProperties(id string) (team, boxType string, quarter int)
 	return
 }
 
-func gamePlayerBasicStatsFromRow(rowMap map[string]*colly.HTMLElement, teamId string, quarter int) (gpbs GamePlayerBasicStats) {
-	gpbs.TeamId = teamId
-	gpbs.Quarter = quarter
-	gpbs.PlayerId = parsePlayerId(parseLink(rowMap["player"]))
-
-	if _, ok := rowMap["reason"]; !ok { // a "reason" column indicates the player did not play
+func gamePlayerBasicStatsFromRow(rowMap map[string]*colly.HTMLElement, teamId string, quarter int) *GamePlayerBasicStats {
+	if _, ok := rowMap["reason"]; !ok {
+		gpbs := new(GamePlayerBasicStats)
+		gpbs.TeamId = teamId
+		gpbs.Quarter = quarter
+		gpbs.PlayerId = parsePlayerId(parseLink(rowMap["player"])) // a "reason" column indicates the player did not play
 		gpbs.TimePlayed, _ = parseDuration(rowMap["mp"].Text)
 		gpbs.FieldGoals, _ = strconv.Atoi(rowMap["fg"].Text)
 		gpbs.FieldGoalsAttempted, _ = strconv.Atoi(rowMap["fga"].Text)
@@ -106,16 +112,17 @@ func gamePlayerBasicStatsFromRow(rowMap map[string]*colly.HTMLElement, teamId st
 		gpbs.PersonalFouls, _ = strconv.Atoi(rowMap["pf"].Text)
 		gpbs.Points, _ = strconv.Atoi(rowMap["pts"].Text)
 		gpbs.PlusMinus, _ = strconv.Atoi(strings.Replace(rowMap["plus_minus"].Text, "+", "", 1))
+		return gpbs
 	}
 
-	return
+	return nil
 }
 
-func gamePlayerAdvancedStatsFromRow(rowMap map[string]*colly.HTMLElement, teamId string) (gpas GamePlayerAdvancedStats) {
-	gpas.TeamId = teamId
-	gpas.PlayerId = parsePlayerId(parseLink(rowMap["player"]))
-
+func gamePlayerAdvancedStatsFromRow(rowMap map[string]*colly.HTMLElement, teamId string) *GamePlayerAdvancedStats {
 	if _, ok := rowMap["reason"]; !ok { // a "reason" column indicates the player did not play
+		gpas := new(GamePlayerAdvancedStats)
+		gpas.TeamId = teamId
+		gpas.PlayerId = parsePlayerId(parseLink(rowMap["player"]))
 		gpas.TrueShootingPct, _ = parseFloatStat(rowMap["ts_pct"].Text)
 		gpas.EffectiveFgPct, _ = parseFloatStat(rowMap["efg_pct"].Text)
 		gpas.ThreePtAttemptRate, _ = parseFloatStat(rowMap["fg3a_per_fga_pct"].Text)
@@ -131,12 +138,14 @@ func gamePlayerAdvancedStatsFromRow(rowMap map[string]*colly.HTMLElement, teamId
 		gpas.OffensiveRating, _ = strconv.Atoi(rowMap["off_rtg"].Text)
 		gpas.DefensiveRating, _ = strconv.Atoi(rowMap["def_rtg"].Text)
 		gpas.BoxPlusMinus, _ = parseFloatStat(rowMap["bpm"].Text)
+		return gpas
 	}
 
-	return
+	return nil
 }
 
-func gamePlayerFromRow(rowMap map[string]*colly.HTMLElement, teamId string, index int) (gp GamePlayer) {
+func gamePlayerFromRow(rowMap map[string]*colly.HTMLElement, teamId string, index int) *GamePlayer {
+	gp := new(GamePlayer)
 	gp.TeamId = teamId
 	gp.PlayerId = parsePlayerId(parseLink(rowMap["player"]))
 
@@ -150,5 +159,5 @@ func gamePlayerFromRow(rowMap map[string]*colly.HTMLElement, teamId string, inde
 		gp.Status = "D"
 	}
 
-	return
+	return gp
 }
