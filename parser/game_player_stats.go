@@ -65,6 +65,28 @@ func parseBasicBoxScoreGameTable(tbl *colly.HTMLElement, teamId string) []GamePl
 	return players
 }
 
+func parseInactivePlayersList(box *colly.HTMLElement) []GamePlayer {
+	gp := []GamePlayer{}
+	var teamId string
+
+	// we will encounter two team labels, each surrounded by span and strong, and should set the teamId when this happens
+	box.ForEach("div:nth-child(1) > span, div:nth-child(1) > a", func(_ int, t *colly.HTMLElement) {
+		if t.ChildText("strong") != "" {
+			teamId = t.Text
+		}
+		// all players after that label therefore belong to that team
+		if t.Attr("href") != "" {
+			gp = append(gp, GamePlayer{
+				TeamId:   teamId,
+				PlayerId: parsePlayerId(t.Attr("href")),
+				Status:   "I",
+			})
+		}
+	})
+
+	return gp
+}
+
 func parseBoxScoreTableProperties(id string) (team, boxType string, quarter int) {
 	parts := strings.Split(id, "-") // expected format: box-TEAM-q/ot#-basic
 	team = parts[1]

@@ -53,6 +53,12 @@ func (g *Game) ScoreboxStatTable(box *colly.HTMLElement) {
 	})
 }
 
+func (g *Game) InactivePlayersList(box *colly.HTMLElement) {
+	if box.Attr("id") == "" && box.Attr("class") == "" {
+		g.GamePlayers = append(g.GamePlayers, parseInactivePlayersList(box)...)
+	}
+}
+
 func (g *Game) ScheduleLink(a *colly.HTMLElement) {
 	// link format: /leagues/NBA_2022_games.html (we want the 2022 obviously)
 	g.Season, _ = strconv.Atoi(strings.Split(a.Attr("href"), "_")[1])

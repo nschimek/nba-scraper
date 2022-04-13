@@ -8,14 +8,16 @@ import (
 )
 
 const (
-	baseBodyElement             = "body #wrap #content"
+	baseBodyElement             = "body #wrap"
+	baseContentElement          = baseBodyElement + " div#content"
 	scoreboxElements            = "div.scorebox > div"
-	lineScoreTableElementBase   = baseBodyElement + " .content_grid div:nth-child(1) div#all_line_score.table_wrapper"
+	lineScoreTableElementBase   = baseContentElement + " .content_grid div:nth-child(1) div#all_line_score.table_wrapper"
 	lineScoreTableElement       = "div#div_line_score.table_container table tbody"
-	fourFactorsTableElementBase = baseBodyElement + " .content_grid div:nth-child(2) div#all_four_factors.table_wrapper"
+	fourFactorsTableElementBase = baseContentElement + " .content_grid div:nth-child(2) div#all_four_factors.table_wrapper"
 	fourFactorsTableElement     = "div#div_four_factors.table_container table tbody"
 	basicBoxScoreTables         = "div.section_wrapper div.section_content div.table_wrapper div.table_container table"
-	seasonLinkElement           = baseBodyElement + " div#bottom_nav.section_wrapper div#bottom_nav_container.section_content ul li:nth-child(3) a"
+	seasonLinkElement           = baseContentElement + " div#bottom_nav.section_wrapper div#bottom_nav_container.section_content ul li:nth-child(3) a"
+	scoreboxFooterElement       = "div#content > div"
 )
 
 type GameScraper struct {
@@ -93,6 +95,12 @@ func (s *GameScraper) parseGamePage(url string) (game parser.Game) {
 	c.OnHTML(baseBodyElement, func(div *colly.HTMLElement) {
 		div.ForEach(basicBoxScoreTables, func(_ int, box *colly.HTMLElement) {
 			game.ScoreboxStatTable(box)
+		})
+	})
+
+	c.OnHTML(baseBodyElement, func(div *colly.HTMLElement) {
+		div.ForEach(scoreboxFooterElement, func(_ int, box *colly.HTMLElement) {
+			game.InactivePlayersList(box)
 		})
 	})
 
