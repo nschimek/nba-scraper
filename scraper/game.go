@@ -75,7 +75,7 @@ func (s *GameScraper) parseGamePage(url string) (game parser.Game) {
 		fmt.Println("Visiting ", r.URL.String())
 	})
 
-	c.OnHTML(baseBodyElement, func(div *colly.HTMLElement) {
+	c.OnHTML(baseContentElement, func(div *colly.HTMLElement) {
 		div.ForEach(scoreboxElements, func(i int, box *colly.HTMLElement) {
 			game.Scorebox(box, i)
 		})
@@ -92,7 +92,7 @@ func (s *GameScraper) parseGamePage(url string) (game parser.Game) {
 		game.FourFactorsTable(tbl)
 	})
 
-	c.OnHTML(baseBodyElement, func(div *colly.HTMLElement) {
+	c.OnHTML(baseContentElement, func(div *colly.HTMLElement) {
 		div.ForEach(basicBoxScoreTables, func(_ int, box *colly.HTMLElement) {
 			game.ScoreboxStatTable(box)
 		})
