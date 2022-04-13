@@ -75,7 +75,7 @@ func parseInactivePlayersList(box *colly.HTMLElement) []GamePlayer {
 			teamId = t.Text
 		}
 		// all players after that label therefore belong to that team
-		if t.Attr("href") != "" {
+		if teamId != "" && t.Attr("href") != "" {
 			gp = append(gp, GamePlayer{
 				TeamId:   teamId,
 				PlayerId: parsePlayerId(t.Attr("href")),
