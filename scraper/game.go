@@ -61,7 +61,7 @@ func (s *GameScraper) Scrape(urls ...string) {
 		s.childUrls[game.AwayTeam.TeamId] = game.AwayTeam.TeamUrl
 	}
 
-	fmt.Printf("%+v\n", s.ScrapedData)
+	// fmt.Printf("%+v\n", s.ScrapedData)
 
 	scrapeChild(s)
 }

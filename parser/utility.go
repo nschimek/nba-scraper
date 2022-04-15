@@ -25,7 +25,8 @@ func parseGameId(link string) string {
 }
 
 func parseTeamId(link string) string {
-	return strings.Split(link, "/")[2]
+	s := strings.Split(link, "/")
+	return s[len(s)-2]
 }
 
 func parsePlayerId(link string) string {

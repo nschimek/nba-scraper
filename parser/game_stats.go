@@ -23,7 +23,7 @@ type GameLineScore struct {
 }
 
 func parseScorebox(box *colly.HTMLElement) (gt GameTeam) {
-	gt.TeamUrl = box.ChildAttr("div:first-child strong a", "href")
+	gt.TeamUrl = box.Request.AbsoluteURL(box.ChildAttr("div:first-child strong a", "href"))
 	gt.TeamId = parseTeamId(gt.TeamUrl)
 	gt.Score, _ = strconv.Atoi(box.ChildText("div.scores div.score"))
 
