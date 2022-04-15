@@ -32,13 +32,13 @@ func mapScheduleRow(r map[string]*colly.HTMLElement) (s Schedule) {
 	parsedTime := strings.Replace(r["game_start_time"].Text, "p", " PM EST", 1)
 
 	s.StartTime, _ = time.ParseInLocation("Mon, Jan 2, 2006 3:04 PM EST", parsedDate+" "+parsedTime, EST)
-	s.VisitorTeamId = parseTeamId(parseLink(r["visitor_team_name"]))
-	s.HomeTeamId = parseTeamId(parseLink(r["home_team_name"]))
+	s.VisitorTeamId = ParseTeamId(parseLink(r["visitor_team_name"]))
+	s.HomeTeamId = ParseTeamId(parseLink(r["home_team_name"]))
 
 	s.GameUrl = parseLink(r["box_score_text"])
 
 	if s.GameUrl != "" {
-		s.GameId = parseGameId(s.GameUrl)
+		s.GameId = ParseLastId(s.GameUrl)
 		s.Played = true
 	}
 

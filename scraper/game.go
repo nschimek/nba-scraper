@@ -8,15 +8,15 @@ import (
 )
 
 const (
-	baseBodyElement             = "body #wrap"
-	baseContentElement          = baseBodyElement + " div#content"
+	gameBaseBodyElement         = "body #wrap"
+	baseContentElement          = gameBaseBodyElement + " div#content"
 	scoreboxElements            = "div.scorebox > div"
-	lineScoreTableElementBase   = baseContentElement + " .content_grid div:nth-child(1) div#all_line_score.table_wrapper"
+	lineScoreTableElementBase   = gameBaseBodyElement + " .content_grid div:nth-child(1) div#all_line_score.table_wrapper"
 	lineScoreTableElement       = "div#div_line_score.table_container table tbody"
-	fourFactorsTableElementBase = baseContentElement + " .content_grid div:nth-child(2) div#all_four_factors.table_wrapper"
+	fourFactorsTableElementBase = gameBaseBodyElement + " .content_grid div:nth-child(2) div#all_four_factors.table_wrapper"
 	fourFactorsTableElement     = "div#div_four_factors.table_container table tbody"
 	basicBoxScoreTables         = "div.section_wrapper div.section_content div.table_wrapper div.table_container table"
-	seasonLinkElement           = baseContentElement + " div#bottom_nav.section_wrapper div#bottom_nav_container.section_content ul li:nth-child(3) a"
+	seasonLinkElement           = gameBaseBodyElement + " div#bottom_nav.section_wrapper div#bottom_nav_container.section_content ul li:nth-child(3) a"
 	scoreboxFooterElement       = "div#content > div"
 )
 
@@ -69,7 +69,7 @@ func (s *GameScraper) Scrape(urls ...string) {
 func (s *GameScraper) parseGamePage(url string) (game parser.Game) {
 	c := s.colly.Clone()
 
-	game.Id = parseGameId(url)
+	game.Id = parser.ParseLastId(url)
 
 	c.OnRequest(func(r *colly.Request) {
 		fmt.Println("Visiting ", r.URL.String())
@@ -98,7 +98,7 @@ func (s *GameScraper) parseGamePage(url string) (game parser.Game) {
 		})
 	})
 
-	c.OnHTML(baseBodyElement, func(div *colly.HTMLElement) {
+	c.OnHTML(gameBaseBodyElement, func(div *colly.HTMLElement) {
 		div.ForEach(scoreboxFooterElement, func(_ int, box *colly.HTMLElement) {
 			game.InactivePlayersList(box)
 		})

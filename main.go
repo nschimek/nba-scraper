@@ -19,7 +19,9 @@ func main() {
 	// fmt.Println(scheduleScraper.GetData())
 	// fmt.Println(scheduleScraper.GetChildUrls())
 
-	gameScraper := scraper.CreateGameScraper(c)
-	gameScraper.Scrape("https://www.basketball-reference.com/boxscores/202110300WAS.html", "https://www.basketball-reference.com/boxscores/202202280BRK.html")
+	// gameScraper := scraper.CreateGameScraper(c)
+	// gameScraper.Scrape("https://www.basketball-reference.com/boxscores/202110300WAS.html", "https://www.basketball-reference.com/boxscores/202202280BRK.html")
 
+	teamScraper := scraper.CreateTeamScraper(c)
+	teamScraper.Scrape("https://www.basketball-reference.com/teams/TOR/2022.html")
 }

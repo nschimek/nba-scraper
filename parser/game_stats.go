@@ -24,7 +24,7 @@ type GameLineScore struct {
 
 func parseScorebox(box *colly.HTMLElement) (gt GameTeam) {
 	gt.TeamUrl = box.Request.AbsoluteURL(box.ChildAttr("div:first-child strong a", "href"))
-	gt.TeamId = parseTeamId(gt.TeamUrl)
+	gt.TeamId = ParseTeamId(gt.TeamUrl)
 	gt.Score, _ = strconv.Atoi(box.ChildText("div.scores div.score"))
 
 	wl := strings.Split(box.ChildText("div:nth-child(3)"), "-")
@@ -54,7 +54,7 @@ func parseFourFactorsTable(tbl *colly.HTMLElement) (home, visitor GameFourFactor
 
 func lineScoreFromRow(rowMap map[string]*colly.HTMLElement) (scores []GameLineScore) {
 	teamUrl := parseLink(rowMap["team"])
-	teamId := parseTeamId(teamUrl)
+	teamId := ParseTeamId(teamUrl)
 
 	for key, cell := range rowMap {
 		// loop through all non-team and total columns; those that remain are the quarters
@@ -88,7 +88,7 @@ func lineScoreQuarter(c string) int {
 }
 
 func gameFourFactorsFromRow(rowMap map[string]*colly.HTMLElement) (factors GameFourFactors) {
-	factors.TeamId = parseTeamId(parseLink(rowMap["team_id"]))
+	factors.TeamId = ParseTeamId(parseLink(rowMap["team_id"]))
 	factors.Pace, _ = strconv.ParseFloat(rowMap["pace"].Text, 64)
 	factors.EffectiveFgPct, _ = strconv.ParseFloat(rowMap["efg_pct"].Text, 64)
 	factors.TurnoverPct, _ = strconv.ParseFloat(rowMap["tov_pct"].Text, 64)

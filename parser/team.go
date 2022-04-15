@@ -4,11 +4,12 @@ import "time"
 
 type Team struct {
 	Id, Name string
+	Season   int
 }
 
 type TeamRoster struct {
 	TeamId, PlayerId, Name, Position string
-	Season, Number                   int
+	Number                           int
 }
 
 type TeamInjuryReport struct {
@@ -18,5 +19,5 @@ type TeamInjuryReport struct {
 
 type TeamPlayerSalaries struct {
 	TeamId, PlayerId string
-	Season, Salary   int
+	Salary           int
 }

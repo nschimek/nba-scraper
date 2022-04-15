@@ -19,12 +19,13 @@ func parseLink(e *colly.HTMLElement) string {
 	return e.ChildAttr("a", "href")
 }
 
-func parseGameId(link string) string {
+// for URLs where the last part of the URL (*.html)
+func ParseLastId(link string) string {
 	s := strings.Split(link, "/")
 	return strings.Replace(s[len(s)-1], ".html", "", 1)
 }
 
-func parseTeamId(link string) string {
+func ParseTeamId(link string) string {
 	s := strings.Split(link, "/")
 	return s[len(s)-2]
 }
