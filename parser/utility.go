@@ -48,6 +48,11 @@ func parseFloatStat(s string) (float64, error) {
 	}
 }
 
+// simply remove the $ and , from the currency string and parse as an int
+func parseCurrency(s string) (int, error) {
+	return strconv.Atoi(strings.ReplaceAll(strings.ReplaceAll(s, ",", ""), "$", ""))
+}
+
 func transformHtmlElement(element *colly.HTMLElement, query string, transform func(html string) string) (*colly.HTMLElement, error) {
 	html, _ := element.DOM.Html()
 	doc, _ := goquery.NewDocumentFromReader(bytes.NewBufferString(transform(html)))

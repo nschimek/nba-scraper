@@ -9,8 +9,10 @@ import (
 )
 
 const (
-	teamBaseBodyElement = "body div#wrap"
-	teamInfoElement     = teamBaseBodyElement + " div#info div#meta"
+	teamBaseBodyElement        = "body div#wrap"
+	teamInfoElement            = teamBaseBodyElement + " div#info div#meta"
+	teamRosterTableElement     = teamBaseBodyElement + " div#all_roster > div#div_roster > table#roster"
+	teamSalaryTableElementBase = teamBaseBodyElement + " div#all_salaries2"
 )
 
 type TeamScraper struct {
@@ -67,7 +69,16 @@ func (s *TeamScraper) parseTeamPage(url string) (team parser.Team) {
 	})
 
 	c.OnHTML(teamInfoElement, func(div *colly.HTMLElement) {
-		team.Name = div.ChildText("div:nth-child(2) > h1 > span:nth-child(2)")
+		team.TeamInfoBox(div)
+	})
+
+	c.OnHTML(teamRosterTableElement, func(tbl *colly.HTMLElement) {
+		team.TeamPlayerTable(tbl)
+	})
+
+	c.OnHTML(teamSalaryTableElementBase, func(div *colly.HTMLElement) {
+		tbl, _ := transformHtmlElement(div, "div#salaries2 > table#salaries2", removeCommentsSyntax)
+		team.TeamSalariesTable(tbl)
 	})
 
 	c.Visit(url)
