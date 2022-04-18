@@ -13,6 +13,7 @@ const (
 	teamInfoElement            = teamBaseBodyElement + " div#info div#meta"
 	teamRosterTableElement     = teamBaseBodyElement + " div#all_roster > div#div_roster > table#roster > tbody"
 	teamSalaryTableElementBase = teamBaseBodyElement + " div#all_salaries2"
+	teamSalaryTableElement     = "div#div_salaries2 > table#salaries2 > tbody"
 )
 
 type TeamScraper struct {
@@ -74,13 +75,16 @@ func (s *TeamScraper) parseTeamPage(url string) (team parser.Team) {
 
 	c.OnHTML(teamRosterTableElement, func(tbl *colly.HTMLElement) {
 		team.TeamPlayerTable(tbl)
+
+		for _, p := range team.TeamPlayers {
+			s.childUrls[p.PlayerId] = tbl.Request.AbsoluteURL(p.PlayerUrl)
+		}
 	})
 
-	// c.OnHTML(teamSalaryTableElementBase, func(div *colly.HTMLElement) {
-	// 	tbl, _ := transformHtmlElement(div, "div#salaries2 > table#salaries2", removeCommentsSyntax)
-	// 	// team.TeamSalariesTable(tbl)
-	// 	// fmt.Println(tbl.DOM.Html())
-	// })
+	c.OnHTML(teamSalaryTableElementBase, func(div *colly.HTMLElement) {
+		tbl, _ := transformHtmlElement(div, teamSalaryTableElement, removeCommentsSyntax)
+		team.TeamSalariesTable(tbl)
+	})
 
 	c.Visit(url)
 
