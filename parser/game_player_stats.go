@@ -78,7 +78,7 @@ func parseInactivePlayersList(box *colly.HTMLElement) []GamePlayer {
 		if teamId != "" && t.Attr("href") != "" {
 			gp = append(gp, GamePlayer{
 				TeamId:   teamId,
-				PlayerId: parsePlayerId(t.Attr("href")),
+				PlayerId: ParseLastId(t.Attr("href")),
 				Status:   "I",
 			})
 		}
@@ -113,7 +113,7 @@ func gamePlayerBasicStatsFromRow(rowMap map[string]*colly.HTMLElement, teamId st
 		gpbs := new(GamePlayerBasicStats)
 		gpbs.TeamId = teamId
 		gpbs.Quarter = quarter
-		gpbs.PlayerId = parsePlayerId(parseLink(rowMap["player"])) // a "reason" column indicates the player did not play
+		gpbs.PlayerId = ParseLastId(parseLink(rowMap["player"])) // a "reason" column indicates the player did not play
 		gpbs.TimePlayed, _ = parseDuration(rowMap["mp"].Text)
 		gpbs.FieldGoals, _ = strconv.Atoi(rowMap["fg"].Text)
 		gpbs.FieldGoalsAttempted, _ = strconv.Atoi(rowMap["fga"].Text)
@@ -144,7 +144,7 @@ func gamePlayerAdvancedStatsFromRow(rowMap map[string]*colly.HTMLElement, teamId
 	if _, ok := rowMap["reason"]; !ok { // a "reason" column indicates the player did not play
 		gpas := new(GamePlayerAdvancedStats)
 		gpas.TeamId = teamId
-		gpas.PlayerId = parsePlayerId(parseLink(rowMap["player"]))
+		gpas.PlayerId = ParseLastId(parseLink(rowMap["player"]))
 		gpas.TrueShootingPct, _ = parseFloatStat(rowMap["ts_pct"].Text)
 		gpas.EffectiveFgPct, _ = parseFloatStat(rowMap["efg_pct"].Text)
 		gpas.ThreePtAttemptRate, _ = parseFloatStat(rowMap["fg3a_per_fga_pct"].Text)
@@ -169,7 +169,7 @@ func gamePlayerAdvancedStatsFromRow(rowMap map[string]*colly.HTMLElement, teamId
 func gamePlayerFromRow(rowMap map[string]*colly.HTMLElement, teamId string, index int) *GamePlayer {
 	gp := new(GamePlayer)
 	gp.TeamId = teamId
-	gp.PlayerId = parsePlayerId(parseLink(rowMap["player"]))
+	gp.PlayerId = ParseLastId(parseLink(rowMap["player"]))
 
 	if _, ok := rowMap["reason"]; !ok { // a "reason" column indicates the player did not play
 		if index < 5 { // the first 5 players are the starters

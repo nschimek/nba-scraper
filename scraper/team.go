@@ -11,7 +11,7 @@ import (
 const (
 	teamBaseBodyElement        = "body div#wrap"
 	teamInfoElement            = teamBaseBodyElement + " div#info div#meta"
-	teamRosterTableElement     = teamBaseBodyElement + " div#all_roster > div#div_roster > table#roster"
+	teamRosterTableElement     = teamBaseBodyElement + " div#all_roster > div#div_roster > table#roster > tbody"
 	teamSalaryTableElementBase = teamBaseBodyElement + " div#all_salaries2"
 )
 
@@ -76,10 +76,11 @@ func (s *TeamScraper) parseTeamPage(url string) (team parser.Team) {
 		team.TeamPlayerTable(tbl)
 	})
 
-	c.OnHTML(teamSalaryTableElementBase, func(div *colly.HTMLElement) {
-		tbl, _ := transformHtmlElement(div, "div#salaries2 > table#salaries2", removeCommentsSyntax)
-		team.TeamSalariesTable(tbl)
-	})
+	// c.OnHTML(teamSalaryTableElementBase, func(div *colly.HTMLElement) {
+	// 	tbl, _ := transformHtmlElement(div, "div#salaries2 > table#salaries2", removeCommentsSyntax)
+	// 	// team.TeamSalariesTable(tbl)
+	// 	// fmt.Println(tbl.DOM.Html())
+	// })
 
 	c.Visit(url)
 

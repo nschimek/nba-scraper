@@ -14,8 +14,8 @@ type Team struct {
 }
 
 type TeamPlayer struct {
-	PlayerId, Name, Position string
-	Number                   int
+	PlayerId, PlayerUrl, Position string
+	Number                        int
 }
 
 type TeamPlayerSalary struct {
@@ -49,8 +49,8 @@ func teamPlayerFromRow(rowMap map[string]*colly.HTMLElement) *TeamPlayer {
 	tr := new(TeamPlayer)
 
 	tr.Number, _ = strconv.Atoi(rowMap["number"].Text)
-	tr.PlayerId = parsePlayerId(parseLink(rowMap["player"]))
-	tr.Name = rowMap["player"].Text
+	tr.PlayerUrl = parseLink(rowMap["player"])
+	tr.PlayerId = ParseLastId(tr.PlayerUrl)
 	tr.Position = rowMap["pos"].Text
 
 	return tr
@@ -69,7 +69,7 @@ func parseTeamSalariesTable(tbl *colly.HTMLElement) []TeamPlayerSalary {
 func teamSalaryFromRow(rowMap map[string]*colly.HTMLElement) *TeamPlayerSalary {
 	tps := new(TeamPlayerSalary)
 
-	tps.PlayerId = parsePlayerId(parseLink(rowMap["player"]))
+	tps.PlayerId = ParseLastId(parseLink(rowMap["player"]))
 	tps.Salary, _ = strconv.Atoi(rowMap["salary"].Attr("csk"))
 	tps.Rank, _ = strconv.Atoi(rowMap["ranker"].Text)
 

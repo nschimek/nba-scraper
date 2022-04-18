@@ -30,10 +30,6 @@ func ParseTeamId(link string) string {
 	return s[len(s)-2]
 }
 
-func parsePlayerId(link string) string {
-	return strings.Replace(strings.Split(link, "/")[3], ".html", "", 1)
-}
-
 func parseDuration(duration string) (time.Duration, error) {
 	// durations are in string format of m:s, so convert them into #m#s format for time.ParseDuration()
 	return time.ParseDuration(strings.Replace(duration, ":", "m", 1) + "s")
