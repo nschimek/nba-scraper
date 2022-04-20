@@ -65,10 +65,6 @@ func (s *TeamScraper) parseTeamPage(url string) (team parser.Team) {
 	team.Id = parser.ParseTeamId(url)
 	team.Season, _ = strconv.Atoi(parser.ParseLastId(url))
 
-	c.OnRequest(func(r *colly.Request) {
-		fmt.Println("Parsing: " + r.URL.String())
-	})
-
 	c.OnHTML(teamInfoElement, func(div *colly.HTMLElement) {
 		team.TeamInfoBox(div)
 	})

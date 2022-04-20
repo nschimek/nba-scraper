@@ -1,6 +1,8 @@
 package main
 
 import (
+	"fmt"
+
 	"github.com/gocolly/colly/v2"
 
 	"github.com/nschimek/nba-scraper/scraper"
@@ -9,6 +11,10 @@ import (
 func main() {
 	c := colly.NewCollector(colly.AllowedDomains(scraper.AllowedDomain))
 	c.Limit(&scraper.LimitRule)
+
+	c.OnRequest(func(r *colly.Request) {
+		fmt.Println("Visiting: ", r.URL.String())
+	})
 
 	// startDate, _ := time.Parse("2006-01-02", "2021-10-20")
 	// endDate, _ := time.Parse("2006-01-02", "2021-10-25")

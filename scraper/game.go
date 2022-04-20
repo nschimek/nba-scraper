@@ -71,10 +71,6 @@ func (s *GameScraper) parseGamePage(url string) (game parser.Game) {
 
 	game.Id = parser.ParseLastId(url)
 
-	c.OnRequest(func(r *colly.Request) {
-		fmt.Println("Visiting ", r.URL.String())
-	})
-
 	c.OnHTML(baseContentElement, func(div *colly.HTMLElement) {
 		game.GameTitle(div)
 
