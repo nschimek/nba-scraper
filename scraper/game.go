@@ -8,7 +8,7 @@ import (
 )
 
 const (
-	gameBaseBodyElement         = "body #wrap"
+	gameBaseBodyElement         = "body div#wrap"
 	baseContentElement          = gameBaseBodyElement + " div#content"
 	scoreboxElements            = "div.scorebox > div"
 	lineScoreTableElementBase   = gameBaseBodyElement + " .content_grid div:nth-child(1) div#all_line_score.table_wrapper"
@@ -76,6 +76,10 @@ func (s *GameScraper) parseGamePage(url string) (game parser.Game) {
 	})
 
 	c.OnHTML(baseContentElement, func(div *colly.HTMLElement) {
+		game.GameTitle(div)
+
+		fmt.Println(game.Type)
+
 		div.ForEach(scoreboxElements, func(i int, box *colly.HTMLElement) {
 			game.Scorebox(box, i)
 		})

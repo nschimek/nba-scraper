@@ -10,7 +10,7 @@ import (
 )
 
 type Game struct {
-	Id, Location                     string
+	Id, Location, Type               string
 	Season, Quarters                 int
 	StartTime                        time.Time
 	HomeTeam, AwayTeam               GameTeam
@@ -19,6 +19,10 @@ type Game struct {
 	GamePlayers                      []GamePlayer
 	GamePlayersBasicStats            []GamePlayerBasicStats
 	GamePlayersAdvancedStats         []GamePlayerAdvancedStats
+}
+
+func (g *Game) GameTitle(div *colly.HTMLElement) {
+	g.Type = parseTypeFromTitle(div.ChildText("h1"))
 }
 
 func (g *Game) Scorebox(box *colly.HTMLElement, index int) {
@@ -68,6 +72,14 @@ func parseMetaScorebox(box *colly.HTMLElement) (startTime time.Time, location st
 	startTime, _ = time.ParseInLocation("3:04 PM, January 2, 2006", box.ChildText("div:first-child"), EST)
 	location = box.ChildText("div:nth-child(2)")
 	return
+}
+
+func parseTypeFromTitle(title string) string {
+	if strings.Contains(title, "NBA") {
+		return "P"
+	} else {
+		return "R"
+	}
 }
 
 // I looked this up: there can be no ties in the NBA!
