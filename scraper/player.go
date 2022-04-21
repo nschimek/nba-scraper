@@ -1,11 +1,17 @@
 package scraper
 
 import (
+	"fmt"
 	"strconv"
 	"strings"
 
 	"github.com/gocolly/colly/v2"
 	"github.com/nschimek/nba-scraper/parser"
+)
+
+const (
+	basePlayerBodyElement = "body > div#wrap"
+	playerInfoElement     = basePlayerBodyElement + " > div#info > div#meta > div:nth-child(2)"
 )
 
 type PlayerScraper struct {
@@ -55,6 +61,25 @@ func (s *PlayerScraper) Scrape(urls ...string) {
 
 func (s *PlayerScraper) parsePlayerPage(url string) (player parser.Player) {
 	c := s.colly.Clone()
+
+	c.OnRequest(onRequestVisit)
+
+	player.Id = parser.ParseLastId(url)
+
+	c.OnHTML(playerInfoElement, func(div *colly.HTMLElement) {
+		player.Name = strings.Split(div.ChildText("h1"), " 20")[0]
+
+		div.ForEach("p", func(i int, p *colly.HTMLElement) {
+			line := strings.ReplaceAll(strings.TrimSpace(p.Text), "\n", "")
+			if i == 2 {
+				parts := strings.Split(line, "▪")
+				player.Position = strings.TrimSpace(strings.TrimPrefix(strings.TrimSpace(parts[0]), "Position:"))
+				player.Shoots = strings.TrimSpace(strings.TrimPrefix(strings.TrimSpace(parts[1]), "Shoots:"))
+			}
+		})
+
+		fmt.Printf("%+v\n", player)
+	})
 
 	c.Visit(strings.Replace(url, ".html", "", 1) + "/gamelog/" + strconv.Itoa(s.season))
 

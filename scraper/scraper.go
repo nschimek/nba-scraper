@@ -3,6 +3,7 @@ package scraper
 import (
 	"bytes"
 	"errors"
+	"fmt"
 	"strings"
 
 	"github.com/PuerkitoBio/goquery"
@@ -15,6 +16,10 @@ type Scraper interface {
 	AttachChild(scraper *Scraper)
 	GetChild() Scraper
 	GetChildUrls() []string
+}
+
+func onRequestVisit(r *colly.Request) {
+	fmt.Println("Visiting: ", r.URL.String())
 }
 
 func scrapeChild(s Scraper) {
