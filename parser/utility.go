@@ -3,6 +3,7 @@ package parser
 import (
 	"bytes"
 	"errors"
+	"regexp"
 	"strconv"
 	"strings"
 	"time"
@@ -63,4 +64,18 @@ func transformHtmlElement(element *colly.HTMLElement, query string, transform fu
 
 func removeCommentsSyntax(html string) string {
 	return strings.ReplaceAll(strings.ReplaceAll(html, "<!--", ""), "-->", "")
+}
+
+func RegexParamMap(regEx, target string) (rpm map[string]string) {
+	r := regexp.MustCompile(regEx)
+	m := r.FindStringSubmatch(target)
+
+	rpm = make(map[string]string)
+	for i, n := range r.SubexpNames() {
+		if i > 0 && i < len(m) {
+			rpm[n] = m[i]
+		}
+	}
+
+	return
 }

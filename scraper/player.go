@@ -12,6 +12,7 @@ import (
 const (
 	basePlayerBodyElement = "body > div#wrap"
 	playerInfoElement     = basePlayerBodyElement + " > div#info > div#meta > div:nth-child(2)"
+	heightWeightRegex     = `(?P<ft>\d{1,2})-(?P<in>\d{1,2}),.(?P<lb>\d{2,3})lb`
 )
 
 type PlayerScraper struct {
@@ -75,6 +76,16 @@ func (s *PlayerScraper) parsePlayerPage(url string) (player parser.Player) {
 				parts := strings.Split(line, "▪")
 				player.Position = strings.TrimSpace(strings.TrimPrefix(strings.TrimSpace(parts[0]), "Position:"))
 				player.Shoots = strings.TrimSpace(strings.TrimPrefix(strings.TrimSpace(parts[1]), "Shoots:"))
+			}
+			if i == 3 {
+				hw := parser.RegexParamMap(heightWeightRegex, p.Text)
+				ft, _ := strconv.Atoi(hw["ft"])
+				in, _ := strconv.Atoi(hw["in"])
+				player.Height = (ft * 12) + in
+				player.Weight, _ = strconv.Atoi(hw["lb"])
+			}
+			if i == 4 {
+				fmt.Println(p.DOM.Html())
 			}
 		})
 
