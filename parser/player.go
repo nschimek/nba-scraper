@@ -3,11 +3,11 @@ package parser
 import "time"
 
 type Player struct {
-	Id, Name, Position, Shoots string
-	Height, Weight             int
-	Birthday                   time.Time
-	Active                     bool
-	PlayerGameSummaries        []PlayerGameSummary
+	Id, Name, Position, Shoots, BirthPlace, CountryCode string
+	Height, Weight                                      int
+	Birthday                                            time.Time
+	Active                                              bool
+	PlayerGameSummaries                                 []PlayerGameSummary
 }
 
 type PlayerGameSummary struct {
