@@ -50,6 +50,11 @@ func parseCurrency(s string) (int, error) {
 	return strconv.Atoi(strings.ReplaceAll(strings.ReplaceAll(s, ",", ""), "$", ""))
 }
 
+// removes newlines and strips extra whitespace from a string
+func removeNewlines(s string) string {
+	return strings.ReplaceAll(strings.TrimSpace(s), "\n", "")
+}
+
 func transformHtmlElement(element *colly.HTMLElement, query string, transform func(html string) string) (*colly.HTMLElement, error) {
 	html, _ := element.DOM.Html()
 	doc, _ := goquery.NewDocumentFromReader(bytes.NewBufferString(transform(html)))
