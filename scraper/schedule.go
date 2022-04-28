@@ -2,6 +2,7 @@ package scraper
 
 import (
 	"errors"
+	"strconv"
 	"strings"
 	"time"
 
@@ -10,7 +11,6 @@ import (
 )
 
 const (
-	basePath         = "leagues"
 	baseTableElement = "body #wrap #content #all_schedule #div_schedule table tbody" // targets the main schedule table
 )
 
@@ -22,7 +22,7 @@ type Schedule struct {
 
 type ScheduleScraper struct {
 	colly       colly.Collector
-	season      string
+	season      int
 	dateRange   DateRange
 	urls        []string
 	ScrapedData []parser.Schedule
@@ -35,7 +35,7 @@ type DateRange struct {
 	startDate, endDate time.Time
 }
 
-func CreateScheduleScraperWithDates(c *colly.Collector, season string, startDate, endDate time.Time) (ScheduleScraper, error) {
+func CreateScheduleScraperWithDates(c *colly.Collector, season int, startDate, endDate time.Time) (ScheduleScraper, error) {
 	dateRange := DateRange{startDate: startDate, endDate: endDate}
 	urls, err := dateRangeToUrls(season, dateRange)
 
@@ -50,7 +50,7 @@ func CreateScheduleScraperWithDates(c *colly.Collector, season string, startDate
 	return scraper, nil
 }
 
-func CreateScheduleScraper(c *colly.Collector, season string) ScheduleScraper {
+func CreateScheduleScraper(c *colly.Collector, season int) ScheduleScraper {
 	return ScheduleScraper{
 		colly:     *c,
 		season:    season,
@@ -92,7 +92,7 @@ func (s *ScheduleScraper) Scrape(urls ...string) {
 	scrapeChild(s)
 }
 
-func dateRangeToUrls(season string, dateRange DateRange) ([]string, error) {
+func dateRangeToUrls(season int, dateRange DateRange) ([]string, error) {
 	months, err := getMonths(dateRange.startDate, dateRange.endDate)
 
 	if err != nil {
@@ -108,9 +108,9 @@ func dateRangeToUrls(season string, dateRange DateRange) ([]string, error) {
 	return urls, nil
 }
 
-func getMonthUrl(month time.Month, season string) string {
+func getMonthUrl(month time.Month, season int) string {
 	monthString := strings.ToLower(month.String())
-	return BaseHttp + "/" + basePath + "/NBA_" + season + "_games-" + monthString + ".html"
+	return BaseHttp + "/" + baseLeaguesPath + "/NBA_" + strconv.Itoa(season) + "_games-" + monthString + ".html"
 }
 
 func getMonths(startDate, endDate time.Time) ([]time.Month, error) {

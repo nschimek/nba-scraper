@@ -7,8 +7,9 @@ import (
 )
 
 const (
-	BaseHttp      = "https://www.basketball-reference.com"
-	AllowedDomain = "www.basketball-reference.com"
+	BaseHttp        = "https://www.basketball-reference.com"
+	AllowedDomain   = "www.basketball-reference.com"
+	baseLeaguesPath = "leagues"
 )
 
 var LimitRule = colly.LimitRule{
