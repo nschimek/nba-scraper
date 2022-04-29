@@ -52,7 +52,6 @@ func (s *StandingsScraper) GetChildUrls() []string {
 func (s *StandingsScraper) Scrape(urls ...string) {
 	c := s.colly.Clone()
 	c.OnRequest(onRequestVisit)
-
 	s.urls = append(s.urls, urls...)
 
 	c.OnHTML(expandedStandingsTableElementBase, func(div *colly.HTMLElement) {

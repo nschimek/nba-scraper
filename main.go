@@ -28,6 +28,9 @@ func main() {
 	// playerScraper := scraper.CreatePlayerScraper(c)
 	// playerScraper.Scrape("https://www.basketball-reference.com/players/v/vandeja01.html")
 
-	standingsScraper := scraper.CreateStandingsScraper(c, 2022)
-	standingsScraper.Scrape()
+	// standingsScraper := scraper.CreateStandingsScraper(c, 2022)
+	// standingsScraper.Scrape()
+
+	injuriesScraper := scraper.CreateInjuriesScraper(c, 2022)
+	injuriesScraper.Scrape()
 }
