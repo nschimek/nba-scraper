@@ -1,6 +1,10 @@
 package parser
 
-import "github.com/gocolly/colly/v2"
+import (
+	"strings"
+
+	"github.com/gocolly/colly/v2"
+)
 
 type tableParser struct {
 	columnMaps []map[string]*colly.HTMLElement
@@ -19,7 +23,7 @@ func Table(tbl *colly.HTMLElement) []map[string]*colly.HTMLElement {
 }
 
 func (t *tableParser) parseRow(tr *colly.HTMLElement) {
-	if tr.Attr("class") != "thead" { // exclude table headers (these are someties in the middle of the table)
+	if !strings.Contains(tr.Attr("class"), "thead") { // exclude table headers (these are someties in the middle of the table)
 		columnMap := make(map[string]*colly.HTMLElement)
 
 		tr.ForEach("th", func(_ int, th *colly.HTMLElement) {

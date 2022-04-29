@@ -25,6 +25,9 @@ func main() {
 	// teamScraper := scraper.CreateTeamScraper(c)
 	// teamScraper.Scrape("https://www.basketball-reference.com/teams/TOR/2022.html")
 
-	playerScraper := scraper.CreatePlayerScraper(c)
-	playerScraper.Scrape("https://www.basketball-reference.com/players/v/vandeja01.html")
+	// playerScraper := scraper.CreatePlayerScraper(c)
+	// playerScraper.Scrape("https://www.basketball-reference.com/players/v/vandeja01.html")
+
+	standingsScraper := scraper.CreateStandingsScraper(c, 2022)
+	standingsScraper.Scrape()
 }

@@ -58,7 +58,6 @@ func (s *PlayerScraper) Scrape(urls ...string) {
 
 func (s *PlayerScraper) parsePlayerPage(url string) (player parser.Player) {
 	c := s.colly.Clone()
-
 	c.OnRequest(onRequestVisit)
 
 	player.Id = parser.ParseLastId(url)

@@ -11,7 +11,7 @@ import (
 )
 
 const (
-	baseTableElement = "body #wrap #content #all_schedule #div_schedule table tbody" // targets the main schedule table
+	baseScheduleTableElement = "body #wrap #content #all_schedule #div_schedule table tbody" // targets the main schedule table
 )
 
 type Schedule struct {
@@ -78,7 +78,7 @@ func (s *ScheduleScraper) GetChildUrls() []string {
 func (s *ScheduleScraper) Scrape(urls ...string) {
 	s.urls = append(s.urls, urls...)
 
-	s.colly.OnHTML(baseTableElement, func(tbl *colly.HTMLElement) {
+	s.colly.OnHTML(baseScheduleTableElement, func(tbl *colly.HTMLElement) {
 		for _, ps := range parser.ScheduleTable(tbl, s.dateRange.startDate, s.dateRange.endDate) {
 			s.ScrapedData = append(s.ScrapedData, ps)
 			s.childUrls[ps.GameId] = tbl.Request.AbsoluteURL(ps.GameUrl)
