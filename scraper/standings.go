@@ -56,8 +56,12 @@ func (s *StandingsScraper) Scrape(urls ...string) {
 
 	c.OnHTML(expandedStandingsTableElementBase, func(div *colly.HTMLElement) {
 		tbl, _ := transformHtmlElement(div, expandedStandingsTableElement, removeCommentsSyntax)
-		s.ScrapedData = parser.StandingsTable(tbl, s.season)
+		for _, ps := range parser.StandingsTable(tbl, s.season) {
+			s.ScrapedData = append(s.ScrapedData, ps)
+			s.childUrls[ps.TeamId] = tbl.Request.AbsoluteURL(ps.TeamUrl)
+		}
 		fmt.Printf("%+v\n", s.ScrapedData)
+		fmt.Println(s.childUrls)
 	})
 
 	for _, url := range s.urls {

@@ -8,7 +8,7 @@ import (
 )
 
 type Standings struct {
-	TeamId                                                       string
+	TeamId, TeamUrl                                              string
 	Season, Rank                                                 int
 	Overall, Home, Road, East, West                              WinLoss
 	Atlantic, Central, Southeast, Northwest, Pacific, Southwest  WinLoss
@@ -24,17 +24,17 @@ func StandingsTable(tbl *colly.HTMLElement, season int) []Standings {
 	standings := []Standings{}
 
 	for _, rowMap := range Table(tbl) {
-		s := standingsFromRow(rowMap)
-		s.Season = season
-		standings = append(standings, s)
+		standings = append(standings, standingsFromRow(rowMap, season))
 	}
 
 	return standings
 }
 
-func standingsFromRow(rowMap map[string]*colly.HTMLElement) (standings Standings) {
+func standingsFromRow(rowMap map[string]*colly.HTMLElement, season int) (standings Standings) {
+	standings.Season = season
 	standings.Rank, _ = strconv.Atoi(rowMap["ranker"].Text)
-	standings.TeamId = ParseTeamId(parseLink(rowMap["team_name"]))
+	standings.TeamUrl = parseLink(rowMap["team_name"])
+	standings.TeamId = ParseTeamId(standings.TeamUrl)
 	standings.Overall = parseWinLoss(rowMap["Overall"].Text)
 	standings.Home = parseWinLoss(rowMap["Home"].Text)
 	standings.Road = parseWinLoss(rowMap["Road"].Text)
