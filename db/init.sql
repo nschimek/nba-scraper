@@ -1,0 +1,14 @@
+GRANT SELECT, INSERT, UPDATE, DELETE, CREATE, INDEX, DROP, ALTER, CREATE TEMPORARY TABLES, LOCK TABLES ON nba.* TO 'go';
+
+CREATE TABLE `nba`.`player` (
+  `id` VARCHAR(9) NOT NULL,
+  `name` VARCHAR(30) NOT NULL,
+  `position` VARCHAR(75) NOT NULL,
+  `shoots` ENUM('L', 'R') NOT NULL,
+  `birth_place` VARCHAR(50) NOT NULL,
+  `birth_country_code` VARCHAR(2) NOT NULL,
+  `birth_date` DATE NOT NULL,
+  `height` TINYINT UNSIGNED NOT NULL,
+  `weight` SMALLINT UNSIGNED NOT NULL,
+  PRIMARY KEY (`id`),
+  UNIQUE INDEX `id_UNIQUE` (`id` ASC) VISIBLE);
