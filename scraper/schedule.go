@@ -27,7 +27,7 @@ type ScheduleScraper struct {
 	urls        []string
 	ScrapedData []parser.Schedule
 	Errors      []error
-	child       Scraper
+	child       *Scraper
 	childUrls   map[string]string
 }
 
@@ -64,10 +64,10 @@ func (s *ScheduleScraper) GetData() interface{} {
 }
 
 func (s *ScheduleScraper) AttachChild(scraper *Scraper) {
-	s.child = *scraper
+	s.child = scraper
 }
 
-func (s *ScheduleScraper) GetChild() Scraper {
+func (s *ScheduleScraper) GetChild() *Scraper {
 	return s.child
 }
 

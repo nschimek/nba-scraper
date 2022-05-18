@@ -20,7 +20,7 @@ type TeamScraper struct {
 	colly       colly.Collector
 	ScrapedData []parser.Team
 	Errors      []error
-	child       Scraper
+	child       *Scraper
 	childUrls   map[string]string
 }
 
@@ -36,10 +36,10 @@ func (s *TeamScraper) GetData() interface{} {
 }
 
 func (s *TeamScraper) AttachChild(scraper *Scraper) {
-	s.child = *scraper
+	s.child = scraper
 }
 
-func (s *TeamScraper) GetChild() Scraper {
+func (s *TeamScraper) GetChild() *Scraper {
 	return s.child
 }
 

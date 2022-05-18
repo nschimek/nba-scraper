@@ -24,12 +24,12 @@ type GameScraper struct {
 	colly       colly.Collector
 	ScrapedData []parser.Game
 	Errors      []error
-	child       Scraper
+	child       *Scraper
 	childUrls   map[string]string
 }
 
-func CreateGameScraper(c *colly.Collector) GameScraper {
-	return GameScraper{
+func CreateGameScraper(c *colly.Collector) *GameScraper {
+	return &GameScraper{
 		colly:     *c,
 		childUrls: make(map[string]string),
 	}
@@ -41,10 +41,10 @@ func (s *GameScraper) GetData() interface{} {
 }
 
 func (s *GameScraper) AttachChild(scraper *Scraper) {
-	s.child = *scraper
+	s.child = scraper
 }
 
-func (s *GameScraper) GetChild() Scraper {
+func (s *GameScraper) GetChild() *Scraper {
 	return s.child
 }
 
@@ -61,7 +61,7 @@ func (s *GameScraper) Scrape(urls ...string) {
 		s.childUrls[game.AwayTeam.TeamId] = game.AwayTeam.TeamUrl
 	}
 
-	// fmt.Printf("%+v\n", s.ScrapedData)
+	fmt.Printf("%+v\n", s.ScrapedData)
 
 	scrapeChild(s)
 }

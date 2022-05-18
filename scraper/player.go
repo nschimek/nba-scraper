@@ -17,7 +17,7 @@ type PlayerScraper struct {
 	season      int
 	ScrapedData []parser.Player
 	Errors      []error
-	child       Scraper
+	child       *Scraper
 	childUrls   map[string]string
 }
 
@@ -33,10 +33,10 @@ func (s *PlayerScraper) GetData() interface{} {
 }
 
 func (s *PlayerScraper) AttachChild(scraper *Scraper) {
-	s.child = *scraper
+	s.child = scraper
 }
 
-func (s *PlayerScraper) GetChild() Scraper {
+func (s *PlayerScraper) GetChild() *Scraper {
 	return s.child
 }
 

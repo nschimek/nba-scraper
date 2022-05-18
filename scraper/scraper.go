@@ -14,7 +14,7 @@ type Scraper interface {
 	Scrape(urls ...string)
 	GetData() interface{}
 	AttachChild(scraper *Scraper)
-	GetChild() Scraper
+	GetChild() *Scraper
 	GetChildUrls() []string
 }
 
@@ -24,7 +24,8 @@ func onRequestVisit(r *colly.Request) {
 
 func scrapeChild(s Scraper) {
 	if s.GetChild() != nil && len(s.GetChildUrls()) > 0 {
-		s.GetChild().Scrape(s.GetChildUrls()...)
+		c := *s.GetChild()
+		c.Scrape(s.GetChildUrls()...)
 	}
 }
 

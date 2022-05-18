@@ -2,13 +2,23 @@ package main
 
 import (
 	"github.com/gocolly/colly/v2"
+	"gopkg.in/ini.v1"
+	"gorm.io/gorm"
 
 	"github.com/nschimek/nba-scraper/scraper"
 )
 
+type Env struct {
+	config *ini.File
+	colly  *colly.Collector
+	db     *gorm.DB
+}
+
 func main() {
-	c := colly.NewCollector(colly.AllowedDomains(scraper.AllowedDomain))
-	c.Limit(&scraper.LimitRule)
+	c := SetupContext()
+
+	test := ScraperFactory[*scraper.GameScraper](c)
+	test.Scrape("https://www.basketball-reference.com/boxscores/202110300WAS.html")
 
 	// startDate, _ := time.Parse("2006-01-02", "2021-10-20")
 	// endDate, _ := time.Parse("2006-01-02", "2021-10-25")
@@ -31,6 +41,6 @@ func main() {
 	// standingsScraper := scraper.CreateStandingsScraper(c, 2022)
 	// standingsScraper.Scrape()
 
-	injuriesScraper := scraper.CreateInjuriesScraper(c, 2022)
-	injuriesScraper.Scrape()
+	// injuriesScraper := scraper.CreateInjuriesScraper(c, 2022)
+	// injuriesScraper.Scrape()
 }
