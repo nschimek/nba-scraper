@@ -1,18 +1,8 @@
 package main
 
 import (
-	"github.com/gocolly/colly/v2"
-	"gopkg.in/ini.v1"
-	"gorm.io/gorm"
-
 	"github.com/nschimek/nba-scraper/scraper"
 )
-
-type Env struct {
-	config *ini.File
-	colly  *colly.Collector
-	db     *gorm.DB
-}
 
 func main() {
 	c := SetupContext()

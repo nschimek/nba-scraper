@@ -5,6 +5,8 @@ import (
 
 	"github.com/gocolly/colly/v2"
 	"github.com/nschimek/nba-scraper/scraper"
+	"gopkg.in/ini.v1"
+	"gorm.io/gorm"
 )
 
 const (
@@ -12,6 +14,8 @@ const (
 )
 
 type Context struct {
+	config   *ini.File
+	db       *gorm.DB
 	colly    *colly.Collector
 	scrapers map[reflect.Type]scraper.Scraper
 }
