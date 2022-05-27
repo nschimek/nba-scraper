@@ -1,14 +1,41 @@
 package main
 
 import (
-	"github.com/nschimek/nba-scraper/scraper"
+	"fmt"
 )
 
-func main() {
-	c := SetupContext()
+type Test struct {
+	Child *Child `Inject:"self"`
+	name  string
+}
 
-	test := ScraperFactory[*scraper.GameScraper](c)
-	test.Scrape("https://www.basketball-reference.com/boxscores/202110300WAS.html")
+type Child struct {
+	age int
+}
+
+func (t *Test) setName(name string) {
+	t.name = name
+}
+
+func (t *Test) getName() string {
+	return t.name
+}
+
+func main() {
+	// c := SetupContext()
+	i := CreateInjector()
+
+	child := InjectorFactory[Child](i)
+	child.age = 5
+
+	test := InjectorFactory[Test](i)
+	test.setName("Nick")
+
+	fmt.Println(test.getName())
+
+	test2 := InjectorFactory[Test](i)
+	fmt.Println(test2.getName())
+	fmt.Println(test2.Child.age)
 
 	// startDate, _ := time.Parse("2006-01-02", "2021-10-20")
 	// endDate, _ := time.Parse("2006-01-02", "2021-10-25")

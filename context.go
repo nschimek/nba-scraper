@@ -38,7 +38,3 @@ func SetupContext() *Context {
 func ScraperFactory[T scraper.Scraper](c *Context) T {
 	return c.scrapers[typeOf[T]()].(T)
 }
-
-func typeOf[T any]() reflect.Type {
-	return reflect.TypeOf((*T)(nil)).Elem()
-}
