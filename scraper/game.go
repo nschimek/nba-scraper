@@ -5,6 +5,7 @@ import (
 
 	"github.com/gocolly/colly/v2"
 	"github.com/nschimek/nba-scraper/parser"
+	"github.com/sirupsen/logrus"
 )
 
 const (
@@ -21,18 +22,12 @@ const (
 )
 
 type GameScraper struct {
-	colly       colly.Collector
+	colly       *colly.Collector `Inject:""`
+	log         *logrus.Logger   `Inject:""`
 	ScrapedData []parser.Game
 	Errors      []error
 	child       *Scraper
 	childUrls   map[string]string
-}
-
-func CreateGameScraper(c *colly.Collector) *GameScraper {
-	return &GameScraper{
-		colly:     *c,
-		childUrls: make(map[string]string),
-	}
 }
 
 // Scraper interface methods

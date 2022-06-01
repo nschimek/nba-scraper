@@ -1,41 +1,15 @@
 package main
 
 import (
-	"fmt"
+	"github.com/nschimek/nba-scraper/context"
+	"github.com/nschimek/nba-scraper/scraper"
 )
 
-type Test struct {
-	Child *Child `Inject:"self"`
-	name  string
-}
-
-type Child struct {
-	age int
-}
-
-func (t *Test) setName(name string) {
-	t.name = name
-}
-
-func (t *Test) getName() string {
-	return t.name
-}
-
 func main() {
-	// c := SetupContext()
-	i := CreateInjector()
+	c := context.Setup()
 
-	child := InjectorFactory[Child](i)
-	child.age = 5
-
-	test := InjectorFactory[Test](i)
-	test.setName("Nick")
-
-	fmt.Println(test.getName())
-
-	test2 := InjectorFactory[Test](i)
-	fmt.Println(test2.getName())
-	fmt.Println(test2.Child.age)
+	gameScraper := context.Factory[scraper.GameScraper](c.Injector())
+	gameScraper.Scrape("https://www.basketball-reference.com/boxscores/202110300WAS.html", "https://www.basketball-reference.com/boxscores/202204180GSW.html")
 
 	// startDate, _ := time.Parse("2006-01-02", "2021-10-20")
 	// endDate, _ := time.Parse("2006-01-02", "2021-10-25")
@@ -45,9 +19,6 @@ func main() {
 	// scheduleScraper.Scrape()
 	// fmt.Println(scheduleScraper.GetData())
 	// fmt.Println(scheduleScraper.GetChildUrls())
-
-	// gameScraper := scraper.CreateGameScraper(c)
-	// gameScraper.Scrape("https://www.basketball-reference.com/boxscores/202110300WAS.html", "https://www.basketball-reference.com/boxscores/202204180GSW.html")
 
 	// teamScraper := scraper.CreateTeamScraper(c)
 	// teamScraper.Scrape("https://www.basketball-reference.com/teams/TOR/2022.html")
