@@ -4,8 +4,8 @@ import (
 	"fmt"
 
 	"github.com/gocolly/colly/v2"
+	"github.com/nschimek/nba-scraper/context"
 	"github.com/nschimek/nba-scraper/parser"
-	"github.com/sirupsen/logrus"
 )
 
 const (
@@ -22,8 +22,7 @@ const (
 )
 
 type GameScraper struct {
-	colly       *colly.Collector `Inject:""`
-	log         *logrus.Logger   `Inject:""`
+	Colly       *colly.Collector `Inject:""`
 	ScrapedData []parser.Game
 	Errors      []error
 	child       *Scraper
@@ -48,6 +47,7 @@ func (s *GameScraper) GetChildUrls() []string {
 }
 
 func (s *GameScraper) Scrape(urls ...string) {
+	s.childUrls = make(map[string]string)
 
 	for _, url := range urls {
 		game := s.parseGamePage(url)
@@ -56,13 +56,13 @@ func (s *GameScraper) Scrape(urls ...string) {
 		s.childUrls[game.AwayTeam.TeamId] = game.AwayTeam.TeamUrl
 	}
 
-	fmt.Printf("%+v\n", s.ScrapedData)
+	context.Log.Infof("%+v\n", s.ScrapedData)
 
 	scrapeChild(s)
 }
 
 func (s *GameScraper) parseGamePage(url string) (game parser.Game) {
-	c := s.colly.Clone()
+	c := s.Colly.Clone()
 
 	game.Id = parser.ParseLastId(url)
 

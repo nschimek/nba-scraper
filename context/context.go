@@ -6,7 +6,6 @@ type context struct {
 
 var ctx *context
 
-// Sets up a new Context
 func Setup() *context {
 	if ctx != nil {
 		return ctx
@@ -28,11 +27,8 @@ func Get() *context {
 }
 
 func setupInjector() *Injector {
-	log := createLogger()
-	log.Debug("Creating Injector...")
-	i := createInjector(log)
+	i := createInjector()
 
-	i.AddInjectable(log)
 	i.AddInjectable(createColly())
 
 	return i

@@ -2,8 +2,11 @@ package context
 
 import "github.com/sirupsen/logrus"
 
-func createLogger() *logrus.Logger {
-	log := logrus.New()
+var Log = initializeLogger()
 
+func initializeLogger() *logrus.Logger {
+	log := logrus.New()
+	log.SetFormatter(&logrus.TextFormatter{TimestampFormat: "2006-01-02 15:04:05", FullTimestamp: true})
+	log.SetLevel(logrus.DebugLevel)
 	return log
 }
