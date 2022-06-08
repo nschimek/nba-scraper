@@ -1,10 +1,7 @@
 package scraper
 
 import (
-	"fmt"
-
 	"github.com/gocolly/colly/v2"
-	"github.com/nschimek/nba-scraper/context"
 	"github.com/nschimek/nba-scraper/parser"
 )
 
@@ -56,7 +53,7 @@ func (s *GameScraper) Scrape(urls ...string) {
 		s.childUrls[game.AwayTeam.TeamId] = game.AwayTeam.TeamUrl
 	}
 
-	context.Log.Infof("%+v\n", s.ScrapedData)
+	// context.Log.Infof("%+v\n", s.ScrapedData)
 
 	scrapeChild(s)
 }
@@ -68,8 +65,6 @@ func (s *GameScraper) parseGamePage(url string) (game parser.Game) {
 
 	c.OnHTML(baseContentElement, func(div *colly.HTMLElement) {
 		game.GameTitle(div)
-
-		fmt.Println(game.Type)
 
 		div.ForEach(scoreboxElements, func(i int, box *colly.HTMLElement) {
 			game.Scorebox(box, i)

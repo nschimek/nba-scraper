@@ -20,20 +20,19 @@ func Factory[T any](n *Injector) *T {
 	return n.getInjectable(typeOf[T]()).(*T)
 }
 
-func (n *Injector) AddInjectable(i any) {
-	t := reflect.TypeOf(i)
+func (n *Injector) AddInjectable(c any) {
+	t := dereferencePointer(reflect.TypeOf(c))
+
 	if _, ok := n.injectables[t]; !ok {
 		Log.WithField("type", t.String()).Debug("Added Injectable")
-		n.injectables[reflect.TypeOf(i)] = i
+		n.injectables[t] = n.inject(c, t)
 	} else {
 		Log.WithField("type", t.String()).Fatal("An injectable with this type already exists")
 	}
 }
 
 func (n *Injector) getInjectable(t reflect.Type) any {
-	_, ok := n.injectables[t]
-
-	if !ok {
+	if _, ok := n.injectables[t]; !ok {
 		n.construct(t)
 	}
 
@@ -43,15 +42,18 @@ func (n *Injector) getInjectable(t reflect.Type) any {
 func (n *Injector) construct(t reflect.Type) {
 	Log.WithField("type", t.String()).Debug("Constructing new instance for injection")
 	c := reflect.New(t).Interface() // the requested type constructed as an interface
+	n.injectables[t] = n.inject(c, t)
+}
 
+func (n *Injector) inject(c any, t reflect.Type) any {
 	for i := 0; i < t.NumField(); i++ {
 		f := t.Field(i)
 		if _, ok := f.Tag.Lookup("Inject"); ok {
 			Log.WithFields(logrus.Fields{
 				"field": f.Name,
 				"type":  f.Type.String(),
-			}).Debug("Found injectable field, getting injectable instance...")
-			inj := reflect.ValueOf(n.getInjectable(f.Type))
+			}).Debug("Found injectable field, injecting...")
+			inj := reflect.ValueOf(n.getInjectable(dereferencePointer(f.Type)))
 
 			// destination field in the created struct
 			d := reflect.ValueOf(c).Elem().Field(i)
@@ -61,14 +63,21 @@ func (n *Injector) construct(t reflect.Type) {
 				Log.WithFields(logrus.Fields{
 					"type":  t.Name(),
 					"field": f.Name,
-				}).Fatal("Could not inject into field within type, is it valid and exported?")
+				}).Fatal("Could not inject into field within this type, is it valid and exported?")
 			}
 		}
 	}
-
-	n.injectables[t] = c
+	return c
 }
 
 func typeOf[T any]() reflect.Type {
 	return reflect.TypeOf((*T)(nil)).Elem()
+}
+
+func dereferencePointer(t reflect.Type) reflect.Type {
+	if t.Kind() == reflect.Pointer {
+		return t.Elem()
+	} else {
+		return t
+	}
 }
