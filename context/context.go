@@ -1,15 +1,12 @@
 package context
 
-import "gopkg.in/ini.v1"
-
 type context struct {
 	injector *Injector
 }
 
 var ctx *context
-var Config *ini.File
 
-func Setup(env string) *context {
+func Setup() *context {
 	if ctx != nil {
 		Log.Fatal("Context already setup")
 	}
@@ -17,9 +14,6 @@ func Setup(env string) *context {
 	ctx = &context{
 		injector: setupInjector(),
 	}
-
-	// Create global config instance with the environment variable passed in
-	Config = createConfig(env)
 
 	return ctx
 }

@@ -1,15 +1,19 @@
 package main
 
 import (
+	"fmt"
+
 	"github.com/nschimek/nba-scraper/context"
-	"github.com/nschimek/nba-scraper/scraper"
 )
 
 func main() {
-	c := context.Setup("dev")
+	// c := context.Setup()
 
-	gameScraper := context.Factory[scraper.GameScraper](c.Injector())
-	gameScraper.Scrape("https://www.basketball-reference.com/boxscores/202110300WAS.html", "https://www.basketball-reference.com/boxscores/202204180GSW.html")
+	cfg := context.CreateConfig()
+	fmt.Println(cfg)
+
+	// gameScraper := context.Factory[scraper.GameScraper](c.Injector())
+	// gameScraper.Scrape("https://www.basketball-reference.com/boxscores/202110300WAS.html", "https://www.basketball-reference.com/boxscores/202204180GSW.html")
 
 	// startDate, _ := time.Parse("2006-01-02", "2021-10-20")
 	// endDate, _ := time.Parse("2006-01-02", "2021-10-25")

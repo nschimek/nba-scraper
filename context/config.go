@@ -4,15 +4,57 @@ import (
 	"gopkg.in/ini.v1"
 )
 
-var dir = "env"
+const (
+	dir  = "conf"
+	ext  = "ini"
+	core = "core"
+)
 
-func createConfig(env string) *ini.File {
-	f := dir + "/" + env + ".ini"
-	ini, err := ini.Load(f)
+type Config struct {
+	Environment, BaseHttp string
+	Database              database
+}
 
-	if err != nil {
-		Log.WithField("file", f).Fatal("Could not find config INI file")
+type database struct {
+	User, Password, Host, Name string
+}
+
+func CreateConfig() *Config {
+	cfg := new(Config)
+
+	coreName := getFullName(core)
+	cfg.loadAndMap(coreName)
+
+	if cfg.Environment == "" {
+		Log.Fatal("Could not determine Environment from core INI")
 	}
 
-	return ini
+	cfg.loadAndMap(coreName, getFullName(cfg.Environment))
+
+	return cfg
+}
+
+func (c *Config) loadAndMap(core string, others ...string) {
+	var i *ini.File
+	var err error
+
+	if len(others) > 0 {
+		i, err = ini.Load(core, others)
+	} else {
+		i, err = ini.Load(core)
+	}
+
+	if err != nil {
+		Log.Fatal(err)
+	}
+
+	err = i.MapTo(c)
+
+	if err != nil {
+		Log.Fatal(err)
+	}
+}
+
+func getFullName(n string) string {
+	return dir + "/" + n + "." + ext
 }

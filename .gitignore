@@ -5,7 +5,9 @@
 *.so
 *.dylib
 
-env/*
+conf/*
+!conf/core.ini
+
 
 # Test binary, built with `go test -c`
 *.test
