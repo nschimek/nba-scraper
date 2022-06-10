@@ -10,20 +10,23 @@ const (
 	core = "core"
 )
 
+var iniOptions = ini.LoadOptions{IgnoreInlineComment: true}
+
 type Config struct {
-	Environment, BaseHttp string
-	Database              database
+	Environment string
+	Debug       bool
+	Database    database
 }
 
 type database struct {
-	User, Password, Host, Name string
+	User, Password, Location, Name string
 }
 
-func CreateConfig() *Config {
+func createConfig() *Config {
 	cfg := new(Config)
 
 	coreName := getFullName(core)
-	cfg.loadAndMap(coreName)
+	cfg.loadAndMap(coreName, "")
 
 	if cfg.Environment == "" {
 		Log.Fatal("Could not determine Environment from core INI")
@@ -34,21 +37,32 @@ func CreateConfig() *Config {
 	return cfg
 }
 
-func (c *Config) loadAndMap(core string, others ...string) {
-	var i *ini.File
+func (c *Config) loadAndMap(core string, env string) {
+	i := c.loadFromIni(core, env)
+	c.mapFromIni(i)
+}
+
+func (c *Config) loadFromIni(core string, env string) (i *ini.File) {
 	var err error
 
-	if len(others) > 0 {
-		i, err = ini.Load(core, others)
+	if env == "" {
+		Log.WithField("file", core).Info("Loading core config from INI...")
+		i, err = ini.LoadSources(iniOptions, core)
 	} else {
-		i, err = ini.Load(core)
+		Log.WithField("file", env).Info("Loading environmental config from INI...")
+		i, err = ini.LoadSources(iniOptions, core, env)
 	}
 
 	if err != nil {
 		Log.Fatal(err)
+		return nil
+	} else {
+		return i
 	}
+}
 
-	err = i.MapTo(c)
+func (c *Config) mapFromIni(i *ini.File) {
+	err := i.MapTo(c)
 
 	if err != nil {
 		Log.Fatal(err)

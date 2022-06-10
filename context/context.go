@@ -1,5 +1,7 @@
 package context
 
+import "github.com/sirupsen/logrus"
+
 type context struct {
 	injector *Injector
 }
@@ -14,6 +16,8 @@ func Setup() *context {
 	ctx = &context{
 		injector: setupInjector(),
 	}
+
+	ctx.initialize()
 
 	return ctx
 }
@@ -30,12 +34,26 @@ func Get() *context {
 func setupInjector() *Injector {
 	i := createInjector()
 
+	i.AddInjectable(createConfig())
 	i.AddInjectable(createColly())
-	// i.AddInjectable(connectToDatabase())
+	i.AddInjectable(createDatabase())
 
 	return i
 }
 
 func (c *context) Injector() *Injector {
 	return c.injector
+}
+
+func (c *context) initialize() {
+	// connect to database
+	db := Factory[Database](c.injector)
+	db.Connect()
+
+	// set log level if Debug mode is enabled
+	cfg := Factory[Config](ctx.injector)
+	if cfg.Debug {
+		Log.Info("Enabling debug logging!")
+		Log.SetLevel(logrus.DebugLevel)
+	}
 }

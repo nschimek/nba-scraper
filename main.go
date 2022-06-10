@@ -7,10 +7,9 @@ import (
 )
 
 func main() {
-	// c := context.Setup()
+	c := context.Setup()
 
-	cfg := context.CreateConfig()
-	fmt.Println(cfg)
+	fmt.Println(c.Injector())
 
 	// gameScraper := context.Factory[scraper.GameScraper](c.Injector())
 	// gameScraper.Scrape("https://www.basketball-reference.com/boxscores/202110300WAS.html", "https://www.basketball-reference.com/boxscores/202204180GSW.html")

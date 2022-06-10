@@ -5,7 +5,7 @@ services:
     cap_add:
       - SYS_NICE
     restart: always
-    env_file: ./env/${ENV}.env
+    env_file: ./conf/${ENV}.env
     ports:
       - '3306:3306'
     volumes:

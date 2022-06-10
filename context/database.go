@@ -1,17 +1,34 @@
 package context
 
 import (
+	"fmt"
+
+	"github.com/sirupsen/logrus"
 	"gorm.io/driver/mysql"
 	"gorm.io/gorm"
 )
 
-func connectToDatabase() *gorm.DB {
-	dsn := "connection" // TODO: populate with values from Config
-	db, err := gorm.Open(mysql.Open(dsn))
+type Database struct {
+	Config *Config `Inject:""`
+	Gorm   *gorm.DB
+}
+
+const (
+	dsnFormat = "%s:%s@tcp(%s)/%s?charset=utf8mb4&parseTime=True&loc=Local"
+)
+
+func createDatabase() *Database {
+	return &Database{}
+}
+
+func (db *Database) Connect() {
+	Log.WithFields(logrus.Fields{"name": db.Config.Database.Name, "location": db.Config.Database.Location}).Info("Connecting to database...")
+	dsn := fmt.Sprintf(dsnFormat, db.Config.Database.User, db.Config.Database.Password, db.Config.Database.Location, db.Config.Database.Name)
+	gorm, err := gorm.Open(mysql.Open(dsn))
 
 	if err != nil {
-		Log.Fatal("Could not connect to DB!")
+		Log.Fatal(err)
 	}
 
-	return db
+	db.Gorm = gorm
 }
