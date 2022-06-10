@@ -51,7 +51,7 @@ func (c *context) initialize() {
 	db.Connect()
 
 	// set log level if Debug mode is enabled
-	cfg := Factory[Config](ctx.injector)
+	cfg := Factory[Config](c.injector)
 	if cfg.Debug {
 		Log.Info("Enabling debug logging!")
 		Log.SetLevel(logrus.DebugLevel)
