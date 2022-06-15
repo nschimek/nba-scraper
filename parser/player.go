@@ -27,7 +27,7 @@ func (p *Player) PlayerInfoBox(div *colly.HTMLElement) {
 
 		switch i {
 		case 2:
-			p.Shoots, p.Position = parseShootsPosition(line)
+			p.Shoots, _ = parseShootsPosition(line) // position on this page is the wild west
 		case 3:
 			p.Height, p.Weight = parseHeightWeight(line)
 		case 4:
@@ -38,7 +38,7 @@ func (p *Player) PlayerInfoBox(div *colly.HTMLElement) {
 
 func parseShootsPosition(s string) (shoots, position string) {
 	regexMap := RegexParamMap(positionShootsRegex, s)
-	shoots = regexMap["shoots"]
+	shoots = strings.ToUpper(string(regexMap["shoots"][0]))
 	position = regexMap["position"]
 	return
 }

@@ -53,7 +53,7 @@ func (c *context) initialize() {
 	// set log level if Debug mode is enabled
 	cfg := Factory[Config](c.injector)
 	if cfg.Debug {
-		Log.Info("Enabling debug logging!")
 		Log.SetLevel(logrus.DebugLevel)
+		Log.Info("Debug logging enabled!")
 	}
 }
