@@ -54,8 +54,6 @@ func (s *GameScraper) Scrape(urls ...string) {
 	}
 
 	// context.Log.Infof("%+v\n", s.ScrapedData)
-
-	scrapeChild(s)
 }
 
 func (s *GameScraper) parseGamePage(url string) (game parser.Game) {

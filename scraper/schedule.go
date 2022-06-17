@@ -88,8 +88,6 @@ func (s *ScheduleScraper) Scrape(urls ...string) {
 	for _, url := range s.urls {
 		s.colly.Visit(url)
 	}
-
-	scrapeChild(s)
 }
 
 func dateRangeToUrls(season int, dateRange DateRange) ([]string, error) {

@@ -55,8 +55,6 @@ func (s *TeamScraper) Scrape(urls ...string) {
 	}
 
 	fmt.Printf("%+v\n", s.ScrapedData)
-
-	scrapeChild(s)
 }
 
 func (s *TeamScraper) parseTeamPage(url string) (team parser.Team) {

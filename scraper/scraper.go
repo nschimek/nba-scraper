@@ -3,30 +3,20 @@ package scraper
 import (
 	"bytes"
 	"errors"
-	"fmt"
 	"strings"
 
 	"github.com/PuerkitoBio/goquery"
 	"github.com/gocolly/colly/v2"
+	"github.com/nschimek/nba-scraper/context"
 )
 
 type Scraper interface {
 	Scrape(urls ...string)
 	GetData() interface{}
-	AttachChild(scraper *Scraper)
-	GetChild() *Scraper
-	GetChildUrls() []string
 }
 
 func onRequestVisit(r *colly.Request) {
-	fmt.Println("Visiting: ", r.URL.String())
-}
-
-func scrapeChild(s Scraper) {
-	if s.GetChild() != nil && len(s.GetChildUrls()) > 0 {
-		c := *s.GetChild()
-		c.Scrape(s.GetChildUrls()...)
-	}
+	context.Log.WithField("URL", r.URL.String()).Info("Visiting...")
 }
 
 func urlsMapToArray(urlsMap map[string]string) (urlsArray []string) {
