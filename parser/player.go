@@ -49,11 +49,10 @@ func (p *PlayerParser) PlayerInfoBox(m *model.Player, div *colly.HTMLElement) {
 	m.Name = div.ChildText("h1")
 
 	crp := 0 // current regex parser starts at 0
-	max := len(regexParsers)
 
 	div.ForEach("p", func(i int, e *colly.HTMLElement) {
 		line := strings.TrimSpace(removeNewlines(e.Text))
-		if crp < max {
+		if crp < len(regexParsers) {
 			rm := RegexParamMap(regexParsers[crp].regex, line)
 			// if there's a hit with this regex, we want to run the parser function and increment cra
 			if len(rm) > 0 {
