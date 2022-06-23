@@ -15,6 +15,7 @@ import (
 // reusable parser utilities
 
 var EST, _ = time.LoadLocation("America/New_York")
+var CST, _ = time.LoadLocation("America/Chicago")
 
 func parseLink(e *colly.HTMLElement) string {
 	return e.ChildAttr("a", "href")

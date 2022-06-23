@@ -3,14 +3,15 @@ package repository
 import (
 	"github.com/nschimek/nba-scraper/context"
 	"github.com/nschimek/nba-scraper/model"
+	"gorm.io/gorm/clause"
 )
 
 type PlayerRepository struct {
 	DB *context.Database `Inject:""`
 }
 
-func (r *PlayerRepository) CreateBatch(players []model.Player) {
-	result := r.DB.Gorm.Create(players)
+func (r *PlayerRepository) CreateBatch(player []model.Player) {
+	result := r.DB.Gorm.Clauses(clause.OnConflict{UpdateAll: true}).Create(player)
 
 	if result.Error != nil {
 		context.Log.Error(result.Error)

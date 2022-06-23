@@ -1,11 +1,10 @@
 package scraper
 
 import (
-	"fmt"
-
 	"github.com/gocolly/colly/v2"
 	"github.com/nschimek/nba-scraper/model"
 	"github.com/nschimek/nba-scraper/parser"
+	"github.com/nschimek/nba-scraper/repository"
 )
 
 const (
@@ -14,9 +13,10 @@ const (
 )
 
 type PlayerScraper struct {
-	Colly        *colly.Collector     `Inject:""`
-	PlayerParser *parser.PlayerParser `Inject:""`
-	ScrapedData  []model.Player
+	Colly            *colly.Collector             `Inject:""`
+	PlayerParser     *parser.PlayerParser         `Inject:""`
+	PlayerRepository *repository.PlayerRepository `Inject:""`
+	ScrapedData      []model.Player
 }
 
 func (s *PlayerScraper) GetData() interface{} {
@@ -29,7 +29,7 @@ func (s *PlayerScraper) Scrape(urls ...string) {
 		s.ScrapedData = append(s.ScrapedData, player)
 	}
 
-	fmt.Printf("%+v\n", s.ScrapedData)
+	s.PlayerRepository.CreateBatch(s.ScrapedData)
 }
 
 func (s *PlayerScraper) parsePlayerPage(url string) (player model.Player) {

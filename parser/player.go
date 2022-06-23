@@ -34,7 +34,7 @@ func parseHeightWeight(m *model.Player, rm map[string]string) {
 }
 
 func parseBirthInfo(p *model.Player, rm map[string]string) {
-	p.BirthDate, _ = time.Parse("January 2 2006", rm["birthMonth"]+" "+rm["birthDay"]+" "+rm["birthYear"])
+	p.BirthDate, _ = time.ParseInLocation("January 2 2006", rm["birthMonth"]+" "+rm["birthDay"]+" "+rm["birthYear"], CST)
 	p.BirthPlace = strings.TrimSpace(rm["birthPlace"])
 	p.BirthCountryCode = strings.ToUpper(rm["birthCountry"])
 }
