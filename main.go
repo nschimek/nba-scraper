@@ -1,12 +1,12 @@
 package main
 
 import (
-	"github.com/nschimek/nba-scraper/context"
+	"github.com/nschimek/nba-scraper/core"
 	"github.com/nschimek/nba-scraper/scraper"
 )
 
 func main() {
-	c := context.Setup()
+	c := core.Setup()
 
 	// gameScraper := context.Factory[scraper.GameScraper](c.Injector())
 	// gameScraper.Scrape("https://www.basketball-reference.com/boxscores/202110300WAS.html", "https://www.basketball-reference.com/boxscores/202204180GSW.html")
@@ -23,7 +23,7 @@ func main() {
 	// teamScraper := scraper.CreateTeamScraper(c)
 	// teamScraper.Scrape("https://www.basketball-reference.com/teams/TOR/2022.html")
 
-	playerScraper := context.Factory[scraper.PlayerScraper](c.Injector())
+	playerScraper := core.Factory[scraper.PlayerScraper](c.Injector())
 	playerScraper.Scrape("https://www.basketball-reference.com/players/v/vandeja01.html", "https://www.basketball-reference.com/players/c/curryst01.html")
 
 	// standingsScraper := scraper.CreateStandingsScraper(c, 2022)

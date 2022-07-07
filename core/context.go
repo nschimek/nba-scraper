@@ -1,19 +1,19 @@
-package context
+package core
 
 import "github.com/sirupsen/logrus"
 
-type context struct {
+type coreContext struct {
 	injector *Injector
 }
 
-var ctx *context
+var ctx *coreContext
 
-func Setup() *context {
+func Setup() *coreContext {
 	if ctx != nil {
-		Log.Fatal("Context already setup")
+		Log.Fatal("Core Context already setup")
 	}
 
-	ctx = &context{
+	ctx = &coreContext{
 		injector: setupInjector(),
 	}
 
@@ -22,7 +22,7 @@ func Setup() *context {
 	return ctx
 }
 
-func Get() *context {
+func Get() *coreContext {
 	if ctx == nil {
 		Log.Fatal("Context not setup")
 		return nil
@@ -41,11 +41,11 @@ func setupInjector() *Injector {
 	return i
 }
 
-func (c *context) Injector() *Injector {
+func (c *coreContext) Injector() *Injector {
 	return c.injector
 }
 
-func (c *context) initialize() {
+func (c *coreContext) initialize() {
 	// connect to database
 	db := Factory[Database](c.injector)
 	db.Connect()

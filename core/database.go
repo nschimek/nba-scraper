@@ -1,7 +1,7 @@
-package context
+package core
 
 import (
-	goctx "context"
+	"context"
 	"fmt"
 	"time"
 
@@ -67,19 +67,19 @@ func (l *dbLogger) LogMode(logLevel logger.LogLevel) logger.Interface {
 	return l
 }
 
-func (l *dbLogger) Info(ctx goctx.Context, s string, args ...interface{}) {
+func (l *dbLogger) Info(ctx context.Context, s string, args ...interface{}) {
 	l.log.WithContext(ctx).Infof(s, args)
 }
 
-func (l *dbLogger) Warn(ctx goctx.Context, s string, args ...interface{}) {
+func (l *dbLogger) Warn(ctx context.Context, s string, args ...interface{}) {
 	l.log.WithContext(ctx).Warnf(s, args)
 }
 
-func (l *dbLogger) Error(ctx goctx.Context, s string, args ...interface{}) {
+func (l *dbLogger) Error(ctx context.Context, s string, args ...interface{}) {
 	l.log.WithContext(ctx).Errorf(s, args)
 }
 
-func (l *dbLogger) Trace(ctx goctx.Context, begin time.Time, fc func() (string, int64), err error) {
+func (l *dbLogger) Trace(ctx context.Context, begin time.Time, fc func() (string, int64), err error) {
 	sql, rows := fc()
 	fields := logrus.Fields{}
 	fields["loc"] = utils.FileWithLineNum()

@@ -7,7 +7,7 @@ import (
 
 	"github.com/PuerkitoBio/goquery"
 	"github.com/gocolly/colly/v2"
-	"github.com/nschimek/nba-scraper/context"
+	"github.com/nschimek/nba-scraper/core"
 )
 
 type Scraper interface {
@@ -16,7 +16,7 @@ type Scraper interface {
 }
 
 func onRequestVisit(r *colly.Request) {
-	context.Log.WithField("URL", r.URL.String()).Info("Visiting...")
+	core.Log.Infof("Visiting: %s", r.URL.String())
 }
 
 func urlsMapToArray(urlsMap map[string]string) (urlsArray []string) {
