@@ -1,6 +1,8 @@
 package scraper
 
 import (
+	"fmt"
+
 	"github.com/gocolly/colly/v2"
 	"github.com/nschimek/nba-scraper/model"
 	"github.com/nschimek/nba-scraper/parser"
@@ -23,26 +25,31 @@ func (s *PlayerScraper) GetData() interface{} {
 	return s.ScrapedData
 }
 
-func (s *PlayerScraper) Scrape(urls ...string) {
-	for _, url := range urls {
-		player := s.parsePlayerPage(url)
+func (s *PlayerScraper) Scrape(ids ...string) {
+	for _, id := range ids {
+		player := s.parsePlayerPage(id)
 		s.ScrapedData = append(s.ScrapedData, player)
 	}
 
 	s.PlayerRepository.CreateBatch(s.ScrapedData)
 }
 
-func (s *PlayerScraper) parsePlayerPage(url string) (player model.Player) {
+func (s *PlayerScraper) parsePlayerPage(id string) (player model.Player) {
 	c := s.Colly.Clone()
 	c.OnRequest(onRequestVisit)
+	c.OnError(onError)
 
-	player.ID = parser.ParseLastId(url)
+	player.ID = id
 
 	c.OnHTML(playerInfoElement, func(div *colly.HTMLElement) {
 		s.PlayerParser.PlayerInfoBox(&player, div)
 	})
 
-	c.Visit(url)
+	c.Visit(s.getUrl(id))
 
 	return
+}
+
+func (*PlayerScraper) getUrl(id string) string {
+	return fmt.Sprintf(playerIdPage, id[0:1], id)
 }

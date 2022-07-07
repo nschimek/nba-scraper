@@ -24,7 +24,7 @@ func main() {
 	// teamScraper.Scrape("https://www.basketball-reference.com/teams/TOR/2022.html")
 
 	playerScraper := core.Factory[scraper.PlayerScraper](c.Injector())
-	playerScraper.Scrape("https://www.basketball-reference.com/players/v/vandeja01.html", "https://www.basketball-reference.com/players/c/curryst01.html")
+	playerScraper.Scrape("vandeja01", "curryst01")
 
 	// standingsScraper := scraper.CreateStandingsScraper(c, 2022)
 	// standingsScraper.Scrape()

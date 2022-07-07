@@ -8,6 +8,7 @@ import (
 	"github.com/PuerkitoBio/goquery"
 	"github.com/gocolly/colly/v2"
 	"github.com/nschimek/nba-scraper/core"
+	"github.com/sirupsen/logrus"
 )
 
 type Scraper interface {
@@ -17,6 +18,10 @@ type Scraper interface {
 
 func onRequestVisit(r *colly.Request) {
 	core.Log.Infof("Visiting: %s", r.URL.String())
+}
+
+func onError(r *colly.Response, err error) {
+	core.Log.WithFields(logrus.Fields{"response": r, "error": err}).Errorf("Visiting: %s")
 }
 
 func urlsMapToArray(urlsMap map[string]string) (urlsArray []string) {
