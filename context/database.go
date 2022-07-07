@@ -1,12 +1,15 @@
 package context
 
 import (
+	goctx "context"
 	"fmt"
+	"time"
 
 	"github.com/sirupsen/logrus"
 	"gorm.io/driver/mysql"
 	"gorm.io/gorm"
 	"gorm.io/gorm/logger"
+	"gorm.io/gorm/utils"
 )
 
 type Database struct {
@@ -43,5 +46,53 @@ func (db *Database) getGormConfig() *gorm.Config {
 		logMode = logger.Error
 	}
 
-	return &gorm.Config{Logger: logger.Default.LogMode(logMode)}
+	return &gorm.Config{Logger: NewLogger(Log).LogMode(logMode)}
+}
+
+type dbLogger struct {
+	log   *logrus.Logger
+	debug bool
+}
+
+func NewLogger(l *logrus.Logger) *dbLogger {
+	return &dbLogger{
+		log: l,
+	}
+}
+
+func (l *dbLogger) LogMode(logLevel logger.LogLevel) logger.Interface {
+	if logLevel == logger.Info {
+		l.debug = true
+	}
+	return l
+}
+
+func (l *dbLogger) Info(ctx goctx.Context, s string, args ...interface{}) {
+	l.log.WithContext(ctx).Infof(s, args)
+}
+
+func (l *dbLogger) Warn(ctx goctx.Context, s string, args ...interface{}) {
+	l.log.WithContext(ctx).Warnf(s, args)
+}
+
+func (l *dbLogger) Error(ctx goctx.Context, s string, args ...interface{}) {
+	l.log.WithContext(ctx).Errorf(s, args)
+}
+
+func (l *dbLogger) Trace(ctx goctx.Context, begin time.Time, fc func() (string, int64), err error) {
+	sql, rows := fc()
+	fields := logrus.Fields{}
+	fields["loc"] = utils.FileWithLineNum()
+	fields["rows"] = rows
+	fields["ms"] = time.Since(begin)
+
+	if err != nil {
+		fields[logrus.ErrorKey] = err
+		l.log.WithContext(ctx).WithFields(fields).Errorf(sql)
+		return
+	}
+
+	if l.debug {
+		l.log.WithContext(ctx).WithFields(fields).Debugf(sql)
+	}
 }
