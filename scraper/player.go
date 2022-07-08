@@ -10,15 +10,16 @@ import (
 )
 
 const (
+	players               = "players"
 	basePlayerBodyElement = "body > div#wrap"
 	playerInfoElement     = basePlayerBodyElement + " > div#info > div#meta > div:nth-child(2)"
 )
 
 type PlayerScraper struct {
-	Colly            *colly.Collector             `Inject:""`
-	PlayerParser     *parser.PlayerParser         `Inject:""`
-	PlayerRepository *repository.PlayerRepository `Inject:""`
-	ScrapedData      []model.Player
+	Colly        *colly.Collector              `Inject:""`
+	PlayerParser *parser.PlayerParser          `Inject:""`
+	Repository   *repository.GenericRepository `Inject:""`
+	ScrapedData  []model.Player
 }
 
 func (s *PlayerScraper) GetData() interface{} {
@@ -31,7 +32,7 @@ func (s *PlayerScraper) Scrape(ids ...string) {
 		s.ScrapedData = append(s.ScrapedData, player)
 	}
 
-	s.PlayerRepository.CreateBatch(s.ScrapedData)
+	s.Repository.Upsert(s.ScrapedData, players)
 }
 
 func (s *PlayerScraper) parsePlayerPage(id string) (player model.Player) {

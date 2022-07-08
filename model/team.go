@@ -1,7 +1,7 @@
 package model
 
 type Team struct {
-	Id, Name           string
+	ID, Name           string
 	Season             int
 	TeamPlayers        []TeamPlayer
 	TeamPlayerSalaries []TeamPlayerSalary
@@ -9,13 +9,16 @@ type Team struct {
 }
 
 type TeamPlayer struct {
-	PlayerId, Position string
-	Number             int
+	TeamId   string `gorm:"primaryKey"`
+	PlayerId string `gorm:"primaryKey"`
+	Position string
+	Number   int
 	Audit
 }
 
 type TeamPlayerSalary struct {
-	PlayerId     string
+	TeamId       string `gorm:"primaryKey"`
+	PlayerId     string `gorm:"primaryKey"`
 	Salary, Rank int
 	Audit
 }
