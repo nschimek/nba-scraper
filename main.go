@@ -20,11 +20,12 @@ func main() {
 	// fmt.Println(scheduleScraper.GetData())
 	// fmt.Println(scheduleScraper.GetChildUrls())
 
-	// teamScraper := scraper.CreateTeamScraper(c)
+	teamScraper := core.Factory[scraper.TeamScraper](c.Injector())
+	teamScraper.Scrape("TOR")
 	// teamScraper.Scrape("https://www.basketball-reference.com/teams/TOR/2022.html")
 
-	playerScraper := core.Factory[scraper.PlayerScraper](c.Injector())
-	playerScraper.Scrape("vandeja01", "curryst01")
+	// playerScraper := core.Factory[scraper.PlayerScraper](c.Injector())
+	// playerScraper.Scrape("vandeja01", "curryst01")
 
 	// standingsScraper := scraper.CreateStandingsScraper(c, 2022)
 	// standingsScraper.Scrape()

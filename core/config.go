@@ -13,6 +13,7 @@ const (
 var iniOptions = ini.LoadOptions{IgnoreInlineComment: true}
 
 type Config struct {
+	Season      int
 	Environment string
 	Debug       bool
 	Database    database

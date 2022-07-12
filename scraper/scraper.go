@@ -8,8 +8,9 @@ import (
 	"github.com/PuerkitoBio/goquery"
 	"github.com/gocolly/colly/v2"
 	"github.com/nschimek/nba-scraper/core"
-	"github.com/sirupsen/logrus"
 )
+
+var exists = struct{}{}
 
 type Scraper interface {
 	Scrape(urls ...string)
@@ -21,7 +22,7 @@ func onRequestVisit(r *colly.Request) {
 }
 
 func onError(r *colly.Response, err error) {
-	core.Log.WithFields(logrus.Fields{"response": r, "error": err}).Errorf("Visiting: %s")
+	core.Log.Fatalf("Scraping resulted in error: %s", err)
 }
 
 func urlsMapToArray(urlsMap map[string]string) (urlsArray []string) {

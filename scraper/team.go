@@ -2,10 +2,12 @@ package scraper
 
 import (
 	"fmt"
-	"strconv"
 
 	"github.com/gocolly/colly/v2"
+	"github.com/nschimek/nba-scraper/core"
+	"github.com/nschimek/nba-scraper/model"
 	"github.com/nschimek/nba-scraper/parser"
+	"github.com/nschimek/nba-scraper/repository"
 )
 
 const (
@@ -17,70 +19,53 @@ const (
 )
 
 type TeamScraper struct {
-	colly       colly.Collector
-	ScrapedData []parser.Team
-	Errors      []error
-	child       *Scraper
-	childUrls   map[string]string
+	Config      *core.Config                  `Inject:""`
+	Colly       *colly.Collector              `Inject:""`
+	TeamParser  *parser.TeamParser            `Inject:""`
+	Repository  *repository.GenericRepository `Inject:""`
+	ScrapedData []model.Team
+	PlayerIds   map[string]struct{}
 }
 
-func CreateTeamScraper(c *colly.Collector) TeamScraper {
-	return TeamScraper{
-		colly:     *c,
-		childUrls: make(map[string]string),
-	}
-}
+func (s *TeamScraper) Scrape(ids ...string) {
+	s.PlayerIds = make(map[string]struct{})
 
-func (s *TeamScraper) GetData() interface{} {
-	return s.ScrapedData
-}
-
-func (s *TeamScraper) AttachChild(scraper *Scraper) {
-	s.child = scraper
-}
-
-func (s *TeamScraper) GetChild() *Scraper {
-	return s.child
-}
-
-func (s *TeamScraper) GetChildUrls() []string {
-	return urlsMapToArray(s.childUrls)
-}
-
-func (s *TeamScraper) Scrape(urls ...string) {
-
-	for _, url := range urls {
-		team := s.parseTeamPage(url)
+	for _, id := range ids {
+		team := s.parseTeamPage(id)
 		s.ScrapedData = append(s.ScrapedData, team)
 	}
-
-	fmt.Printf("%+v\n", s.ScrapedData)
 }
 
-func (s *TeamScraper) parseTeamPage(url string) (team parser.Team) {
-	c := s.colly.Clone()
+func (s *TeamScraper) parseTeamPage(id string) (team model.Team) {
+	c := s.Colly.Clone()
+	c.OnRequest(onRequestVisit)
+	c.OnError(onError)
 
-	team.Id = parser.ParseTeamId(url)
-	team.Season, _ = strconv.Atoi(parser.ParseLastId(url))
+	team.ID = id
+	team.Season = s.Config.Season
 
 	c.OnHTML(teamInfoElement, func(div *colly.HTMLElement) {
-		team.TeamInfoBox(div)
+		s.TeamParser.TeamInfoBox(&team, div)
 	})
 
 	c.OnHTML(teamRosterTableElement, func(tbl *colly.HTMLElement) {
-		team.TeamPlayerTable(tbl)
+		s.TeamParser.TeamPlayerTable(&team, tbl)
 
 		for _, p := range team.TeamPlayers {
-			s.childUrls[p.PlayerId] = tbl.Request.AbsoluteURL(p.PlayerUrl)
+			s.PlayerIds[p.PlayerId] = exists
 		}
 	})
 
 	c.OnHTML(teamSalaryTableElementBase, func(div *colly.HTMLElement) {
 		tbl, _ := transformHtmlElement(div, teamSalaryTableElement, removeCommentsSyntax)
-		team.TeamSalariesTable(tbl)
+		s.TeamParser.TeamSalariesTable(&team, tbl)
 	})
 
-	c.Visit(url)
+	c.Visit(s.getUrl(id))
 
 	return team
+}
+
+func (t *TeamScraper) getUrl(id string) string {
+	return fmt.Sprintf(teamIdPage, id, t.Config.Season)
 }

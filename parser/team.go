@@ -4,70 +4,59 @@ import (
 	"strconv"
 
 	"github.com/gocolly/colly/v2"
+	"github.com/nschimek/nba-scraper/model"
 )
 
-type Team struct {
-	Id, Name           string
-	Season             int
-	TeamPlayers        []TeamPlayer
-	TeamPlayerSalaries []TeamPlayerSalary
-}
+type TeamParser struct{}
 
-type TeamPlayer struct {
-	PlayerId, PlayerUrl, Position string
-	Number                        int
-}
-
-type TeamPlayerSalary struct {
-	PlayerId     string
-	Salary, Rank int
-}
-
-func (t *Team) TeamInfoBox(box *colly.HTMLElement) {
+func (*TeamParser) TeamInfoBox(t *model.Team, box *colly.HTMLElement) {
 	t.Name = box.ChildText("div:nth-child(2) > h1 > span:nth-child(2)")
 }
 
-func (t *Team) TeamPlayerTable(tbl *colly.HTMLElement) {
-	t.TeamPlayers = parseTeamRosterTable(tbl)
+func (*TeamParser) TeamPlayerTable(t *model.Team, tbl *colly.HTMLElement) {
+	t.TeamPlayers = parseTeamRosterTable(tbl, t.ID)
 }
 
-func (t *Team) TeamSalariesTable(tbl *colly.HTMLElement) {
-	t.TeamPlayerSalaries = parseTeamSalariesTable(tbl)
+func (*TeamParser) TeamSalariesTable(t *model.Team, tbl *colly.HTMLElement) {
+	t.TeamPlayerSalaries = parseTeamSalariesTable(tbl, t.ID)
 }
 
-func parseTeamRosterTable(tbl *colly.HTMLElement) []TeamPlayer {
-	roster := []TeamPlayer{}
+func parseTeamRosterTable(tbl *colly.HTMLElement, teamId string) []model.TeamPlayer {
+	roster := []model.TeamPlayer{}
 
 	for _, rowMap := range Table(tbl) {
-		roster = append(roster, *teamPlayerFromRow(rowMap))
+		tp := teamPlayerFromRow(rowMap)
+		tp.TeamId = teamId
+		roster = append(roster, *tp)
 	}
 
 	return roster
 }
 
-func teamPlayerFromRow(rowMap map[string]*colly.HTMLElement) *TeamPlayer {
-	tr := new(TeamPlayer)
+func teamPlayerFromRow(rowMap map[string]*colly.HTMLElement) *model.TeamPlayer {
+	tr := new(model.TeamPlayer)
 
 	tr.Number, _ = strconv.Atoi(rowMap["number"].Text)
-	tr.PlayerUrl = parseLink(rowMap["player"])
-	tr.PlayerId = ParseLastId(tr.PlayerUrl)
+	tr.PlayerId = ParseLastId(parseLink(rowMap["player"]))
 	tr.Position = rowMap["pos"].Text
 
 	return tr
 }
 
-func parseTeamSalariesTable(tbl *colly.HTMLElement) []TeamPlayerSalary {
-	salaries := []TeamPlayerSalary{}
+func parseTeamSalariesTable(tbl *colly.HTMLElement, teamId string) []model.TeamPlayerSalary {
+	salaries := []model.TeamPlayerSalary{}
 
 	for _, rowMap := range Table(tbl) {
-		salaries = append(salaries, *teamSalaryFromRow(rowMap))
+		tps := teamSalaryFromRow(rowMap)
+		tps.TeamId = teamId
+		salaries = append(salaries, *tps)
 	}
 
 	return salaries
 }
 
-func teamSalaryFromRow(rowMap map[string]*colly.HTMLElement) *TeamPlayerSalary {
-	tps := new(TeamPlayerSalary)
+func teamSalaryFromRow(rowMap map[string]*colly.HTMLElement) *model.TeamPlayerSalary {
+	tps := new(model.TeamPlayerSalary)
 
 	tps.PlayerId = ParseLastId(parseLink(rowMap["player"]))
 	tps.Salary, _ = strconv.Atoi(rowMap["salary"].Attr("csk"))
