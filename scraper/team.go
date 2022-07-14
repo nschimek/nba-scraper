@@ -42,7 +42,6 @@ func (s *TeamScraper) parseTeamPage(id string) (team model.Team) {
 	c.OnError(onError)
 
 	team.ID = id
-	team.Season = s.Config.Season
 
 	c.OnHTML(teamInfoElement, func(div *colly.HTMLElement) {
 		s.TeamParser.TeamInfoBox(&team, div)

@@ -4,29 +4,33 @@ import (
 	"strconv"
 
 	"github.com/gocolly/colly/v2"
+	"github.com/nschimek/nba-scraper/core"
 	"github.com/nschimek/nba-scraper/model"
 )
 
-type TeamParser struct{}
+type TeamParser struct {
+	Config *core.Config `Inject:""`
+}
 
-func (*TeamParser) TeamInfoBox(t *model.Team, box *colly.HTMLElement) {
+func (p *TeamParser) TeamInfoBox(t *model.Team, box *colly.HTMLElement) {
 	t.Name = box.ChildText("div:nth-child(2) > h1 > span:nth-child(2)")
 }
 
-func (*TeamParser) TeamPlayerTable(t *model.Team, tbl *colly.HTMLElement) {
-	t.TeamPlayers = parseTeamRosterTable(tbl, t.ID)
+func (p *TeamParser) TeamPlayerTable(t *model.Team, tbl *colly.HTMLElement) {
+	t.TeamPlayers = p.parseTeamRosterTable(tbl, t.ID)
 }
 
-func (*TeamParser) TeamSalariesTable(t *model.Team, tbl *colly.HTMLElement) {
-	t.TeamPlayerSalaries = parseTeamSalariesTable(tbl, t.ID)
+func (p *TeamParser) TeamSalariesTable(t *model.Team, tbl *colly.HTMLElement) {
+	t.TeamPlayerSalaries = p.parseTeamSalariesTable(tbl, t.ID)
 }
 
-func parseTeamRosterTable(tbl *colly.HTMLElement, teamId string) []model.TeamPlayer {
+func (p *TeamParser) parseTeamRosterTable(tbl *colly.HTMLElement, teamId string) []model.TeamPlayer {
 	roster := []model.TeamPlayer{}
 
 	for _, rowMap := range Table(tbl) {
 		tp := teamPlayerFromRow(rowMap)
 		tp.TeamId = teamId
+		tp.Season = p.Config.Season
 		roster = append(roster, *tp)
 	}
 
@@ -43,12 +47,13 @@ func teamPlayerFromRow(rowMap map[string]*colly.HTMLElement) *model.TeamPlayer {
 	return tr
 }
 
-func parseTeamSalariesTable(tbl *colly.HTMLElement, teamId string) []model.TeamPlayerSalary {
+func (p *TeamParser) parseTeamSalariesTable(tbl *colly.HTMLElement, teamId string) []model.TeamPlayerSalary {
 	salaries := []model.TeamPlayerSalary{}
 
 	for _, rowMap := range Table(tbl) {
 		tps := teamSalaryFromRow(rowMap)
 		tps.TeamId = teamId
+		tps.Season = p.Config.Season
 		salaries = append(salaries, *tps)
 	}
 

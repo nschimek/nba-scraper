@@ -11,6 +11,7 @@ type Team struct {
 type TeamPlayer struct {
 	TeamId   string `gorm:"primaryKey"`
 	PlayerId string `gorm:"primaryKey"`
+	Season   int    `gorm:"primaryKey"`
 	Position string
 	Number   int
 	Audit
@@ -19,6 +20,7 @@ type TeamPlayer struct {
 type TeamPlayerSalary struct {
 	TeamId       string `gorm:"primaryKey"`
 	PlayerId     string `gorm:"primaryKey"`
+	Season       int    `gorm:"primaryKey"`
 	Salary, Rank int
 	Audit
 }
