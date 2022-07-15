@@ -2,7 +2,7 @@ package model
 
 type Team struct {
 	ID, Name           string
-	Season             int
+	Season             int `gorm:"-"`
 	TeamPlayers        []TeamPlayer
 	TeamPlayerSalaries []TeamPlayerSalary
 	Audit

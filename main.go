@@ -21,7 +21,7 @@ func main() {
 	// fmt.Println(scheduleScraper.GetChildUrls())
 
 	teamScraper := core.Factory[scraper.TeamScraper](c.Injector())
-	teamScraper.Scrape("TOR")
+	teamScraper.Scrape("TOR", "CHI")
 	// teamScraper.Scrape("https://www.basketball-reference.com/teams/TOR/2022.html")
 
 	// playerScraper := core.Factory[scraper.PlayerScraper](c.Injector())

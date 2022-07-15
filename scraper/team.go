@@ -11,6 +11,7 @@ import (
 )
 
 const (
+	teams                      = "teams"
 	teamBaseBodyElement        = "body div#wrap"
 	teamInfoElement            = teamBaseBodyElement + " div#info div#meta"
 	teamRosterTableElement     = teamBaseBodyElement + " div#all_roster > div#div_roster > table#roster > tbody"
@@ -19,10 +20,10 @@ const (
 )
 
 type TeamScraper struct {
-	Config      *core.Config                  `Inject:""`
-	Colly       *colly.Collector              `Inject:""`
-	TeamParser  *parser.TeamParser            `Inject:""`
-	Repository  *repository.GenericRepository `Inject:""`
+	Config      *core.Config               `Inject:""`
+	Colly       *colly.Collector           `Inject:""`
+	TeamParser  *parser.TeamParser         `Inject:""`
+	Repository  *repository.TeamRepository `Inject:""`
 	ScrapedData []model.Team
 	PlayerIds   map[string]struct{}
 }
@@ -34,6 +35,8 @@ func (s *TeamScraper) Scrape(ids ...string) {
 		team := s.parseTeamPage(id)
 		s.ScrapedData = append(s.ScrapedData, team)
 	}
+
+	s.Repository.UpsertTeams(s.ScrapedData)
 }
 
 func (s *TeamScraper) parseTeamPage(id string) (team model.Team) {
@@ -42,6 +45,7 @@ func (s *TeamScraper) parseTeamPage(id string) (team model.Team) {
 	c.OnError(onError)
 
 	team.ID = id
+	team.Season = s.Config.Season
 
 	c.OnHTML(teamInfoElement, func(div *colly.HTMLElement) {
 		s.TeamParser.TeamInfoBox(&team, div)
