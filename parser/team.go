@@ -38,13 +38,13 @@ func (p *TeamParser) parseTeamRosterTable(tbl *colly.HTMLElement, teamId string)
 }
 
 func teamPlayerFromRow(rowMap map[string]*colly.HTMLElement) *model.TeamPlayer {
-	tr := new(model.TeamPlayer)
+	tp := new(model.TeamPlayer)
 
-	tr.Number, _ = strconv.Atoi(rowMap["number"].Text)
-	tr.PlayerId = ParseLastId(parseLink(rowMap["player"]))
-	tr.Position = rowMap["pos"].Text
+	tp.Number, _ = strconv.Atoi(rowMap["number"].Text)
+	tp.PlayerId = ParseLastId(parseLink(rowMap["player"]))
+	tp.Position = rowMap["pos"].Text
 
-	return tr
+	return tp
 }
 
 func (p *TeamParser) parseTeamSalariesTable(tbl *colly.HTMLElement, teamId string) []model.TeamPlayerSalary {
