@@ -10,7 +10,8 @@ CREATE TABLE `nba`.`players` (
   `height` SMALLINT UNSIGNED NOT NULL,
   `weight` SMALLINT UNSIGNED NOT NULL,
   PRIMARY KEY (`id`),
-  UNIQUE INDEX `id_UNIQUE` (`id` ASC) VISIBLE);
+  UNIQUE INDEX `id_UNIQUE` (`id` ASC) VISIBLE
+);
 
 CREATE TABLE `nba`.`teams` (
   `id` VARCHAR(3) NOT NULL,
@@ -18,7 +19,8 @@ CREATE TABLE `nba`.`teams` (
   `created_at` DATETIME NOT NULL,
   `updated_at` DATETIME NOT NULL,
   PRIMARY KEY (`id`),
-  UNIQUE INDEX `id_UNIQUE` (`id` ASC) VISIBLE);
+  UNIQUE INDEX `id_UNIQUE` (`id` ASC) VISIBLE
+);
 
 CREATE TABLE `nba`.`team_players` (
   `team_id` VARCHAR(3) NOT NULL,
@@ -28,7 +30,8 @@ CREATE TABLE `nba`.`team_players` (
   `number` TINYINT UNSIGNED NOT NULL,
   `created_at` DATETIME NOT NULL,
   `updated_at` DATETIME NOT NULL,
-  PRIMARY KEY (`team_id`, `player_id`, `season`));
+  PRIMARY KEY (`team_id`, `player_id`, `season`)
+);
 
 CREATE TABLE `nba`.`team_player_salaries` (
   `team_id` VARCHAR(3) NOT NULL,
@@ -38,7 +41,19 @@ CREATE TABLE `nba`.`team_player_salaries` (
   `rank` TINYINT UNSIGNED NOT NULL,
   `updated_at` DATETIME NOT NULL,
   `created_at` DATETIME NOT NULL,
-  PRIMARY KEY (`team_id`, `player_id`, `season`));
+  PRIMARY KEY (`team_id`, `player_id`, `season`)
+);
+
+CREATE TABLE `player_injuries` (
+  `team_id` varchar(3) NOT NULL,
+  `player_id` varchar(9) NOT NULL,
+  `season` smallint NOT NULL,
+  `source_update_date` date NOT NULL,
+  `description` text NOT NULL,
+  `updated_at` datetime NOT NULL,
+  `created_at` datetime NOT NULL,
+  PRIMARY KEY (`team_id`,`player_id`,`season`)
+);
 
 ALTER TABLE `nba`.`team_players` 
 ADD CONSTRAINT `team_players.id2team.id`

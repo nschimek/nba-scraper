@@ -10,7 +10,6 @@ import (
 )
 
 const (
-	players               = "players"
 	basePlayerBodyElement = "body > div#wrap"
 	playerInfoElement     = basePlayerBodyElement + " > div#info > div#meta > div:nth-child(2)"
 )
@@ -32,7 +31,7 @@ func (s *PlayerScraper) Scrape(ids ...string) {
 		s.ScrapedData = append(s.ScrapedData, player)
 	}
 
-	s.Repository.Upsert(s.ScrapedData, players)
+	s.Repository.Upsert(s.ScrapedData, "players")
 }
 
 func (s *PlayerScraper) parsePlayerPage(id string) (player model.Player) {

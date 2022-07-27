@@ -12,6 +12,7 @@ type GenericRepository struct {
 }
 
 func (r *GenericRepository) Upsert(items any, label string) {
+	core.Log.Infof("Create/updating %s...", label)
 	result := r.DB.Gorm.Clauses(updateAll).Create(items)
 
 	if result.Error == nil {

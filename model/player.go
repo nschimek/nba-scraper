@@ -11,3 +11,12 @@ type Player struct {
 	Height, Weight   int
 	Audit
 }
+
+type PlayerInjury struct {
+	TeamId           string    `gorm:"primaryKey"`
+	PlayerId         string    `gorm:"primaryKey"`
+	Season           int       `gorm:"primaryKey"`
+	SourceUpdateDate time.Time `gorm:"primaryKey"`
+	Description      string
+	Audit
+}
