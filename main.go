@@ -26,9 +26,9 @@ func main() {
 	// playerScraper := core.Factory[scraper.PlayerScraper](c.Injector())
 	// playerScraper.Scrape("vandeja01", "curryst01")
 
-	// standingsScraper := scraper.CreateStandingsScraper(c, 2022)
-	// standingsScraper.Scrape()
+	standingsScraper := core.Factory[scraper.StandingScraper](c.Injector())
+	standingsScraper.Scrape()
 
-	injuriesScraper := core.Factory[scraper.InjuryScraper](c.Injector())
-	injuriesScraper.Scrape()
+	// injuriesScraper := core.Factory[scraper.InjuryScraper](c.Injector())
+	// injuriesScraper.Scrape()
 }

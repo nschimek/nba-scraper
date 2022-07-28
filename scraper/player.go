@@ -15,9 +15,9 @@ const (
 )
 
 type PlayerScraper struct {
-	Colly        *colly.Collector              `Inject:""`
-	PlayerParser *parser.PlayerParser          `Inject:""`
-	Repository   *repository.GenericRepository `Inject:""`
+	Colly        *colly.Collector             `Inject:""`
+	PlayerParser *parser.PlayerParser         `Inject:""`
+	Repository   *repository.SimpleRepository `Inject:""`
 	ScrapedData  []model.Player
 }
 

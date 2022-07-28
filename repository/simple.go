@@ -7,11 +7,11 @@ import (
 
 var updateAll = clause.OnConflict{UpdateAll: true}
 
-type GenericRepository struct {
+type SimpleRepository struct {
 	DB *core.Database `Inject:""`
 }
 
-func (r *GenericRepository) Upsert(items any, label string) {
+func (r *SimpleRepository) Upsert(items any, label string) {
 	core.Log.Infof("Create/updating %s...", label)
 	result := r.DB.Gorm.Clauses(updateAll).Create(items)
 

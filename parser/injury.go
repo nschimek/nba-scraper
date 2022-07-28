@@ -8,13 +8,6 @@ import (
 	"github.com/nschimek/nba-scraper/model"
 )
 
-type Injuries struct {
-	PlayerId, PlayerUrl, TeamId string
-	Season                      int
-	UpdateDate                  time.Time
-	Description                 string
-}
-
 type InjuryParser struct {
 	Config *core.Config `Inject:""`
 }
