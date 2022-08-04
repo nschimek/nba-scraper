@@ -5,7 +5,10 @@ import (
 	"strings"
 
 	"github.com/gocolly/colly/v2"
+	"github.com/nschimek/nba-scraper/model"
 )
+
+type GameStatsParser struct{}
 
 type GameTeam struct {
 	TeamId, TeamUrl, Result string
@@ -22,47 +25,49 @@ type GameLineScore struct {
 	Quarter, Score  int
 }
 
-func parseScorebox(box *colly.HTMLElement) (gt GameTeam) {
-	gt.TeamUrl = box.Request.AbsoluteURL(box.ChildAttr("div:first-child strong a", "href"))
-	gt.TeamId = ParseTeamId(gt.TeamUrl)
+func (*GameStatsParser) parseScorebox(box *colly.HTMLElement) *model.GameTeam {
+	gt := new(model.GameTeam)
+
+	gt.TeamId = ParseTeamId(box.ChildAttr("div:first-child strong a", "href"))
 	gt.Score, _ = strconv.Atoi(box.ChildText("div.scores div.score"))
 
 	wl := strings.Split(box.ChildText("div:nth-child(3)"), "-")
 	gt.Wins, _ = strconv.Atoi(wl[0])
 	gt.Losses, _ = strconv.Atoi(wl[1])
 
-	return
+	return gt
 }
 
-func parseLineScoreTable(tbl *colly.HTMLElement) (home, visitor []GameLineScore) {
+func (*GameStatsParser) parseLineScoreTable(tbl *colly.HTMLElement, gameId string) (home, visitor []model.GameLineScore) {
 	tableMaps := Table(tbl) // row 0 will be away, row 1 will be home
 
-	visitor = lineScoreFromRow(tableMaps[0])
-	home = lineScoreFromRow(tableMaps[1])
+	visitor = lineScoreFromRow(tableMaps[0], gameId)
+	home = lineScoreFromRow(tableMaps[1], gameId)
 
 	return
 }
 
-func parseFourFactorsTable(tbl *colly.HTMLElement) (home, visitor GameFourFactors) {
+func (*GameStatsParser) parseFourFactorsTable(tbl *colly.HTMLElement, gameId string) (home, visitor model.GameFourFactor) {
 	tableMaps := Table(tbl) // row 0 will be away, row 1 will be home
 
 	visitor = gameFourFactorsFromRow(tableMaps[0])
+	visitor.GameId = gameId
 	home = gameFourFactorsFromRow(tableMaps[1])
+	home.GameId = gameId
 
 	return
 }
 
-func lineScoreFromRow(rowMap map[string]*colly.HTMLElement) (scores []GameLineScore) {
-	teamUrl := parseLink(rowMap["team"])
-	teamId := ParseTeamId(teamUrl)
+func lineScoreFromRow(rowMap map[string]*colly.HTMLElement, gameId string) (scores []model.GameLineScore) {
+	teamId := ParseTeamId(parseLink(rowMap["team"]))
 
 	for key, cell := range rowMap {
 		// loop through all non-team and total columns; those that remain are the quarters
 		if key != "team" && key != "T" {
 			score, _ := strconv.Atoi(cell.Text)
-			scores = append(scores, GameLineScore{
+			scores = append(scores, model.GameLineScore{
+				GameId:  gameId,
 				TeamId:  teamId,
-				TeamUrl: teamUrl,
 				Quarter: lineScoreQuarter(key),
 				Score:   score,
 			})
@@ -87,14 +92,16 @@ func lineScoreQuarter(c string) int {
 	}
 }
 
-func gameFourFactorsFromRow(rowMap map[string]*colly.HTMLElement) (factors GameFourFactors) {
-	factors.TeamId = ParseTeamId(parseLink(rowMap["team_id"]))
-	factors.Pace, _ = strconv.ParseFloat(rowMap["pace"].Text, 64)
-	factors.EffectiveFgPct, _ = strconv.ParseFloat(rowMap["efg_pct"].Text, 64)
-	factors.TurnoverPct, _ = strconv.ParseFloat(rowMap["tov_pct"].Text, 64)
-	factors.OffensiveRbPct, _ = strconv.ParseFloat(rowMap["orb_pct"].Text, 64)
-	factors.FtPerFga, _ = strconv.ParseFloat(rowMap["ft_rate"].Text, 64)
-	factors.OffensiveRating, _ = strconv.ParseFloat(rowMap["off_rtg"].Text, 64)
+func gameFourFactorsFromRow(rowMap map[string]*colly.HTMLElement) model.GameFourFactor {
+	gff := new(model.GameFourFactor)
 
-	return
+	gff.TeamId = ParseTeamId(parseLink(rowMap["team_id"]))
+	gff.Pace, _ = strconv.ParseFloat(rowMap["pace"].Text, 64)
+	gff.EffectiveFgPct, _ = strconv.ParseFloat(rowMap["efg_pct"].Text, 64)
+	gff.TurnoverPct, _ = strconv.ParseFloat(rowMap["tov_pct"].Text, 64)
+	gff.OffensiveRbPct, _ = strconv.ParseFloat(rowMap["orb_pct"].Text, 64)
+	gff.FtPerFga, _ = strconv.ParseFloat(rowMap["ft_rate"].Text, 64)
+	gff.OffensiveRating, _ = strconv.ParseFloat(rowMap["off_rtg"].Text, 64)
+
+	return *gff
 }

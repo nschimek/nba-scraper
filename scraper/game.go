@@ -2,6 +2,7 @@ package scraper
 
 import (
 	"github.com/gocolly/colly/v2"
+	"github.com/nschimek/nba-scraper/core"
 	"github.com/nschimek/nba-scraper/parser"
 )
 
@@ -53,11 +54,13 @@ func (s *GameScraper) Scrape(urls ...string) {
 		s.childUrls[game.AwayTeam.TeamId] = game.AwayTeam.TeamUrl
 	}
 
-	// context.Log.Infof("%+v\n", s.ScrapedData)
+	core.Log.Infof("%+v\n", s.ScrapedData)
 }
 
 func (s *GameScraper) parseGamePage(url string) (game parser.Game) {
 	c := s.Colly.Clone()
+	c.OnRequest(onRequestVisit)
+	c.OnError(onError)
 
 	game.Id = parser.ParseLastId(url)
 

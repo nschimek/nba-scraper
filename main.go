@@ -8,7 +8,7 @@ import (
 func main() {
 	c := core.Setup()
 
-	// gameScraper := context.Factory[scraper.GameScraper](c.Injector())
+	// gameScraper := core.Factory[scraper.GameScraper](c.Injector())
 	// gameScraper.Scrape("https://www.basketball-reference.com/boxscores/202110300WAS.html", "https://www.basketball-reference.com/boxscores/202204180GSW.html")
 
 	// startDate, _ := time.Parse("2006-01-02", "2021-10-20")
@@ -29,6 +29,6 @@ func main() {
 	standingsScraper := core.Factory[scraper.StandingScraper](c.Injector())
 	standingsScraper.Scrape()
 
-	// injuriesScraper := core.Factory[scraper.InjuryScraper](c.Injector())
-	// injuriesScraper.Scrape()
+	injuriesScraper := core.Factory[scraper.InjuryScraper](c.Injector())
+	injuriesScraper.Scrape()
 }

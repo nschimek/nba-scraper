@@ -7,7 +7,10 @@ import (
 	"time"
 
 	"github.com/gocolly/colly/v2"
+	"github.com/nschimek/nba-scraper/model"
 )
+
+type GamePlayerStatsParser struct{}
 
 type GamePlayer struct {
 	TeamId, PlayerId, Status string
@@ -29,12 +32,15 @@ type GamePlayerAdvancedStats struct {
 	OffensiveRating, DefensiveRating                                                                                      int
 }
 
-func parseBasicBoxScoreTable(tbl *colly.HTMLElement, teamId string, quarter int) []GamePlayerBasicStats {
-	stats := []GamePlayerBasicStats{}
+func (*GamePlayerStatsParser) parseBasicBoxScoreTable(tbl *colly.HTMLElement, gameId, teamId string, quarter int) []model.GamePlayerBasicStat {
+	stats := []model.GamePlayerBasicStat{}
 
 	for _, rowMap := range Table(tbl) {
-		gpbs := gamePlayerBasicStatsFromRow(rowMap, teamId, quarter)
+		gpbs := gamePlayerBasicStatsFromRow(rowMap)
 		if gpbs != nil {
+			gpbs.GameId = gameId
+			gpbs.TeamId = teamId
+			gpbs.Quarter = quarter
 			stats = append(stats, *gpbs)
 		}
 	}
@@ -42,12 +48,14 @@ func parseBasicBoxScoreTable(tbl *colly.HTMLElement, teamId string, quarter int)
 	return stats
 }
 
-func parseAdvancedBoxScoreTable(tbl *colly.HTMLElement, teamId string) []GamePlayerAdvancedStats {
-	stats := []GamePlayerAdvancedStats{}
+func (*GamePlayerStatsParser) parseAdvancedBoxScoreTable(tbl *colly.HTMLElement, gameId, teamId string) []model.GamePlayerAdvancedStat {
+	stats := []model.GamePlayerAdvancedStat{}
 
 	for _, rowMap := range Table(tbl) {
-		gpas := gamePlayerAdvancedStatsFromRow(rowMap, teamId)
+		gpas := gamePlayerAdvancedStatsFromRow(rowMap)
 		if gpas != nil {
+			gpas.GameId = gameId
+			gpas.TeamId = teamId
 			stats = append(stats, *gpas)
 		}
 	}
@@ -55,18 +63,21 @@ func parseAdvancedBoxScoreTable(tbl *colly.HTMLElement, teamId string) []GamePla
 	return stats
 }
 
-func parseBasicBoxScoreGameTable(tbl *colly.HTMLElement, teamId string) []GamePlayer {
-	players := []GamePlayer{}
+func (*GamePlayerStatsParser) parseBasicBoxScoreGameTable(tbl *colly.HTMLElement, gameId, teamId string) []model.GamePlayer {
+	players := []model.GamePlayer{}
 
 	for i, rowMap := range Table(tbl) {
-		players = append(players, *gamePlayerFromRow(rowMap, teamId, i))
+		player := *gamePlayerFromRow(rowMap, i)
+		player.GameId = gameId
+		player.TeamId = teamId
+		players = append(players, player)
 	}
 
 	return players
 }
 
-func parseInactivePlayersList(box *colly.HTMLElement) []GamePlayer {
-	gp := []GamePlayer{}
+func (*GamePlayerStatsParser) parseInactivePlayersList(box *colly.HTMLElement, gameId string) []model.GamePlayer {
+	gp := []model.GamePlayer{}
 	var teamId string
 
 	// we will encounter two team labels, each surrounded by span and strong, and should set the teamId when this happens
@@ -76,7 +87,8 @@ func parseInactivePlayersList(box *colly.HTMLElement) []GamePlayer {
 		}
 		// all players after that label therefore belong to that team
 		if teamId != "" && t.Attr("href") != "" {
-			gp = append(gp, GamePlayer{
+			gp = append(gp, model.GamePlayer{
+				GameId:   gameId,
 				TeamId:   teamId,
 				PlayerId: ParseLastId(t.Attr("href")),
 				Status:   "I",
@@ -108,11 +120,9 @@ func parseBoxScoreTableProperties(id string) (team, boxType string, quarter int)
 	return
 }
 
-func gamePlayerBasicStatsFromRow(rowMap map[string]*colly.HTMLElement, teamId string, quarter int) *GamePlayerBasicStats {
+func gamePlayerBasicStatsFromRow(rowMap map[string]*colly.HTMLElement) *model.GamePlayerBasicStat {
 	if _, ok := rowMap["reason"]; !ok {
-		gpbs := new(GamePlayerBasicStats)
-		gpbs.TeamId = teamId
-		gpbs.Quarter = quarter
+		gpbs := new(model.GamePlayerBasicStat)
 		gpbs.PlayerId = ParseLastId(parseLink(rowMap["player"])) // a "reason" column indicates the player did not play
 		gpbs.TimePlayed, _ = parseDuration(rowMap["mp"].Text)
 		gpbs.FieldGoals, _ = strconv.Atoi(rowMap["fg"].Text)
@@ -140,10 +150,9 @@ func gamePlayerBasicStatsFromRow(rowMap map[string]*colly.HTMLElement, teamId st
 	return nil
 }
 
-func gamePlayerAdvancedStatsFromRow(rowMap map[string]*colly.HTMLElement, teamId string) *GamePlayerAdvancedStats {
+func gamePlayerAdvancedStatsFromRow(rowMap map[string]*colly.HTMLElement) *model.GamePlayerAdvancedStat {
 	if _, ok := rowMap["reason"]; !ok { // a "reason" column indicates the player did not play
-		gpas := new(GamePlayerAdvancedStats)
-		gpas.TeamId = teamId
+		gpas := new(model.GamePlayerAdvancedStat)
 		gpas.PlayerId = ParseLastId(parseLink(rowMap["player"]))
 		gpas.TrueShootingPct, _ = parseFloatStat(rowMap["ts_pct"].Text)
 		gpas.EffectiveFgPct, _ = parseFloatStat(rowMap["efg_pct"].Text)
@@ -166,9 +175,8 @@ func gamePlayerAdvancedStatsFromRow(rowMap map[string]*colly.HTMLElement, teamId
 	return nil
 }
 
-func gamePlayerFromRow(rowMap map[string]*colly.HTMLElement, teamId string, index int) *GamePlayer {
-	gp := new(GamePlayer)
-	gp.TeamId = teamId
+func gamePlayerFromRow(rowMap map[string]*colly.HTMLElement, index int) *model.GamePlayer {
+	gp := new(model.GamePlayer)
 	gp.PlayerId = ParseLastId(parseLink(rowMap["player"]))
 
 	if _, ok := rowMap["reason"]; !ok { // a "reason" column indicates the player did not play

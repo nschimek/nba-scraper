@@ -7,7 +7,15 @@ import (
 	"time"
 
 	"github.com/gocolly/colly/v2"
+	"github.com/nschimek/nba-scraper/core"
+	"github.com/nschimek/nba-scraper/model"
 )
+
+type GameParser struct {
+	Config *core.Config           `Inject:""`
+	GS     *GameStatsParser       `Inject:""`
+	GPS    *GamePlayerStatsParser `Inject:""`
+}
 
 type Game struct {
 	Id, Location, Type               string
@@ -21,45 +29,45 @@ type Game struct {
 	GamePlayersAdvancedStats         []GamePlayerAdvancedStats
 }
 
-func (g *Game) GameTitle(div *colly.HTMLElement) {
+func (*GameParser) GameTitle(g *model.Game, div *colly.HTMLElement) {
 	g.Type = parseTypeFromTitle(div.ChildText("h1"))
 }
 
-func (g *Game) Scorebox(box *colly.HTMLElement, index int) {
+func (p *GameParser) Scorebox(g *model.Game, box *colly.HTMLElement, index int) {
 	if index == 0 { // away team is first
-		g.AwayTeam = parseScorebox(box)
+		g.Away = *p.GS.parseScorebox(box)
 	} else if index == 1 { // home team is second
-		g.HomeTeam = parseScorebox(box)
+		g.Home = *p.GS.parseScorebox(box)
 	} else if index == 2 && box.Attr("class") == "scorebox_meta" {
 		g.StartTime, g.Location = parseMetaScorebox(box)
 	}
 }
 
-func (g *Game) LineScoreTable(tbl *colly.HTMLElement) {
-	g.HomeLineScore, g.AwayLineScore = parseLineScoreTable(tbl)
+func (p *GameParser) LineScoreTable(g *model.Game, tbl *colly.HTMLElement) {
+	g.HomeLineScore, g.AwayLineScore = p.GS.parseLineScoreTable(tbl, g.ID)
 	g.Quarters = len(g.HomeLineScore)
 }
 
-func (g *Game) FourFactorsTable(tbl *colly.HTMLElement) {
-	g.HomeFourFactors, g.AwayFourFactors = parseFourFactorsTable(tbl)
+func (p *GameParser) FourFactorsTable(g *model.Game, tbl *colly.HTMLElement) {
+	g.HomeFourFactors, g.AwayFourFactors = p.GS.parseFourFactorsTable(tbl, g.ID)
 }
 
-func (g *Game) ScoreboxStatTable(box *colly.HTMLElement) {
+func (p *GameParser) ScoreboxStatTable(g *model.Game, box *colly.HTMLElement) {
 	teamId, boxType, quarter := parseBoxScoreTableProperties(box.Attr("id"))
 	box.ForEach("tbody", func(_ int, tbl *colly.HTMLElement) {
 		if boxType == "basic" && quarter > 0 && quarter < math.MaxInt {
-			g.GamePlayersBasicStats = append(g.GamePlayersBasicStats, parseBasicBoxScoreTable(tbl, teamId, quarter)...)
+			g.GamePlayersBasicStats = append(g.GamePlayersBasicStats, p.GPS.parseBasicBoxScoreTable(tbl, g.ID, teamId, quarter)...)
 		} else if boxType == "basic" && quarter == math.MaxInt {
-			g.GamePlayers = append(g.GamePlayers, parseBasicBoxScoreGameTable(tbl, teamId)...)
+			g.GamePlayers = append(g.GamePlayers, p.GPS.parseBasicBoxScoreGameTable(tbl, g.ID, teamId)...)
 		} else if boxType == "advanced" {
-			g.GamePlayersAdvancedStats = append(g.GamePlayersAdvancedStats, parseAdvancedBoxScoreTable(tbl, teamId)...)
+			g.GamePlayersAdvancedStats = append(g.GamePlayersAdvancedStats, p.GPS.parseAdvancedBoxScoreTable(tbl, g.ID, teamId)...)
 		}
 	})
 }
 
-func (g *Game) InactivePlayersList(box *colly.HTMLElement) {
+func (p *GameParser) InactivePlayersList(g *model.Game, box *colly.HTMLElement) {
 	if box.Attr("id") == "" && box.Attr("class") == "" {
-		g.GamePlayers = append(g.GamePlayers, parseInactivePlayersList(box)...)
+		g.GamePlayers = append(g.GamePlayers, p.GPS.parseInactivePlayersList(box, g.ID)...)
 	}
 }
 
