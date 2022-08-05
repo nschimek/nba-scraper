@@ -10,21 +10,6 @@ import (
 
 type GameStatsParser struct{}
 
-type GameTeam struct {
-	TeamId, TeamUrl, Result string
-	Wins, Losses, Score     int
-}
-
-type GameFourFactors struct {
-	TeamId, TeamUrl                                                              string
-	Pace, EffectiveFgPct, TurnoverPct, OffensiveRbPct, FtPerFga, OffensiveRating float64
-}
-
-type GameLineScore struct {
-	TeamId, TeamUrl string
-	Quarter, Score  int
-}
-
 func (*GameStatsParser) parseScorebox(box *colly.HTMLElement) *model.GameTeam {
 	gt := new(model.GameTeam)
 

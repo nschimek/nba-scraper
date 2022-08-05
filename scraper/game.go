@@ -1,8 +1,11 @@
 package scraper
 
 import (
+	"fmt"
+
 	"github.com/gocolly/colly/v2"
 	"github.com/nschimek/nba-scraper/core"
+	"github.com/nschimek/nba-scraper/model"
 	"github.com/nschimek/nba-scraper/parser"
 )
 
@@ -20,86 +23,77 @@ const (
 )
 
 type GameScraper struct {
-	Colly       *colly.Collector `Inject:""`
-	ScrapedData []parser.Game
-	Errors      []error
-	child       *Scraper
-	childUrls   map[string]string
+	Config      *core.Config       `Inject:""`
+	Colly       *colly.Collector   `Inject:""`
+	GameParser  *parser.GameParser `Inject:""`
+	ScrapedData []model.Game
+	PlayerIds   map[string]struct{}
 }
 
-// Scraper interface methods
-func (s *GameScraper) GetData() interface{} {
-	return s.ScrapedData
-}
+func (s *GameScraper) Scrape(ids ...string) {
+	s.PlayerIds = make(map[string]struct{})
 
-func (s *GameScraper) AttachChild(scraper *Scraper) {
-	s.child = scraper
-}
-
-func (s *GameScraper) GetChild() *Scraper {
-	return s.child
-}
-
-func (s *GameScraper) GetChildUrls() []string {
-	return urlsMapToArray(s.childUrls)
-}
-
-func (s *GameScraper) Scrape(urls ...string) {
-	s.childUrls = make(map[string]string)
-
-	for _, url := range urls {
-		game := s.parseGamePage(url)
+	for _, id := range ids {
+		game := s.parseGamePage(id)
 		s.ScrapedData = append(s.ScrapedData, game)
-		s.childUrls[game.HomeTeam.TeamId] = game.HomeTeam.TeamUrl
-		s.childUrls[game.AwayTeam.TeamId] = game.AwayTeam.TeamUrl
+		for _, gp := range game.GamePlayers {
+			s.PlayerIds[gp.PlayerId] = exists
+		}
 	}
 
+	core.Log.WithField("games", len(s.ScrapedData)).Info("Successfully scraped Game page(s)!")
 	core.Log.Infof("%+v\n", s.ScrapedData)
+	core.Log.Infoln("playerIds: ", s.PlayerIds)
 }
 
-func (s *GameScraper) parseGamePage(url string) (game parser.Game) {
+func (s *GameScraper) parseGamePage(id string) (game model.Game) {
 	c := s.Colly.Clone()
 	c.OnRequest(onRequestVisit)
 	c.OnError(onError)
 
-	game.Id = parser.ParseLastId(url)
+	game.ID = id
+	game.Season = s.Config.Season
 
 	c.OnHTML(baseContentElement, func(div *colly.HTMLElement) {
-		game.GameTitle(div)
+		s.GameParser.GameTitle(&game, div)
 
 		div.ForEach(scoreboxElements, func(i int, box *colly.HTMLElement) {
-			game.Scorebox(box, i)
+			s.GameParser.Scorebox(&game, box, i)
 		})
-		game.SetResultAndAdjust()
+		s.GameParser.SetResultAndAdjust(&game)
 	})
 
 	c.OnHTML(lineScoreTableElementBase, func(div *colly.HTMLElement) {
 		tbl, _ := transformHtmlElement(div, lineScoreTableElement, removeCommentsSyntax)
-		game.LineScoreTable(tbl)
+		s.GameParser.LineScoreTable(&game, tbl)
 	})
 
 	c.OnHTML(fourFactorsTableElementBase, func(div *colly.HTMLElement) {
 		tbl, _ := transformHtmlElement(div, fourFactorsTableElement, removeCommentsSyntax)
-		game.FourFactorsTable(tbl)
+		s.GameParser.FourFactorsTable(&game, tbl)
 	})
 
 	c.OnHTML(baseContentElement, func(div *colly.HTMLElement) {
 		div.ForEach(basicBoxScoreTables, func(_ int, box *colly.HTMLElement) {
-			game.ScoreboxStatTable(box)
+			s.GameParser.ScoreboxStatTable(&game, box)
 		})
 	})
 
 	c.OnHTML(gameBaseBodyElement, func(div *colly.HTMLElement) {
 		div.ForEach(scoreboxFooterElement, func(_ int, box *colly.HTMLElement) {
-			game.InactivePlayersList(box)
+			s.GameParser.InactivePlayersList(&game, box)
 		})
 	})
 
 	c.OnHTML(seasonLinkElement, func(li *colly.HTMLElement) {
-		game.ScheduleLink(li)
+		s.GameParser.CheckScheduleLinkSeason(li)
 	})
 
-	c.Visit(url)
+	c.Visit(s.getUrl(id))
 
 	return
+}
+
+func (s *GameScraper) getUrl(id string) string {
+	return fmt.Sprintf(gameIdPage, id)
 }

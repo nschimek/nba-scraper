@@ -8,8 +8,8 @@ import (
 func main() {
 	c := core.Setup()
 
-	// gameScraper := core.Factory[scraper.GameScraper](c.Injector())
-	// gameScraper.Scrape("https://www.basketball-reference.com/boxscores/202110300WAS.html", "https://www.basketball-reference.com/boxscores/202204180GSW.html")
+	gameScraper := core.Factory[scraper.GameScraper](c.Injector())
+	gameScraper.Scrape("202110300WAS", "202204180GSW")
 
 	// startDate, _ := time.Parse("2006-01-02", "2021-10-20")
 	// endDate, _ := time.Parse("2006-01-02", "2021-10-25")
@@ -26,9 +26,9 @@ func main() {
 	// playerScraper := core.Factory[scraper.PlayerScraper](c.Injector())
 	// playerScraper.Scrape("vandeja01", "curryst01")
 
-	standingsScraper := core.Factory[scraper.StandingScraper](c.Injector())
-	standingsScraper.Scrape()
+	// standingsScraper := core.Factory[scraper.StandingScraper](c.Injector())
+	// standingsScraper.Scrape()
 
-	injuriesScraper := core.Factory[scraper.InjuryScraper](c.Injector())
-	injuriesScraper.Scrape()
+	// injuriesScraper := core.Factory[scraper.InjuryScraper](c.Injector())
+	// injuriesScraper.Scrape()
 }

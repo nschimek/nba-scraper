@@ -17,18 +17,6 @@ type GameParser struct {
 	GPS    *GamePlayerStatsParser `Inject:""`
 }
 
-type Game struct {
-	Id, Location, Type               string
-	Season, Quarters                 int
-	StartTime                        time.Time
-	HomeTeam, AwayTeam               GameTeam
-	HomeLineScore, AwayLineScore     []GameLineScore // these will end up in their own table due to the possiblity of OT
-	HomeFourFactors, AwayFourFactors GameFourFactors // also probably their own table
-	GamePlayers                      []GamePlayer
-	GamePlayersBasicStats            []GamePlayerBasicStats
-	GamePlayersAdvancedStats         []GamePlayerAdvancedStats
-}
-
 func (*GameParser) GameTitle(g *model.Game, div *colly.HTMLElement) {
 	g.Type = parseTypeFromTitle(div.ChildText("h1"))
 }
@@ -71,9 +59,12 @@ func (p *GameParser) InactivePlayersList(g *model.Game, box *colly.HTMLElement) 
 	}
 }
 
-func (g *Game) ScheduleLink(a *colly.HTMLElement) {
+func (p *GameParser) CheckScheduleLinkSeason(a *colly.HTMLElement) {
 	// link format: /leagues/NBA_2022_games.html (we want the 2022 obviously)
-	g.Season, _ = strconv.Atoi(strings.Split(a.Attr("href"), "_")[1])
+	var season, _ = strconv.Atoi(strings.Split(a.Attr("href"), "_")[1])
+	if season != p.Config.Season {
+		core.Log.Fatalf("Scraped season (%d) is different from configured season (%d)!  This is a bad idea.", season, p.Config.Season)
+	}
 }
 
 func parseMetaScorebox(box *colly.HTMLElement) (startTime time.Time, location string) {
@@ -92,16 +83,16 @@ func parseTypeFromTitle(title string) string {
 
 // I looked this up: there can be no ties in the NBA!
 // Also, the W-L we scraped are including this game; we want them as of before this game.  So we simply adjust.
-func (g *Game) SetResultAndAdjust() {
-	if g.HomeTeam.Score > g.AwayTeam.Score {
-		g.HomeTeam.Result = "W"
-		g.AwayTeam.Result = "L"
-		g.HomeTeam.Wins--
-		g.AwayTeam.Losses--
+func (*GameParser) SetResultAndAdjust(g *model.Game) {
+	if g.Home.Score > g.Away.Score {
+		g.Home.Result = "W"
+		g.Away.Result = "L"
+		g.Home.Wins--
+		g.Away.Losses--
 	} else {
-		g.HomeTeam.Result = "L"
-		g.AwayTeam.Result = "W"
-		g.HomeTeam.Losses--
-		g.AwayTeam.Wins--
+		g.Home.Result = "L"
+		g.Away.Result = "W"
+		g.Home.Losses--
+		g.Away.Wins--
 	}
 }

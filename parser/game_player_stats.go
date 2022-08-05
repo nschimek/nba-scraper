@@ -4,33 +4,12 @@ import (
 	"math"
 	"strconv"
 	"strings"
-	"time"
 
 	"github.com/gocolly/colly/v2"
 	"github.com/nschimek/nba-scraper/model"
 )
 
 type GamePlayerStatsParser struct{}
-
-type GamePlayer struct {
-	TeamId, PlayerId, Status string
-}
-
-type GamePlayerBasicStats struct {
-	TeamId, PlayerId                                                                                        string
-	Quarter                                                                                                 int
-	TimePlayed                                                                                              time.Duration
-	FieldGoals, FieldGoalsAttempted, ThreePointers, ThreePointersAttempted, FreeThrows, FreeThrowsAttempted int
-	FieldGoalPct, ThreePointersPct, FreeThrowsPct                                                           float64
-	OffensiveRB, DefensiveRB, TotalRB, Assists, Steals, Blocks, Turnovers, PersonalFouls, Points, PlusMinus int
-}
-
-type GamePlayerAdvancedStats struct {
-	TeamId, PlayerId                                                                                                      string
-	TrueShootingPct, EffectiveFgPct, ThreePtAttemptRate, FreeThrowAttemptRate, OffensiveRbPct, DefensiveRbPct, TotalRbPct float64
-	AssistPct, StealPct, BlockPct, TurnoverPct, UsagePct, BoxPlusMinus                                                    float64
-	OffensiveRating, DefensiveRating                                                                                      int
-}
 
 func (*GamePlayerStatsParser) parseBasicBoxScoreTable(tbl *colly.HTMLElement, gameId, teamId string, quarter int) []model.GamePlayerBasicStat {
 	stats := []model.GamePlayerBasicStat{}
