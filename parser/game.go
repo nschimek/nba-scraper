@@ -32,8 +32,8 @@ func (p *GameParser) Scorebox(g *model.Game, box *colly.HTMLElement, index int) 
 }
 
 func (p *GameParser) LineScoreTable(g *model.Game, tbl *colly.HTMLElement) {
-	g.HomeLineScore, g.AwayLineScore = p.GS.parseLineScoreTable(tbl, g.ID)
-	g.Quarters = len(g.HomeLineScore)
+	g.HomeLineScores, g.AwayLineScores = p.GS.parseLineScoreTable(tbl, g.ID)
+	g.Quarters = len(g.HomeLineScores)
 }
 
 func (p *GameParser) FourFactorsTable(g *model.Game, tbl *colly.HTMLElement) {

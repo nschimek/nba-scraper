@@ -7,6 +7,7 @@ import (
 	"github.com/nschimek/nba-scraper/core"
 	"github.com/nschimek/nba-scraper/model"
 	"github.com/nschimek/nba-scraper/parser"
+	"github.com/nschimek/nba-scraper/repository"
 )
 
 const (
@@ -23,9 +24,10 @@ const (
 )
 
 type GameScraper struct {
-	Config      *core.Config       `Inject:""`
-	Colly       *colly.Collector   `Inject:""`
-	GameParser  *parser.GameParser `Inject:""`
+	Config      *core.Config               `Inject:""`
+	Colly       *colly.Collector           `Inject:""`
+	GameParser  *parser.GameParser         `Inject:""`
+	Repository  *repository.GameRepository `Inject:""`
 	ScrapedData []model.Game
 	PlayerIds   map[string]struct{}
 }
@@ -36,14 +38,15 @@ func (s *GameScraper) Scrape(ids ...string) {
 	for _, id := range ids {
 		game := s.parseGamePage(id)
 		s.ScrapedData = append(s.ScrapedData, game)
+		core.Log.Infof("%+v\n", game.GamePlayers)
 		for _, gp := range game.GamePlayers {
 			s.PlayerIds[gp.PlayerId] = exists
 		}
 	}
 
 	core.Log.WithField("games", len(s.ScrapedData)).Info("Successfully scraped Game page(s)!")
-	core.Log.Infof("%+v\n", s.ScrapedData)
-	core.Log.Infoln("playerIds: ", s.PlayerIds)
+	// core.Log.Infof("%+v\n", s.ScrapedData)
+	s.Repository.UpsertGames(s.ScrapedData)
 }
 
 func (s *GameScraper) parseGamePage(id string) (game model.Game) {

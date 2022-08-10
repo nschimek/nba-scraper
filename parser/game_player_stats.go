@@ -62,7 +62,7 @@ func (*GamePlayerStatsParser) parseInactivePlayersList(box *colly.HTMLElement, g
 	// we will encounter two team labels, each surrounded by span and strong, and should set the teamId when this happens
 	box.ForEach("div:nth-child(1) > span, div:nth-child(1) > a", func(_ int, t *colly.HTMLElement) {
 		if t.ChildText("strong") != "" {
-			teamId = t.Text
+			teamId = strings.TrimSpace(t.Text)
 		}
 		// all players after that label therefore belong to that team
 		if teamId != "" && t.Attr("href") != "" {

@@ -32,9 +32,10 @@ func ParseTeamId(link string) string {
 	return s[len(s)-2]
 }
 
-func parseDuration(duration string) (time.Duration, error) {
+func parseDuration(duration string) (int, error) {
 	// durations are in string format of m:s, so convert them into #m#s format for time.ParseDuration()
-	return time.ParseDuration(strings.Replace(duration, ":", "m", 1) + "s")
+	d, err := time.ParseDuration(strings.Replace(duration, ":", "m", 1) + "s")
+	return int(d.Seconds()), err
 }
 
 // when players do not attempt the underlying stat that generates a float, the site returns a blank - convert that to a zero

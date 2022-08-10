@@ -3,12 +3,14 @@ GRANT SELECT, INSERT, UPDATE, DELETE, CREATE, INDEX, DROP, ALTER, CREATE TEMPORA
 CREATE TABLE `game_four_factors` (
   `game_id` varchar(12) NOT NULL,
   `team_id` varchar(3) NOT NULL,
-  `pace` float unsigned NOT NULL,
-  `effective_fg_pct` float unsigned NOT NULL,
-  `turnover_pct` float unsigned NOT NULL,
-  `offensive_rb_pct` float unsigned NOT NULL,
-  `ft_per_fga` float unsigned NOT NULL,
-  `offensive_rating` float unsigned NOT NULL,
+  `pace` float NOT NULL,
+  `effective_fg_pct` float NOT NULL,
+  `turnover_pct` float NOT NULL,
+  `offensive_rb_pct` float NOT NULL,
+  `ft_per_fga` float NOT NULL,
+  `offensive_rating` float NOT NULL,
+  `created_at` datetime NOT NULL,
+  `updated_at` datetime NOT NULL,
   PRIMARY KEY (`game_id`,`team_id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 
@@ -17,28 +19,32 @@ CREATE TABLE `game_line_scores` (
   `team_id` varchar(3) NOT NULL,
   `quarter` tinyint unsigned NOT NULL,
   `score` smallint unsigned NOT NULL,
-  PRIMARY KEY (`game_id`,`team_id`)
+  `created_at` datetime NOT NULL,
+  `updated_at` datetime NOT NULL,
+  PRIMARY KEY (`game_id`,`team_id`,`quarter`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 
 CREATE TABLE `game_player_advanced_stats` (
   `game_id` varchar(12) NOT NULL,
   `team_id` varchar(3) NOT NULL,
   `player_id` varchar(9) NOT NULL,
-  `true_shooting_pct` float unsigned NOT NULL,
-  `effective_fg_pct` float unsigned NOT NULL,
-  `three_pt_attempt_rate` float unsigned NOT NULL,
-  `free_throw_attempt_rate` float unsigned NOT NULL,
-  `offensive_rb_pct` float unsigned NOT NULL,
-  `defensive_rb_pct` float unsigned NOT NULL,
-  `total_rb_pct` float unsigned NOT NULL,
-  `assist_pct` float unsigned NOT NULL,
-  `steal_pct` float unsigned NOT NULL,
-  `block_pct` float unsigned NOT NULL,
-  `turnover_pct` float unsigned NOT NULL,
-  `usage_pct` float unsigned NOT NULL,
+  `true_shooting_pct` float NOT NULL,
+  `effective_fg_pct` float NOT NULL,
+  `three_pt_attempt_rate` float NOT NULL,
+  `free_throw_attempt_rate` float NOT NULL,
+  `offensive_rb_pct` float NOT NULL,
+  `defensive_rb_pct` float NOT NULL,
+  `total_rb_pct` float NOT NULL,
+  `assist_pct` float NOT NULL,
+  `steal_pct` float NOT NULL,
+  `block_pct` float NOT NULL,
+  `turnover_pct` float NOT NULL,
+  `usage_pct` float NOT NULL,
   `box_plus_minus` float NOT NULL,
   `offensive_rating` smallint NOT NULL,
   `defensive_rating` smallint NOT NULL,
+  `created_at` datetime NOT NULL,
+  `updated_at` datetime NOT NULL,
   PRIMARY KEY (`game_id`,`team_id`,`player_id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 
@@ -47,16 +53,16 @@ CREATE TABLE `game_player_basic_stats` (
   `team_id` varchar(3) NOT NULL,
   `player_id` varchar(9) NOT NULL,
   `quarter` tinyint unsigned NOT NULL,
-  `time_played` time NOT NULL,
+  `time_played` bigint NOT NULL,
   `field_goals` tinyint unsigned NOT NULL,
   `field_goals_attempted` tinyint unsigned NOT NULL,
-  `field_goal_pct` float unsigned NOT NULL,
+  `field_goal_pct` float NOT NULL,
   `three_pointers` tinyint unsigned NOT NULL,
   `three_pointers_attempted` tinyint unsigned NOT NULL,
-  `three_pointers_pct` float unsigned NOT NULL,
+  `three_pointers_pct` float NOT NULL,
   `free_throws` tinyint unsigned NOT NULL,
   `free_throws_attempted` tinyint unsigned NOT NULL,
-  `free_throws_pct` float unsigned NOT NULL,
+  `free_throws_pct` float NOT NULL,
   `offensive_rb` tinyint unsigned NOT NULL,
   `defensive_rb` tinyint unsigned NOT NULL,
   `total_rb` tinyint unsigned NOT NULL,
@@ -67,6 +73,8 @@ CREATE TABLE `game_player_basic_stats` (
   `personal_fouls` tinyint unsigned NOT NULL,
   `points` tinyint unsigned NOT NULL,
   `plus_minus` tinyint NOT NULL,
+  `created_at` datetime NOT NULL,
+  `updated_at` datetime NOT NULL,
   PRIMARY KEY (`game_id`,`team_id`,`player_id`,`quarter`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 
@@ -75,6 +83,8 @@ CREATE TABLE `game_players` (
   `team_id` varchar(3) NOT NULL,
   `player_id` varchar(9) NOT NULL,
   `status` enum('S','R','D','I') NOT NULL,
+  `created_at` datetime NOT NULL,
+  `updated_at` datetime NOT NULL,
   PRIMARY KEY (`game_id`,`team_id`,`player_id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 
@@ -95,6 +105,8 @@ CREATE TABLE `games` (
   `away_result` enum('W','L') NOT NULL,
   `away_wins` tinyint unsigned NOT NULL,
   `away_losses` tinyint unsigned NOT NULL,
+  `created_at` datetime NOT NULL,
+  `updated_at` datetime NOT NULL,
   PRIMARY KEY (`id`),
   UNIQUE KEY `id_UNIQUE` (`id`) /*!80000 INVISIBLE */
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
@@ -105,8 +117,8 @@ CREATE TABLE `player_injuries` (
   `season` smallint unsigned NOT NULL,
   `source_update_date` date NOT NULL,
   `description` text NOT NULL,
-  `updated_at` datetime NOT NULL,
   `created_at` datetime NOT NULL,
+  `updated_at` datetime NOT NULL,
   PRIMARY KEY (`team_id`,`player_id`,`season`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 
@@ -131,8 +143,8 @@ CREATE TABLE `team_player_salaries` (
   `season` smallint unsigned NOT NULL,
   `salary` bigint unsigned NOT NULL,
   `rank` tinyint unsigned NOT NULL,
-  `updated_at` datetime NOT NULL,
   `created_at` datetime NOT NULL,
+  `updated_at` datetime NOT NULL,
   PRIMARY KEY (`team_id`,`player_id`,`season`),
   KEY `team_player_salaries.id2team.id_idx` (`team_id`),
   CONSTRAINT `team_player_salaries.id2team.id` FOREIGN KEY (`team_id`) REFERENCES `teams` (`id`) ON DELETE CASCADE
@@ -199,6 +211,8 @@ CREATE TABLE `team_standings` (
   `mar_losses` tinyint unsigned DEFAULT NULL,
   `apr_wins` tinyint unsigned DEFAULT NULL,
   `apr_losses` tinyint unsigned DEFAULT NULL,
+  `created_at` datetime NOT NULL,
+  `updated_at` datetime NOT NULL,
   PRIMARY KEY (`team_id`,`season`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 

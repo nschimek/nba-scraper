@@ -51,6 +51,7 @@ type TeamStanding struct {
 	February        WinLoss `gorm:"embedded;embeddedPrefix:feb_"`
 	March           WinLoss `gorm:"embedded;embeddedPrefix:mar_"`
 	April           WinLoss `gorm:"embedded;embeddedPrefix:apr_"`
+	Audit
 }
 
 type WinLoss struct {

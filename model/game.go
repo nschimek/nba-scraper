@@ -9,11 +9,12 @@ type Game struct {
 	StartTime                        time.Time
 	Home                             GameTeam        `gorm:"embedded;embeddedPrefix:home_"`
 	Away                             GameTeam        `gorm:"embedded;embeddedPrefix:away_"`
-	HomeLineScore, AwayLineScore     []GameLineScore // these will end up in their own table due to the possiblity of OT
+	HomeLineScores, AwayLineScores   []GameLineScore // these will end up in their own table due to the possiblity of OT
 	HomeFourFactors, AwayFourFactors GameFourFactor
 	GamePlayers                      []GamePlayer
 	GamePlayersBasicStats            []GamePlayerBasicStat
 	GamePlayersAdvancedStats         []GamePlayerAdvancedStat
+	Audit
 }
 
 type GameTeam struct {
@@ -26,12 +27,15 @@ type GameFourFactor struct {
 	GameId                                                                       string `gorm:"primaryKey"`
 	TeamId                                                                       string `gorm:"primaryKey"`
 	Pace, EffectiveFgPct, TurnoverPct, OffensiveRbPct, FtPerFga, OffensiveRating float64
+	Audit
 }
 
 type GameLineScore struct {
-	GameId         string `gorm:"primaryKey"`
-	TeamId         string `gorm:"primaryKey"`
-	Quarter, Score int
+	GameId  string `gorm:"primaryKey"`
+	TeamId  string `gorm:"primaryKey"`
+	Quarter int    `gorm:"primaryKey"`
+	Score   int
+	Audit
 }
 
 type GamePlayer struct {
@@ -39,6 +43,7 @@ type GamePlayer struct {
 	TeamId   string `gorm:"primaryKey"`
 	PlayerId string `gorm:"primaryKey"`
 	Status   string `gorm:"type:enum('S', 'R', 'D', 'I');default:'I'"`
+	Audit
 }
 
 type GamePlayerBasicStat struct {
@@ -46,10 +51,11 @@ type GamePlayerBasicStat struct {
 	TeamId                                                                                                  string `gorm:"primaryKey"`
 	PlayerId                                                                                                string `gorm:"primaryKey"`
 	Quarter                                                                                                 int    `gorm:"primaryKey"`
-	TimePlayed                                                                                              time.Duration
+	TimePlayed                                                                                              int
 	FieldGoals, FieldGoalsAttempted, ThreePointers, ThreePointersAttempted, FreeThrows, FreeThrowsAttempted int
 	FieldGoalPct, ThreePointersPct, FreeThrowsPct                                                           float64
 	OffensiveRB, DefensiveRB, TotalRB, Assists, Steals, Blocks, Turnovers, PersonalFouls, Points, PlusMinus int
+	Audit
 }
 
 type GamePlayerAdvancedStat struct {
@@ -59,4 +65,5 @@ type GamePlayerAdvancedStat struct {
 	TrueShootingPct, EffectiveFgPct, ThreePtAttemptRate, FreeThrowAttemptRate, OffensiveRbPct, DefensiveRbPct, TotalRbPct float64
 	AssistPct, StealPct, BlockPct, TurnoverPct, UsagePct, BoxPlusMinus                                                    float64
 	OffensiveRating, DefensiveRating                                                                                      int
+	Audit
 }
