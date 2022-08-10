@@ -53,7 +53,7 @@ CREATE TABLE `game_player_basic_stats` (
   `team_id` varchar(3) NOT NULL,
   `player_id` varchar(9) NOT NULL,
   `quarter` tinyint unsigned NOT NULL,
-  `time_played` bigint NOT NULL,
+  `time_played` smallint NOT NULL,
   `field_goals` tinyint unsigned NOT NULL,
   `field_goals_attempted` tinyint unsigned NOT NULL,
   `field_goal_pct` float NOT NULL,
