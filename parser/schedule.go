@@ -5,21 +5,18 @@ import (
 	"time"
 
 	"github.com/gocolly/colly/v2"
+	"github.com/nschimek/nba-scraper/model"
 )
 
-type Schedule struct {
-	StartTime                                  time.Time
-	GameId, GameUrl, VisitorTeamId, HomeTeamId string
-	Played                                     bool
-}
+type ScheduleParser struct{}
 
-func ScheduleTable(tbl *colly.HTMLElement, startDate, endDate time.Time) []Schedule {
-	schedules := []Schedule{}
+func (*ScheduleParser) ScheduleTable(tbl *colly.HTMLElement, startDate, endDate time.Time) []model.Schedule {
+	schedules := []model.Schedule{}
 
 	for _, row := range Table(tbl) {
 		s := mapScheduleRow(row)
 		if s.Played && s.StartTime.After(startDate) && s.StartTime.Before(endDate) {
-			schedules = append(schedules, s)
+			schedules = append(schedules, *s)
 		}
 	}
 
@@ -27,7 +24,9 @@ func ScheduleTable(tbl *colly.HTMLElement, startDate, endDate time.Time) []Sched
 }
 
 // the row map here has the data-stat attribute as the key and the colly HTML Element (cell) as the value
-func mapScheduleRow(r map[string]*colly.HTMLElement) (s Schedule) {
+func mapScheduleRow(r map[string]*colly.HTMLElement) *model.Schedule {
+	s := new(model.Schedule)
+
 	parsedDate := r["date_game"].ChildText("a")
 	parsedTime := strings.Replace(r["game_start_time"].Text, "p", " PM EST", 1)
 
@@ -35,12 +34,12 @@ func mapScheduleRow(r map[string]*colly.HTMLElement) (s Schedule) {
 	s.VisitorTeamId = ParseTeamId(parseLink(r["visitor_team_name"]))
 	s.HomeTeamId = ParseTeamId(parseLink(r["home_team_name"]))
 
-	s.GameUrl = parseLink(r["box_score_text"])
+	gameUrl := parseLink(r["box_score_text"])
 
-	if s.GameUrl != "" {
-		s.GameId = ParseLastId(s.GameUrl)
+	if gameUrl != "" {
+		s.GameId = ParseLastId(gameUrl)
 		s.Played = true
 	}
 
-	return
+	return s
 }

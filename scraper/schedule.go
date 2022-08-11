@@ -2,11 +2,13 @@ package scraper
 
 import (
 	"errors"
-	"strconv"
+	"fmt"
 	"strings"
 	"time"
 
 	"github.com/gocolly/colly/v2"
+	"github.com/nschimek/nba-scraper/core"
+	"github.com/nschimek/nba-scraper/model"
 	"github.com/nschimek/nba-scraper/parser"
 )
 
@@ -14,48 +16,28 @@ const (
 	baseScheduleTableElement = "body #wrap #content #all_schedule #div_schedule table tbody" // targets the main schedule table
 )
 
-type Schedule struct {
-	StartTime                         time.Time
-	GameId, VisitorTeamId, HomeTeamId string
-	Played                            bool
-}
-
 type ScheduleScraper struct {
-	colly       colly.Collector
-	season      int
-	dateRange   DateRange
-	urls        []string
-	ScrapedData []parser.Schedule
-	Errors      []error
-	child       *Scraper
-	childUrls   map[string]string
+	Config         *core.Config           `Inject:""`
+	Colly          *colly.Collector       `Inject:""`
+	ScheduleParser *parser.ScheduleParser `Inject:""`
+	dateRange      *DateRange
+	ScrapedData    []model.Schedule
+	GameIds        map[string]struct{}
 }
 
 type DateRange struct {
 	startDate, endDate time.Time
 }
 
-func CreateScheduleScraperWithDates(c *colly.Collector, season int, startDate, endDate time.Time) (ScheduleScraper, error) {
-	dateRange := DateRange{startDate: startDate, endDate: endDate}
-	urls, err := dateRangeToUrls(season, dateRange)
+func (s *ScheduleScraper) ScrapeDateRange(startDate, endDate time.Time) {
+	months, err := getMonths(startDate, endDate)
 
 	if err != nil {
-		return ScheduleScraper{}, err
+		core.Log.Fatal(err)
 	}
 
-	scraper := CreateScheduleScraper(c, season)
-	scraper.dateRange = dateRange
-	scraper.urls = urls
-
-	return scraper, nil
-}
-
-func CreateScheduleScraper(c *colly.Collector, season int) ScheduleScraper {
-	return ScheduleScraper{
-		colly:     *c,
-		season:    season,
-		childUrls: make(map[string]string),
-	}
+	s.dateRange = &DateRange{startDate: startDate, endDate: endDate}
+	s.Scrape(months...)
 }
 
 // Scraper interface methods
@@ -63,67 +45,41 @@ func (s *ScheduleScraper) GetData() interface{} {
 	return s.ScrapedData
 }
 
-func (s *ScheduleScraper) AttachChild(scraper *Scraper) {
-	s.child = scraper
-}
+func (s *ScheduleScraper) Scrape(pageIds ...string) {
+	s.GameIds = make(map[string]struct{})
+	c := s.Colly.Clone()
+	c.OnRequest(onRequestVisit)
+	c.OnError(onError)
 
-func (s *ScheduleScraper) GetChild() *Scraper {
-	return s.child
-}
-
-func (s *ScheduleScraper) GetChildUrls() []string {
-	return urlsMapToArray(s.childUrls)
-}
-
-func (s *ScheduleScraper) Scrape(urls ...string) {
-	s.urls = append(s.urls, urls...)
-
-	s.colly.OnHTML(baseScheduleTableElement, func(tbl *colly.HTMLElement) {
-		for _, ps := range parser.ScheduleTable(tbl, s.dateRange.startDate, s.dateRange.endDate) {
+	s.Colly.OnHTML(baseScheduleTableElement, func(tbl *colly.HTMLElement) {
+		for _, ps := range s.ScheduleParser.ScheduleTable(tbl, s.dateRange.startDate, s.dateRange.endDate) {
 			s.ScrapedData = append(s.ScrapedData, ps)
-			s.childUrls[ps.GameId] = tbl.Request.AbsoluteURL(ps.GameUrl)
+			s.GameIds[ps.GameId] = exists
 		}
 	})
 
-	for _, url := range s.urls {
-		s.colly.Visit(url)
+	for _, id := range pageIds {
+		s.Colly.Visit(s.getUrl(id))
 	}
 }
 
-func dateRangeToUrls(season int, dateRange DateRange) ([]string, error) {
-	months, err := getMonths(dateRange.startDate, dateRange.endDate)
-
-	if err != nil {
-		return nil, err
-	}
-
-	urls := []string{}
-
-	for _, month := range months {
-		urls = append(urls, getMonthUrl(month, season))
-	}
-
-	return urls, nil
-}
-
-func getMonthUrl(month time.Month, season int) string {
-	monthString := strings.ToLower(month.String())
-	return BaseHttp + "/" + baseLeaguesPath + "/NBA_" + strconv.Itoa(season) + "_games-" + monthString + ".html"
-}
-
-func getMonths(startDate, endDate time.Time) ([]time.Month, error) {
+func getMonths(startDate, endDate time.Time) ([]string, error) {
 	if endDate.Before(startDate) {
 		return nil, errors.New("end date is before start date")
 	}
 
-	months := []time.Month{}
+	months := []string{}
 	startMonth := time.Date(startDate.Year(), startDate.Month(), 1, 0, 0, 0, 0, time.Local)
 	endMonth := time.Date(endDate.Year(), endDate.Month(), 1, 0, 0, 0, 0, time.Local)
 
 	for startMonth.Before(endMonth) || startMonth.Equal(endMonth) {
-		months = append(months, startMonth.Month())
+		months = append(months, strings.ToLower(startMonth.Month().String()))
 		startMonth = startMonth.AddDate(0, 1, 0)
 	}
 
 	return months, nil
+}
+
+func (s *ScheduleScraper) getUrl(month string) string {
+	return fmt.Sprintf(scheduleIdPage, s.Config.Season, month)
 }
