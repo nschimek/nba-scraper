@@ -40,11 +40,6 @@ func (s *ScheduleScraper) ScrapeDateRange(startDate, endDate time.Time) {
 	s.Scrape(months...)
 }
 
-// Scraper interface methods
-func (s *ScheduleScraper) GetData() interface{} {
-	return s.ScrapedData
-}
-
 func (s *ScheduleScraper) Scrape(pageIds ...string) {
 	s.GameIds = make(map[string]struct{})
 	c := s.Colly.Clone()
@@ -61,6 +56,12 @@ func (s *ScheduleScraper) Scrape(pageIds ...string) {
 	for _, id := range pageIds {
 		s.Colly.Visit(s.getUrl(id))
 	}
+
+	core.Log.WithField("gameIds", len(s.GameIds)).Info("Successfully scraped game IDs from Schedule!")
+}
+
+func (s *ScheduleScraper) GetIds() []string {
+	return idMapToArray(s.GameIds)
 }
 
 func getMonths(startDate, endDate time.Time) ([]string, error) {

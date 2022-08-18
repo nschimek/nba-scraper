@@ -23,7 +23,7 @@ const (
 )
 
 // we this has a static URL, so we have no use for the IDs...but leaving it for a future interface
-func (s *InjuryScraper) Scrape(ids ...string) {
+func (s *InjuryScraper) Scrape(pageIds ...string) {
 	s.PlayerIds = make(map[string]struct{})
 	c := s.Colly.Clone()
 	c.OnRequest(onRequestVisit)
@@ -39,5 +39,8 @@ func (s *InjuryScraper) Scrape(ids ...string) {
 	c.Visit(injuriesUrl)
 
 	core.Log.WithField("injuries", len(s.ScrapedData)).Info("Successfully scraped Player Injuries page!")
+}
+
+func (s *InjuryScraper) Persist() {
 	s.Repository.Upsert(s.ScrapedData, "player_injuries")
 }

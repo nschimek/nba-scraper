@@ -4,6 +4,7 @@ import (
 	"fmt"
 
 	"github.com/gocolly/colly/v2"
+	"github.com/nschimek/nba-scraper/core"
 	"github.com/nschimek/nba-scraper/model"
 	"github.com/nschimek/nba-scraper/parser"
 	"github.com/nschimek/nba-scraper/repository"
@@ -21,16 +22,16 @@ type PlayerScraper struct {
 	ScrapedData  []model.Player
 }
 
-func (s *PlayerScraper) GetData() interface{} {
-	return s.ScrapedData
-}
-
-func (s *PlayerScraper) Scrape(ids ...string) {
-	for _, id := range ids {
+func (s *PlayerScraper) Scrape(pageIds ...string) {
+	for _, id := range pageIds {
 		player := s.parsePlayerPage(id)
 		s.ScrapedData = append(s.ScrapedData, player)
 	}
 
+	core.Log.WithField("players", len(s.ScrapedData)).Info("Successfully scraped Player page(s)!")
+}
+
+func (s *PlayerScraper) Persist() {
 	s.Repository.Upsert(s.ScrapedData, "players")
 }
 

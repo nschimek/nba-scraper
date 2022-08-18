@@ -38,15 +38,20 @@ func (s *GameScraper) Scrape(ids ...string) {
 	for _, id := range ids {
 		game := s.parseGamePage(id)
 		s.ScrapedData = append(s.ScrapedData, game)
-		core.Log.Infof("%+v\n", game.GamePlayers)
 		for _, gp := range game.GamePlayers {
 			s.PlayerIds[gp.PlayerId] = exists
 		}
 	}
 
 	core.Log.WithField("games", len(s.ScrapedData)).Info("Successfully scraped Game page(s)!")
-	// core.Log.Infof("%+v\n", s.ScrapedData)
-	s.Repository.UpsertGames(s.ScrapedData)
+}
+
+func (s *GameScraper) Persist() {
+	if len(s.ScrapedData) > 0 {
+		s.Repository.UpsertGames(s.ScrapedData)
+	} else {
+		core.Log.Warn("Tried to persist Games, but there were none scraped...")
+	}
 }
 
 func (s *GameScraper) parseGamePage(id string) (game model.Game) {

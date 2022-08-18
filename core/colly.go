@@ -8,15 +8,17 @@ import (
 
 const (
 	allowedDomain = "www.basketball-reference.com"
+	domainGlob    = "*" + allowedDomain + "*"
 )
 
-var limitRule = &colly.LimitRule{
-	Parallelism: 2,
-	RandomDelay: 5 * time.Second,
+var LimitRule = &colly.LimitRule{
+	DomainGlob:  domainGlob,
+	Parallelism: 1,
+	RandomDelay: 3 * time.Second,
 }
 
 func createColly() *colly.Collector {
 	c := colly.NewCollector(colly.AllowedDomains(allowedDomain))
-	c.Limit(limitRule)
+	c.Limit(LimitRule)
 	return c
 }

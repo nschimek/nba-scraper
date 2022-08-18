@@ -46,6 +46,9 @@ func (s *StandingScraper) Scrape(pageIds ...string) {
 	c.Visit(s.getUrl())
 
 	core.Log.WithField("standings", len(s.ScrapedData)).Info("Successfully scraped Team Standings page!")
+}
+
+func (s *StandingScraper) Persist() {
 	s.Repository.Upsert(s.ScrapedData, "player_standings")
 }
 

@@ -13,8 +13,7 @@ import (
 var exists = struct{}{}
 
 type Scraper interface {
-	Scrape(urls ...string)
-	GetData() interface{}
+	Scrape(pageIds ...string)
 }
 
 func onRequestVisit(r *colly.Request) {
@@ -25,9 +24,9 @@ func onError(r *colly.Response, err error) {
 	core.Log.Fatalf("Scraping resulted in error: %s", err)
 }
 
-func urlsMapToArray(urlsMap map[string]string) (urlsArray []string) {
-	for _, url := range urlsMap {
-		urlsArray = append(urlsArray, url)
+func idMapToArray(idMap map[string]struct{}) (ids []string) {
+	for id := range idMap {
+		ids = append(ids, id)
 	}
 	return
 }

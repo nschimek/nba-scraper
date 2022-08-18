@@ -1,6 +1,8 @@
 package main
 
 import (
+	"time"
+
 	"github.com/nschimek/nba-scraper/core"
 	"github.com/nschimek/nba-scraper/scraper"
 )
@@ -8,20 +10,17 @@ import (
 func main() {
 	c := core.Setup()
 
+	startDate, _ := time.Parse("2006-01-02", "2021-10-20")
+	endDate, _ := time.Parse("2006-01-02", "2021-10-25")
+
+	scheduleScraper := core.Factory[scraper.ScheduleScraper](c.Injector())
+	scheduleScraper.ScrapeDateRange(startDate, endDate)
+
 	gameScraper := core.Factory[scraper.GameScraper](c.Injector())
-	gameScraper.Scrape("202110300WAS", "202204180GSW")
-
-	// startDate, _ := time.Parse("2006-01-02", "2021-10-20")
-	// endDate, _ := time.Parse("2006-01-02", "2021-10-25")
-
-	// scheduleScraper, _ := scraper.CreateScheduleScraperWithDates(c, "2022", startDate, endDate)
-
-	// scheduleScraper.Scrape()
-	// fmt.Println(scheduleScraper.GetData())
-	// fmt.Println(scheduleScraper.GetChildUrls())
+	gameScraper.Scrape(scheduleScraper.GetIds()...)
 
 	// teamScraper := core.Factory[scraper.TeamScraper](c.Injector())
-	// teamScraper.Scrape("TOR", "CHI")
+	// teamScraper.Scrape("TOR", "CHI", "BRK", "GSW")
 
 	// playerScraper := core.Factory[scraper.PlayerScraper](c.Injector())
 	// playerScraper.Scrape("vandeja01", "curryst01")

@@ -36,6 +36,10 @@ func (s *TeamScraper) Scrape(ids ...string) {
 		s.ScrapedData = append(s.ScrapedData, team)
 	}
 
+	core.Log.WithField("teams", len(s.ScrapedData)).Info("Successfully scraped Team page(s)!")
+}
+
+func (s *TeamScraper) Persist() {
 	s.Repository.UpsertTeams(s.ScrapedData)
 }
 
