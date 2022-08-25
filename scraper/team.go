@@ -25,13 +25,13 @@ type TeamScraper struct {
 	TeamParser  *parser.TeamParser         `Inject:""`
 	Repository  *repository.TeamRepository `Inject:""`
 	ScrapedData []model.Team
-	PlayerIds   map[string]struct{}
+	PlayerIds   map[string]bool
 }
 
-func (s *TeamScraper) Scrape(ids ...string) {
-	s.PlayerIds = make(map[string]struct{})
+func (s *TeamScraper) Scrape(idMap map[string]bool) {
+	s.PlayerIds = make(map[string]bool)
 
-	for _, id := range ids {
+	for _, id := range IdMapToArray(idMap) {
 		team := s.parseTeamPage(id)
 		s.ScrapedData = append(s.ScrapedData, team)
 	}
@@ -44,9 +44,7 @@ func (s *TeamScraper) Persist() {
 }
 
 func (s *TeamScraper) parseTeamPage(id string) (team model.Team) {
-	c := s.Colly.Clone()
-	c.OnRequest(onRequestVisit)
-	c.OnError(onError)
+	c := core.CloneColly(s.Colly)
 
 	team.ID = id
 	team.Season = s.Config.Season
@@ -59,7 +57,7 @@ func (s *TeamScraper) parseTeamPage(id string) (team model.Team) {
 		s.TeamParser.TeamPlayerTable(&team, tbl)
 
 		for _, p := range team.TeamPlayers {
-			s.PlayerIds[p.PlayerId] = exists
+			s.PlayerIds[p.PlayerId] = true
 		}
 	})
 

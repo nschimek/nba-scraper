@@ -29,18 +29,22 @@ type GameScraper struct {
 	GameParser  *parser.GameParser         `Inject:""`
 	Repository  *repository.GameRepository `Inject:""`
 	ScrapedData []model.Game
-	PlayerIds   map[string]struct{}
+	PlayerIds   map[string]bool
+	TeamIds     map[string]bool
 }
 
-func (s *GameScraper) Scrape(ids ...string) {
-	s.PlayerIds = make(map[string]struct{})
+func (s *GameScraper) Scrape(idMap map[string]bool) {
+	s.PlayerIds = make(map[string]bool)
+	s.TeamIds = make(map[string]bool)
 
-	for _, id := range ids {
+	for _, id := range IdMapToArray(idMap) {
 		game := s.parseGamePage(id)
 		s.ScrapedData = append(s.ScrapedData, game)
 		for _, gp := range game.GamePlayers {
-			s.PlayerIds[gp.PlayerId] = exists
+			s.PlayerIds[gp.PlayerId] = true
 		}
+		s.TeamIds[game.Home.TeamId] = true
+		s.TeamIds[game.Away.TeamId] = true
 	}
 
 	core.Log.WithField("games", len(s.ScrapedData)).Info("Successfully scraped Game page(s)!")
@@ -55,9 +59,7 @@ func (s *GameScraper) Persist() {
 }
 
 func (s *GameScraper) parseGamePage(id string) (game model.Game) {
-	c := s.Colly.Clone()
-	c.OnRequest(onRequestVisit)
-	c.OnError(onError)
+	c := core.CloneColly(s.Colly)
 
 	game.ID = id
 	game.Season = s.Config.Season

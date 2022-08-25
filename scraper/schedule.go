@@ -22,7 +22,7 @@ type ScheduleScraper struct {
 	ScheduleParser *parser.ScheduleParser `Inject:""`
 	dateRange      *DateRange
 	ScrapedData    []model.Schedule
-	GameIds        map[string]struct{}
+	GameIds        map[string]bool
 }
 
 type DateRange struct {
@@ -30,6 +30,7 @@ type DateRange struct {
 }
 
 func (s *ScheduleScraper) ScrapeDateRange(startDate, endDate time.Time) {
+	endDate = time.Date(endDate.Year(), endDate.Month(), endDate.Day(), 23, 59, 59, 0, parser.EST)
 	months, err := getMonths(startDate, endDate)
 
 	if err != nil {
@@ -41,27 +42,21 @@ func (s *ScheduleScraper) ScrapeDateRange(startDate, endDate time.Time) {
 }
 
 func (s *ScheduleScraper) Scrape(pageIds ...string) {
-	s.GameIds = make(map[string]struct{})
-	c := s.Colly.Clone()
-	c.OnRequest(onRequestVisit)
-	c.OnError(onError)
+	c := core.CloneColly(s.Colly)
+	s.GameIds = make(map[string]bool)
 
-	s.Colly.OnHTML(baseScheduleTableElement, func(tbl *colly.HTMLElement) {
+	c.OnHTML(baseScheduleTableElement, func(tbl *colly.HTMLElement) {
 		for _, ps := range s.ScheduleParser.ScheduleTable(tbl, s.dateRange.startDate, s.dateRange.endDate) {
 			s.ScrapedData = append(s.ScrapedData, ps)
-			s.GameIds[ps.GameId] = exists
+			s.GameIds[ps.GameId] = true
 		}
 	})
 
 	for _, id := range pageIds {
-		s.Colly.Visit(s.getUrl(id))
+		c.Visit(s.getUrl(id))
 	}
 
 	core.Log.WithField("gameIds", len(s.GameIds)).Info("Successfully scraped game IDs from Schedule!")
-}
-
-func (s *ScheduleScraper) GetIds() []string {
-	return idMapToArray(s.GameIds)
 }
 
 func getMonths(startDate, endDate time.Time) ([]string, error) {

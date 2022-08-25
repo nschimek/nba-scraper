@@ -7,28 +7,27 @@ import (
 
 	"github.com/PuerkitoBio/goquery"
 	"github.com/gocolly/colly/v2"
-	"github.com/nschimek/nba-scraper/core"
 )
 
 var exists = struct{}{}
 
-type Scraper interface {
-	Scrape(pageIds ...string)
-}
-
-func onRequestVisit(r *colly.Request) {
-	core.Log.Infof("Visiting: %s", r.URL.String())
-}
-
-func onError(r *colly.Response, err error) {
-	core.Log.Fatalf("Scraping resulted in error: %s", err)
-}
-
-func idMapToArray(idMap map[string]struct{}) (ids []string) {
-	for id := range idMap {
-		ids = append(ids, id)
+func IdMapToArray(idMap map[string]bool) (ids []string) {
+	for id, keep := range idMap {
+		if keep {
+			ids = append(ids, id)
+		}
 	}
 	return
+}
+
+func ConsolidateIdMaps(idMaps ...map[string]bool) (idMap map[string]bool) {
+	for _, m := range idMaps {
+		for k, v := range m {
+			idMap[k] = v
+		}
+	}
+
+	return idMap
 }
 
 func transformHtmlElement(element *colly.HTMLElement, query string, transform func(html string) string) (*colly.HTMLElement, error) {

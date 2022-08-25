@@ -14,11 +14,26 @@ const (
 var LimitRule = &colly.LimitRule{
 	DomainGlob:  domainGlob,
 	Parallelism: 1,
-	RandomDelay: 3 * time.Second,
+	RandomDelay: 5 * time.Second,
 }
 
 func createColly() *colly.Collector {
 	c := colly.NewCollector(colly.AllowedDomains(allowedDomain))
 	c.Limit(LimitRule)
 	return c
+}
+
+func CloneColly(colly *colly.Collector) *colly.Collector {
+	c := colly.Clone()
+	c.OnRequest(onRequestVisit)
+	c.OnError(onError)
+	return c
+}
+
+func onRequestVisit(r *colly.Request) {
+	Log.Infof("Visiting: %s", r.URL.String())
+}
+
+func onError(r *colly.Response, err error) {
+	Log.Fatalf("Scraping resulted in error: %s", err)
 }

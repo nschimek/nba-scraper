@@ -22,12 +22,9 @@ const (
 	injuriesTableBaseElement = "body > div#wrap > div#content > div#all_injuries.table_wrapper > div#div_injuries.table_container > table > tbody"
 )
 
-// we this has a static URL, so we have no use for the IDs...but leaving it for a future interface
-func (s *InjuryScraper) Scrape(pageIds ...string) {
+func (s *InjuryScraper) Scrape() {
+	c := core.CloneColly(s.Colly)
 	s.PlayerIds = make(map[string]struct{})
-	c := s.Colly.Clone()
-	c.OnRequest(onRequestVisit)
-	c.OnError(onError)
 
 	c.OnHTML(injuriesTableBaseElement, func(tbl *colly.HTMLElement) {
 		for _, pi := range s.InjuryParser.InjuriesTable(tbl) {
