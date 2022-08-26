@@ -11,10 +11,10 @@ import (
 )
 
 type StandingScraper struct {
-	Config      *core.Config                 `Inject:""`
-	Colly       *colly.Collector             `Inject:""`
-	Parser      *parser.StandingParser       `Inject:""`
-	Repository  *repository.SimpleRepository `Inject:""`
+	Config      *core.Config                                     `Inject:""`
+	Colly       *colly.Collector                                 `Inject:""`
+	Parser      *parser.StandingParser                           `Inject:""`
+	Repository  *repository.SimpleRepository[model.TeamStanding] `Inject:""`
 	ScrapedData []model.TeamStanding
 	TeamIds     map[string]struct{}
 }

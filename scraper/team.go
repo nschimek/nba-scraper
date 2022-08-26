@@ -31,7 +31,7 @@ type TeamScraper struct {
 func (s *TeamScraper) Scrape(idMap map[string]bool) {
 	s.PlayerIds = make(map[string]bool)
 
-	for _, id := range IdMapToArray(idMap) {
+	for _, id := range core.IdMapToArray(idMap) {
 		team := s.parseTeamPage(id)
 		s.ScrapedData = append(s.ScrapedData, team)
 	}

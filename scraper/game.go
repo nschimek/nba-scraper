@@ -37,7 +37,7 @@ func (s *GameScraper) Scrape(idMap map[string]bool) {
 	s.PlayerIds = make(map[string]bool)
 	s.TeamIds = make(map[string]bool)
 
-	for _, id := range IdMapToArray(idMap) {
+	for _, id := range core.IdMapToArray(idMap) {
 		game := s.parseGamePage(id)
 		s.ScrapedData = append(s.ScrapedData, game)
 		for _, gp := range game.GamePlayers {

@@ -9,10 +9,10 @@ import (
 )
 
 type InjuryScraper struct {
-	Config       *core.Config                 `Inject:""`
-	Colly        *colly.Collector             `Inject:""`
-	InjuryParser *parser.InjuryParser         `Inject:""`
-	Repository   *repository.SimpleRepository `Inject:""`
+	Config       *core.Config                                     `Inject:""`
+	Colly        *colly.Collector                                 `Inject:""`
+	InjuryParser *parser.InjuryParser                             `Inject:""`
+	Repository   *repository.SimpleRepository[model.PlayerInjury] `Inject:""`
 	ScrapedData  []model.PlayerInjury
 	PlayerIds    map[string]struct{}
 }
