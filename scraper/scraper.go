@@ -7,6 +7,7 @@ import (
 
 	"github.com/PuerkitoBio/goquery"
 	"github.com/gocolly/colly/v2"
+	"github.com/nschimek/nba-scraper/core"
 )
 
 var exists = struct{}{}
@@ -25,4 +26,12 @@ func transformHtmlElement(element *colly.HTMLElement, query string, transform fu
 
 func removeCommentsSyntax(html string) string {
 	return strings.ReplaceAll(strings.ReplaceAll(html, "<!--", ""), "-->", "")
+}
+
+func persistIfPopulated[T any](persist func(scrapedData []T), scrapedData []T, label string) {
+	if len(scrapedData) > 0 {
+		persist(scrapedData)
+	} else {
+		core.Log.Warnf("No %s(s) scraped to persist, skipping!")
+	}
 }

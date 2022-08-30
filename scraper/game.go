@@ -29,32 +29,32 @@ type GameScraper struct {
 	GameParser  *parser.GameParser         `Inject:""`
 	Repository  *repository.GameRepository `Inject:""`
 	ScrapedData []model.Game
-	PlayerIds   map[string]bool
-	TeamIds     map[string]bool
+	PlayerIds   map[string]struct{}
+	TeamIds     map[string]struct{}
 }
 
-func (s *GameScraper) Scrape(idMap map[string]bool) {
-	s.PlayerIds = make(map[string]bool)
-	s.TeamIds = make(map[string]bool)
+func (s *GameScraper) Scrape(idMap map[string]struct{}) {
+	s.PlayerIds = make(map[string]struct{})
+	s.TeamIds = make(map[string]struct{})
 
 	for _, id := range core.IdMapToArray(idMap) {
 		game := s.parseGamePage(id)
 		s.ScrapedData = append(s.ScrapedData, game)
 		for _, gp := range game.GamePlayers {
-			s.PlayerIds[gp.PlayerId] = true
+			s.PlayerIds[gp.PlayerId] = exists
 		}
-		s.TeamIds[game.Home.TeamId] = true
-		s.TeamIds[game.Away.TeamId] = true
+		s.TeamIds[game.Home.TeamId] = exists
+		s.TeamIds[game.Away.TeamId] = exists
 	}
 
-	core.Log.WithField("games", len(s.ScrapedData)).Info("Successfully scraped Game page(s)!")
+	core.Log.WithField("games", len(s.ScrapedData)).Info("Finished scraping Game page(s)!")
 }
 
 func (s *GameScraper) Persist() {
 	if len(s.ScrapedData) > 0 {
 		s.Repository.UpsertGames(s.ScrapedData)
 	} else {
-		core.Log.Warn("Tried to persist Games, but there were none scraped...")
+		core.Log.Warn("No Games scraped to persist! Skipping...")
 	}
 }
 

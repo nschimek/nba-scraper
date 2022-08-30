@@ -35,9 +35,13 @@ func (s *InjuryScraper) Scrape() {
 
 	c.Visit(injuriesUrl)
 
-	core.Log.WithField("injuries", len(s.ScrapedData)).Info("Successfully scraped Player Injuries page!")
+	core.Log.WithField("injuries", len(s.ScrapedData)).Info("Finished scraping Player Injuries page!")
 }
 
 func (s *InjuryScraper) Persist() {
-	s.Repository.Upsert(s.ScrapedData, "player_injuries")
+	if len(s.ScrapedData) > 0 {
+		s.Repository.Upsert(s.ScrapedData, "player_injuries")
+	} else {
+		core.Log.Warn("No Player Injuries scraped to persist! Skipping...")
+	}
 }

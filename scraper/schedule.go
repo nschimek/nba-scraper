@@ -22,7 +22,7 @@ type ScheduleScraper struct {
 	ScheduleParser *parser.ScheduleParser `Inject:""`
 	dateRange      *DateRange
 	ScrapedData    []model.Schedule
-	GameIds        map[string]bool
+	GameIds        map[string]struct{}
 }
 
 type DateRange struct {
@@ -43,12 +43,12 @@ func (s *ScheduleScraper) ScrapeDateRange(startDate, endDate time.Time) {
 
 func (s *ScheduleScraper) Scrape(pageIds ...string) {
 	c := core.CloneColly(s.Colly)
-	s.GameIds = make(map[string]bool)
+	s.GameIds = make(map[string]struct{})
 
 	c.OnHTML(baseScheduleTableElement, func(tbl *colly.HTMLElement) {
 		for _, ps := range s.ScheduleParser.ScheduleTable(tbl, s.dateRange.startDate, s.dateRange.endDate) {
 			s.ScrapedData = append(s.ScrapedData, ps)
-			s.GameIds[ps.GameId] = true
+			s.GameIds[ps.GameId] = exists
 		}
 	})
 
@@ -56,7 +56,11 @@ func (s *ScheduleScraper) Scrape(pageIds ...string) {
 		c.Visit(s.getUrl(id))
 	}
 
-	core.Log.WithField("gameIds", len(s.GameIds)).Info("Successfully scraped game IDs from Schedule!")
+	if len(s.GameIds) > 0 {
+		core.Log.WithField("gameIds", len(s.GameIds)).Info("Successfully scraped game IDs from Schedule!")
+	} else {
+		core.Log.Warn("No game IDs scraped from given date range...")
+	}
 }
 
 func getMonths(startDate, endDate time.Time) ([]string, error) {

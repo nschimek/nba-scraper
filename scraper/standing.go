@@ -43,11 +43,15 @@ func (s *StandingScraper) Scrape(pageIds ...string) {
 
 	c.Visit(s.getUrl())
 
-	core.Log.WithField("standings", len(s.ScrapedData)).Info("Successfully scraped Team Standings page!")
+	core.Log.WithField("standings", len(s.ScrapedData)).Info("Finished scraping Team Standings page!")
 }
 
 func (s *StandingScraper) Persist() {
-	s.Repository.Upsert(s.ScrapedData, "player_standings")
+	if len(s.ScrapedData) > 0 {
+		s.Repository.Upsert(s.ScrapedData, "Team Standing")
+	} else {
+		core.Log.Warn("No Team Standings scraped to persist, skipping...")
+	}
 }
 
 func (t *StandingScraper) getUrl() string {

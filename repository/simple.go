@@ -8,6 +8,10 @@ import (
 	"gorm.io/gorm/clause"
 )
 
+const (
+	suppressedLogMessage = "%d (of %d) %s ID(s) were updated in last %d days and suppressed from scraping"
+)
+
 var updateAll = clause.OnConflict{UpdateAll: true}
 
 type SimpleRepository[T any] struct {
@@ -31,7 +35,7 @@ func (r *SimpleRepository[T]) GetRecentlyUpdated(days int, ids []string, label s
 	result := r.DB.Gorm.Model(&m).Where("updated_at > ? AND id IN ?", updated, ids).Find(&matched)
 
 	if result.Error == nil {
-		core.Log.Infof("Got %d %s ID(s) updated in past %d days...", result.RowsAffected, label, days)
+		core.Log.Infof(suppressedLogMessage, result.RowsAffected, len(ids), label, days)
 		m_ids := []string{}
 
 		for _, id := range matched {

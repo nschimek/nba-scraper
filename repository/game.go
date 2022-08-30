@@ -4,6 +4,7 @@ import (
 	"github.com/nschimek/nba-scraper/core"
 	"github.com/nschimek/nba-scraper/model"
 	"github.com/sirupsen/logrus"
+	"gorm.io/gorm"
 )
 
 type GameRepository struct {
@@ -13,7 +14,7 @@ type GameRepository struct {
 func (r *GameRepository) UpsertGames(games []model.Game) {
 	core.Log.WithField("games", len(games)).Infof("Create/Updating Games, Game Stats, and Game Player Stats...")
 	for _, game := range games {
-		r.DB.Gorm.Clauses(updateAll).Omit(
+		r1 := r.DB.Gorm.Clauses(updateAll).Omit(
 			"HomeLineScores",
 			"AwayLineScores",
 			"HomeFourFactors",
@@ -22,20 +23,34 @@ func (r *GameRepository) UpsertGames(games []model.Game) {
 			"GamePlayersBasicStats",
 			"GamePlayersAdvancedStats").Create(&game)
 
-		r1 := r.DB.Gorm.Clauses(updateAll).Create(&game.HomeLineScores)
-		r2 := r.DB.Gorm.Clauses(updateAll).Create(&game.AwayLineScores)
-		r3 := r.DB.Gorm.Clauses(updateAll).Create(&game.HomeFourFactors)
-		r4 := r.DB.Gorm.Clauses(updateAll).Create(&game.AwayFourFactors)
-		r5 := r.DB.Gorm.Clauses(updateAll).Create(&game.GamePlayers)
-		r6 := r.DB.Gorm.Clauses(updateAll).Create(&game.GamePlayersBasicStats)
-		r7 := r.DB.Gorm.Clauses(updateAll).Create(&game.GamePlayersAdvancedStats)
+		if r1.Error == nil {
+			var results [7]*gorm.DB
+			var errors int
 
-		core.Log.WithFields(logrus.Fields{
-			"line scores":  r1.RowsAffected + r2.RowsAffected,
-			"four factors": r3.RowsAffected + r4.RowsAffected,
-			"game players": r5.RowsAffected,
-			"basic stats":  r6.RowsAffected,
-			"adv stats":    r7.RowsAffected,
-		}).Infof("Succesfully create/updated game %s along with all scores and stats", game.ID)
+			results[0] = r.DB.Gorm.Clauses(updateAll).Create(&game.HomeLineScores)
+			results[1] = r.DB.Gorm.Clauses(updateAll).Create(&game.AwayLineScores)
+			results[2] = r.DB.Gorm.Clauses(updateAll).Create(&game.HomeFourFactors)
+			results[3] = r.DB.Gorm.Clauses(updateAll).Create(&game.AwayFourFactors)
+			results[4] = r.DB.Gorm.Clauses(updateAll).Create(&game.GamePlayers)
+			results[5] = r.DB.Gorm.Clauses(updateAll).Create(&game.GamePlayersBasicStats)
+			results[6] = r.DB.Gorm.Clauses(updateAll).Create(&game.GamePlayersAdvancedStats)
+
+			for _, r := range results {
+				if r.Error != nil {
+					errors++
+				}
+			}
+
+			if errors == 0 {
+				core.Log.WithFields(logrus.Fields{
+					"line scores":  results[0].RowsAffected + results[1].RowsAffected,
+					"four factors": results[2].RowsAffected + results[3].RowsAffected,
+					"game players": results[4].RowsAffected,
+					"basic stats":  results[5].RowsAffected,
+					"adv stats":    results[6].RowsAffected,
+				}).Infof("Succesfully create/updated game %s along with all scores and stats", game.ID)
+			}
+		}
+
 	}
 }

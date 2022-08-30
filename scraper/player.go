@@ -22,8 +22,8 @@ type PlayerScraper struct {
 	ScrapedData  []model.Player
 }
 
-func (s *PlayerScraper) Scrape(idMap map[string]bool) {
-	core.Log.WithField("ids", len(idMap)).Info("Got Player ID(s) to Scrape, suppressing recent...")
+func (s *PlayerScraper) Scrape(idMap map[string]struct{}) {
+	core.Log.WithField("ids", len(idMap)).Info("Got Player ID(s) to scrape, checking for recently updated (for suppression)...")
 	s.suppressRecent(idMap)
 
 	for id := range idMap {
@@ -31,16 +31,22 @@ func (s *PlayerScraper) Scrape(idMap map[string]bool) {
 		s.ScrapedData = append(s.ScrapedData, player)
 	}
 
-	core.Log.WithField("players", len(s.ScrapedData)).Info("Successfully scraped Player page(s)!")
+	core.Log.WithField("players", len(s.ScrapedData)).Info("Finished scraping Player page(s)!")
 }
 
 func (s *PlayerScraper) Persist() {
-	s.Repository.Upsert(s.ScrapedData, "players")
+	if len(s.ScrapedData) > 0 {
+		s.Repository.Upsert(s.ScrapedData, "Players")
+	} else {
+		core.Log.Info("No Players scraped to persist! Skipping...")
+	}
 }
 
-func (s *PlayerScraper) suppressRecent(idMap map[string]bool) {
-	ids, _ := s.Repository.GetRecentlyUpdated(365, core.IdMapToArray(idMap), "Players")
-	core.SuppressIdMap(idMap, ids)
+func (s *PlayerScraper) suppressRecent(idMap map[string]struct{}) {
+	ids, _ := s.Repository.GetRecentlyUpdated(365, core.IdMapToArray(idMap), "Player")
+	if ids != nil && len(ids) > 0 {
+		core.SuppressIdMap(idMap, ids)
+	}
 }
 
 func (s *PlayerScraper) parsePlayerPage(id string) (player model.Player) {

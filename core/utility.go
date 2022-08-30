@@ -1,25 +1,25 @@
 package core
 
-func IdMapToArray(idMap map[string]bool) (ids []string) {
-	for id, keep := range idMap {
-		if keep {
-			ids = append(ids, id)
-		}
+func IdMapToArray(idMap map[string]struct{}) (ids []string) {
+	for id := range idMap {
+		ids = append(ids, id)
 	}
 	return
 }
 
-func ConsolidateIdMaps(idMaps ...map[string]bool) (idMap map[string]bool) {
+func ConsolidateIdMaps(idMaps ...map[string]struct{}) (idMap map[string]struct{}) {
 	for _, m := range idMaps {
-		for k, v := range m {
-			idMap[k] = v
+		if m != nil {
+			for k, v := range m {
+				idMap[k] = v
+			}
 		}
 	}
 
 	return idMap
 }
 
-func SuppressIdMap(idMap map[string]bool, ids []string) {
+func SuppressIdMap(idMap map[string]struct{}, ids []string) {
 	for _, id := range ids {
 		if _, ok := idMap[id]; ok {
 			delete(idMap, id)

@@ -20,27 +20,41 @@ const (
 )
 
 type TeamScraper struct {
-	Config      *core.Config               `Inject:""`
-	Colly       *colly.Collector           `Inject:""`
-	TeamParser  *parser.TeamParser         `Inject:""`
-	Repository  *repository.TeamRepository `Inject:""`
-	ScrapedData []model.Team
-	PlayerIds   map[string]bool
+	Config           *core.Config                             `Inject:""`
+	Colly            *colly.Collector                         `Inject:""`
+	TeamParser       *parser.TeamParser                       `Inject:""`
+	TeamRepository   *repository.TeamRepository               `Inject:""`
+	SimpleRepository *repository.SimpleRepository[model.Team] `Inject:""`
+	ScrapedData      []model.Team
+	PlayerIds        map[string]struct{}
 }
 
-func (s *TeamScraper) Scrape(idMap map[string]bool) {
-	s.PlayerIds = make(map[string]bool)
+func (s *TeamScraper) Scrape(idMap map[string]struct{}) {
+	s.PlayerIds = make(map[string]struct{})
+	core.Log.WithField("ids", len(idMap)).Info("Got Team ID(s) to scrape, checking for recently updated (for suppression)...")
+	s.suppressRecent(idMap)
 
 	for _, id := range core.IdMapToArray(idMap) {
 		team := s.parseTeamPage(id)
 		s.ScrapedData = append(s.ScrapedData, team)
 	}
 
-	core.Log.WithField("teams", len(s.ScrapedData)).Info("Successfully scraped Team page(s)!")
+	core.Log.WithField("teams", len(s.ScrapedData)).Info("Finished scraping Team page(s)!")
 }
 
 func (s *TeamScraper) Persist() {
-	s.Repository.UpsertTeams(s.ScrapedData)
+	if len(s.ScrapedData) > 0 {
+		s.TeamRepository.UpsertTeams(s.ScrapedData)
+	} else {
+		core.Log.Info("No Teams scraped to persist! Skipping...")
+	}
+}
+
+func (s *TeamScraper) suppressRecent(idMap map[string]struct{}) {
+	ids, _ := s.SimpleRepository.GetRecentlyUpdated(30, core.IdMapToArray(idMap), "Team")
+	if ids != nil && len(ids) > 0 {
+		core.SuppressIdMap(idMap, ids)
+	}
 }
 
 func (s *TeamScraper) parseTeamPage(id string) (team model.Team) {
@@ -57,7 +71,7 @@ func (s *TeamScraper) parseTeamPage(id string) (team model.Team) {
 		s.TeamParser.TeamPlayerTable(&team, tbl)
 
 		for _, p := range team.TeamPlayers {
-			s.PlayerIds[p.PlayerId] = true
+			s.PlayerIds[p.PlayerId] = exists
 		}
 	})
 
