@@ -226,14 +226,28 @@ CREATE TABLE `teams` (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 
 ALTER TABLE `nba`.`team_players` 
-ADD CONSTRAINT `team_players.id2team.id`
+ADD CONSTRAINT `team_players.team_id2teams.id`
   FOREIGN KEY (`team_id`)
   REFERENCES `nba`.`teams` (`id`)
   ON DELETE CASCADE
   ON UPDATE NO ACTION;
 
+ALTER TABLE `nba`.`team_players` 
+ADD CONSTRAINT `team_players.player_id2players.id`
+  FOREIGN KEY (`player_id`)
+  REFERENCES `nba`.`players` (`id`)
+  ON DELETE CASCADE
+  ON UPDATE NO ACTION;
+
 ALTER TABLE `nba`.`team_player_salaries` 
-ADD CONSTRAINT `team_player_salaries.id2team.id`
+ADD CONSTRAINT `team_player_salaries.player_id2teams.id`
+  FOREIGN KEY (`team_id`)
+  REFERENCES `nba`.`teams` (`id`)
+  ON DELETE CASCADE
+  ON UPDATE NO ACTION;
+
+ALTER TABLE `nba`.`team_standings` 
+ADD CONSTRAINT `team_standings.team_id2team.id`
   FOREIGN KEY (`team_id`)
   REFERENCES `nba`.`teams` (`id`)
   ON DELETE CASCADE
