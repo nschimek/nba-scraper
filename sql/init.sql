@@ -1,4 +1,54 @@
-GRANT SELECT, INSERT, UPDATE, DELETE, CREATE, INDEX, DROP, ALTER, CREATE TEMPORARY TABLES, LOCK TABLES ON nba.* TO 'go';
+CREATE TABLE `players` (
+  `id` varchar(9) NOT NULL,
+  `name` varchar(30) NOT NULL,
+  `shoots` enum('L','R') NOT NULL,
+  `birth_place` varchar(50) NOT NULL,
+  `birth_country_code` varchar(2) NOT NULL,
+  `birth_date` date NOT NULL,
+  `height` smallint unsigned NOT NULL,
+  `weight` smallint unsigned NOT NULL,
+  `created_at` datetime NOT NULL,
+  `updated_at` datetime NOT NULL,
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `id_UNIQUE` (`id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+
+CREATE TABLE `teams` (
+  `id` varchar(3) NOT NULL,
+  `name` varchar(30) NOT NULL,
+  `created_at` datetime NOT NULL,
+  `updated_at` datetime NOT NULL,
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `id_UNIQUE` (`id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+
+CREATE TABLE `games` (
+  `id` varchar(12) NOT NULL,
+  `location` varchar(255) NOT NULL,
+  `type` enum('R','P') NOT NULL,
+  `season` smallint unsigned NOT NULL,
+  `quarters` tinyint unsigned NOT NULL,
+  `start_time` datetime NOT NULL,
+  `home_team_id` varchar(3) NOT NULL,
+  `home_score` smallint unsigned NOT NULL,
+  `home_result` enum('W','L') NOT NULL,
+  `home_wins` tinyint unsigned NOT NULL,
+  `home_losses` tinyint unsigned NOT NULL,
+  `away_team_id` varchar(3) NOT NULL,
+  `away_score` smallint unsigned NOT NULL,
+  `away_result` enum('W','L') NOT NULL,
+  `away_wins` tinyint unsigned NOT NULL,
+  `away_losses` tinyint unsigned NOT NULL,
+  `created_at` datetime NOT NULL,
+  `updated_at` datetime NOT NULL,
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `id_UNIQUE` (`id`),
+  KEY `games.away_team_id2teams.id` (`away_team_id`),
+  KEY `games.home_team_id2teams.id` (`home_team_id`),
+  CONSTRAINT `games.away_team_id2teams.id` FOREIGN KEY (`away_team_id`) REFERENCES `teams` (`id`) ON DELETE CASCADE,
+  CONSTRAINT `games.home_team_id2teams.id` FOREIGN KEY (`home_team_id`) REFERENCES `teams` (`id`) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+
 
 CREATE TABLE `game_four_factors` (
   `game_id` varchar(12) NOT NULL,
@@ -11,7 +61,10 @@ CREATE TABLE `game_four_factors` (
   `offensive_rating` float NOT NULL,
   `created_at` datetime NOT NULL,
   `updated_at` datetime NOT NULL,
-  PRIMARY KEY (`game_id`,`team_id`)
+  PRIMARY KEY (`game_id`,`team_id`),
+  KEY `game_four_factors.team_id2teams.id` (`team_id`),
+  CONSTRAINT `game_four_factors.game_id2games.id` FOREIGN KEY (`game_id`) REFERENCES `games` (`id`) ON DELETE CASCADE,
+  CONSTRAINT `game_four_factors.team_id2teams.id` FOREIGN KEY (`team_id`) REFERENCES `teams` (`id`) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 
 CREATE TABLE `game_line_scores` (
@@ -21,7 +74,10 @@ CREATE TABLE `game_line_scores` (
   `score` smallint unsigned NOT NULL,
   `created_at` datetime NOT NULL,
   `updated_at` datetime NOT NULL,
-  PRIMARY KEY (`game_id`,`team_id`,`quarter`)
+  PRIMARY KEY (`game_id`,`team_id`,`quarter`),
+  KEY `game_line_scores.team_id2teams.id` (`team_id`),
+  CONSTRAINT `game_line_scores.game_id2games.id` FOREIGN KEY (`game_id`) REFERENCES `games` (`id`) ON DELETE CASCADE,
+  CONSTRAINT `game_line_scores.team_id2teams.id` FOREIGN KEY (`team_id`) REFERENCES `teams` (`id`) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 
 CREATE TABLE `game_player_advanced_stats` (
@@ -45,7 +101,12 @@ CREATE TABLE `game_player_advanced_stats` (
   `defensive_rating` smallint NOT NULL,
   `created_at` datetime NOT NULL,
   `updated_at` datetime NOT NULL,
-  PRIMARY KEY (`game_id`,`team_id`,`player_id`)
+  PRIMARY KEY (`game_id`,`team_id`,`player_id`),
+  KEY `game_player_advanced_stats.team_id2teams.id` (`team_id`),
+  KEY `game_player_advanced_stats.player_id2players.id` (`player_id`),
+  CONSTRAINT `game_player_advanced_stats.game_id2games.id` FOREIGN KEY (`game_id`) REFERENCES `games` (`id`) ON DELETE CASCADE,
+  CONSTRAINT `game_player_advanced_stats.player_id2players.id` FOREIGN KEY (`player_id`) REFERENCES `players` (`id`) ON DELETE CASCADE,
+  CONSTRAINT `game_player_advanced_stats.team_id2teams.id` FOREIGN KEY (`team_id`) REFERENCES `teams` (`id`) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 
 CREATE TABLE `game_player_basic_stats` (
@@ -75,7 +136,12 @@ CREATE TABLE `game_player_basic_stats` (
   `plus_minus` tinyint NOT NULL,
   `created_at` datetime NOT NULL,
   `updated_at` datetime NOT NULL,
-  PRIMARY KEY (`game_id`,`team_id`,`player_id`,`quarter`)
+  PRIMARY KEY (`game_id`,`team_id`,`player_id`,`quarter`),
+  KEY `game_player_basic_stats.team_id2teams.id` (`team_id`),
+  KEY `game_player_basic_stats.player_id2players.id` (`player_id`),
+  CONSTRAINT `game_player_basic_stats.game_id2games.id` FOREIGN KEY (`game_id`) REFERENCES `games` (`id`) ON DELETE CASCADE,
+  CONSTRAINT `game_player_basic_stats.player_id2players.id` FOREIGN KEY (`player_id`) REFERENCES `players` (`id`) ON DELETE CASCADE,
+  CONSTRAINT `game_player_basic_stats.team_id2teams.id` FOREIGN KEY (`team_id`) REFERENCES `teams` (`id`) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 
 CREATE TABLE `game_players` (
@@ -85,30 +151,12 @@ CREATE TABLE `game_players` (
   `status` enum('S','R','D','I') NOT NULL,
   `created_at` datetime NOT NULL,
   `updated_at` datetime NOT NULL,
-  PRIMARY KEY (`game_id`,`team_id`,`player_id`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
-
-CREATE TABLE `games` (
-  `id` varchar(12) NOT NULL,
-  `location` varchar(255) NOT NULL,
-  `type` enum('R','P') NOT NULL,
-  `season` smallint unsigned NOT NULL,
-  `quarters` tinyint unsigned NOT NULL,
-  `start_time` datetime NOT NULL,
-  `home_team_id` varchar(3) NOT NULL,
-  `home_score` smallint unsigned NOT NULL,
-  `home_result` enum('W','L') NOT NULL,
-  `home_wins` tinyint unsigned NOT NULL,
-  `home_losses` tinyint unsigned NOT NULL,
-  `away_team_id` varchar(3) NOT NULL,
-  `away_score` smallint unsigned NOT NULL,
-  `away_result` enum('W','L') NOT NULL,
-  `away_wins` tinyint unsigned NOT NULL,
-  `away_losses` tinyint unsigned NOT NULL,
-  `created_at` datetime NOT NULL,
-  `updated_at` datetime NOT NULL,
-  PRIMARY KEY (`id`),
-  UNIQUE KEY `id_UNIQUE` (`id`) /*!80000 INVISIBLE */
+  PRIMARY KEY (`game_id`,`team_id`,`player_id`),
+  KEY `game_players.team_id2teams.id` (`team_id`),
+  KEY `game_players.player_id2players.id` (`player_id`),
+  CONSTRAINT `game_players.game_id2games.id` FOREIGN KEY (`game_id`) REFERENCES `games` (`id`) ON DELETE CASCADE,
+  CONSTRAINT `game_players.player_id2players.id` FOREIGN KEY (`player_id`) REFERENCES `players` (`id`) ON DELETE CASCADE,
+  CONSTRAINT `game_players.team_id2teams.id` FOREIGN KEY (`team_id`) REFERENCES `teams` (`id`) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 
 CREATE TABLE `player_injuries` (
@@ -119,22 +167,10 @@ CREATE TABLE `player_injuries` (
   `description` text NOT NULL,
   `created_at` datetime NOT NULL,
   `updated_at` datetime NOT NULL,
-  PRIMARY KEY (`team_id`,`player_id`,`season`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
-
-CREATE TABLE `players` (
-  `id` varchar(9) NOT NULL,
-  `name` varchar(30) NOT NULL,
-  `shoots` enum('L','R') NOT NULL,
-  `birth_place` varchar(50) NOT NULL,
-  `birth_country_code` varchar(2) NOT NULL,
-  `birth_date` date NOT NULL,
-  `height` smallint unsigned NOT NULL,
-  `weight` smallint unsigned NOT NULL,
-  `created_at` datetime NOT NULL,
-  `updated_at` datetime NOT NULL,
-  PRIMARY KEY (`id`),
-  UNIQUE KEY `id_UNIQUE` (`id`)
+  PRIMARY KEY (`team_id`,`player_id`,`season`),
+  KEY `player_injuries.player_id2players.id` (`player_id`),
+  CONSTRAINT `player_injuries.player_id2players.id` FOREIGN KEY (`player_id`) REFERENCES `players` (`id`) ON DELETE CASCADE,
+  CONSTRAINT `player_injuries.team_id2teams.id` FOREIGN KEY (`team_id`) REFERENCES `teams` (`id`) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 
 CREATE TABLE `team_player_salaries` (
@@ -145,9 +181,9 @@ CREATE TABLE `team_player_salaries` (
   `rank` tinyint unsigned NOT NULL,
   `created_at` datetime NOT NULL,
   `updated_at` datetime NOT NULL,
-  PRIMARY KEY (`team_id`,`player_id`,`season`),
   KEY `team_player_salaries.id2team.id_idx` (`team_id`),
-  CONSTRAINT `team_player_salaries.id2team.id` FOREIGN KEY (`team_id`) REFERENCES `teams` (`id`) ON DELETE CASCADE
+  KEY `team_player_salaries.team_id2team.id_idx` (`player_id`),
+  CONSTRAINT `team_player_salaries.team_id2team.id` FOREIGN KEY (`player_id`) REFERENCES `players` (`id`) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 
 CREATE TABLE `team_players` (
@@ -160,7 +196,9 @@ CREATE TABLE `team_players` (
   `updated_at` datetime NOT NULL,
   PRIMARY KEY (`team_id`,`player_id`,`season`),
   KEY `team_players.id2team.id_idx` (`team_id`),
-  CONSTRAINT `team_players.id2team.id` FOREIGN KEY (`team_id`) REFERENCES `teams` (`id`) ON DELETE CASCADE
+  KEY `team_players.player_id2players.id_idx` (`player_id`),
+  CONSTRAINT `team_players.player_id2players.id` FOREIGN KEY (`player_id`) REFERENCES `players` (`id`) ON DELETE CASCADE,
+  CONSTRAINT `team_players.team_id2teams.id` FOREIGN KEY (`team_id`) REFERENCES `teams` (`id`) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 
 CREATE TABLE `team_standings` (
@@ -213,42 +251,7 @@ CREATE TABLE `team_standings` (
   `apr_losses` tinyint unsigned DEFAULT NULL,
   `created_at` datetime NOT NULL,
   `updated_at` datetime NOT NULL,
-  PRIMARY KEY (`team_id`,`season`)
+  PRIMARY KEY (`team_id`,`season`),
+  KEY `team_id` (`team_id`),
+  CONSTRAINT `team_standings.team_id2teams.id` FOREIGN KEY (`team_id`) REFERENCES `teams` (`id`) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
-
-CREATE TABLE `teams` (
-  `id` varchar(3) NOT NULL,
-  `name` varchar(30) NOT NULL,
-  `created_at` datetime NOT NULL,
-  `updated_at` datetime NOT NULL,
-  PRIMARY KEY (`id`),
-  UNIQUE KEY `id_UNIQUE` (`id`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
-
-ALTER TABLE `nba`.`team_players` 
-ADD CONSTRAINT `team_players.team_id2teams.id`
-  FOREIGN KEY (`team_id`)
-  REFERENCES `nba`.`teams` (`id`)
-  ON DELETE CASCADE
-  ON UPDATE NO ACTION;
-
-ALTER TABLE `nba`.`team_players` 
-ADD CONSTRAINT `team_players.player_id2players.id`
-  FOREIGN KEY (`player_id`)
-  REFERENCES `nba`.`players` (`id`)
-  ON DELETE CASCADE
-  ON UPDATE NO ACTION;
-
-ALTER TABLE `nba`.`team_player_salaries` 
-ADD CONSTRAINT `team_player_salaries.player_id2teams.id`
-  FOREIGN KEY (`team_id`)
-  REFERENCES `nba`.`teams` (`id`)
-  ON DELETE CASCADE
-  ON UPDATE NO ACTION;
-
-ALTER TABLE `nba`.`team_standings` 
-ADD CONSTRAINT `team_standings.team_id2team.id`
-  FOREIGN KEY (`team_id`)
-  REFERENCES `nba`.`teams` (`id`)
-  ON DELETE CASCADE
-  ON UPDATE NO ACTION;

@@ -15,6 +15,7 @@ type InjuryScraper struct {
 	Repository   *repository.SimpleRepository[model.PlayerInjury] `Inject:""`
 	ScrapedData  []model.PlayerInjury
 	PlayerIds    map[string]struct{}
+	TeamIds      map[string]struct{}
 }
 
 const (
@@ -25,11 +26,13 @@ const (
 func (s *InjuryScraper) Scrape() {
 	c := core.CloneColly(s.Colly)
 	s.PlayerIds = make(map[string]struct{})
+	s.TeamIds = make(map[string]struct{})
 
 	c.OnHTML(injuriesTableBaseElement, func(tbl *colly.HTMLElement) {
 		for _, pi := range s.InjuryParser.InjuriesTable(tbl) {
 			s.ScrapedData = append(s.ScrapedData, pi)
 			s.PlayerIds[pi.PlayerId] = exists
+			s.TeamIds[pi.TeamId] = exists
 		}
 	})
 

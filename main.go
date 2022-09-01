@@ -11,10 +11,10 @@ import (
 func main() {
 	c := core.Setup()
 
-	// standingsScraper := core.Factory[scraper.StandingScraper](c.Injector())
+	standingsScraper := core.Factory[scraper.StandingScraper](c.Injector())
 	// standingsScraper.Scrape()
 
-	// injuriesScraper := core.Factory[scraper.InjuryScraper](c.Injector())
+	injuriesScraper := core.Factory[scraper.InjuryScraper](c.Injector())
 	// injuriesScraper.Scrape()
 
 	startDate, _ := time.ParseInLocation("2006-01-02", "2021-10-20", parser.EST)
@@ -27,10 +27,10 @@ func main() {
 	gameScraper.Scrape(scheduleScraper.GameIds)
 
 	teamScraper := core.Factory[scraper.TeamScraper](c.Injector())
-	teamScraper.Scrape(gameScraper.TeamIds)
+	teamScraper.Scrape(core.ConsolidateIdMaps(standingsScraper.TeamIds, injuriesScraper.TeamIds, gameScraper.TeamIds))
 
 	playerScraper := core.Factory[scraper.PlayerScraper](c.Injector())
-	playerScraper.Scrape(gameScraper.PlayerIds)
+	playerScraper.Scrape(core.ConsolidateIdMaps(injuriesScraper.PlayerIds, gameScraper.PlayerIds, teamScraper.PlayerIds))
 
 	playerScraper.Persist()
 	teamScraper.Persist()
