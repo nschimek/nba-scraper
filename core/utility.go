@@ -8,6 +8,8 @@ func IdMapToArray(idMap map[string]struct{}) (ids []string) {
 }
 
 func ConsolidateIdMaps(idMaps ...map[string]struct{}) (idMap map[string]struct{}) {
+	idMap = make(map[string]struct{})
+
 	for _, m := range idMaps {
 		if m != nil {
 			for k, v := range m {

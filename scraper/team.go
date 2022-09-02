@@ -78,6 +78,10 @@ func (s *TeamScraper) parseTeamPage(id string) (team model.Team) {
 	c.OnHTML(teamSalaryTableElementBase, func(div *colly.HTMLElement) {
 		tbl, _ := transformHtmlElement(div, teamSalaryTableElement, removeCommentsSyntax)
 		s.TeamParser.TeamSalariesTable(&team, tbl)
+
+		for _, p := range team.TeamPlayerSalaries {
+			s.PlayerIds[p.PlayerId] = exists
+		}
 	})
 
 	c.Visit(s.getUrl(id))

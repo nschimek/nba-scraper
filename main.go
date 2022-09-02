@@ -35,4 +35,6 @@ func main() {
 	playerScraper.Persist()
 	teamScraper.Persist()
 	gameScraper.Persist()
+	standingsScraper.Persist()
+	injuriesScraper.Persist()
 }
