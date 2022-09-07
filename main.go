@@ -11,25 +11,22 @@ import (
 func main() {
 	c := core.Setup()
 
-	standingsScraper := core.Factory[scraper.StandingScraper](c.Injector())
-	// standingsScraper.Scrape()
-
-	injuriesScraper := core.Factory[scraper.InjuryScraper](c.Injector())
-	// injuriesScraper.Scrape()
-
-	startDate, _ := time.ParseInLocation("2006-01-02", "2021-10-20", parser.EST)
-	endDate, _ := time.ParseInLocation("2006-01-02", "2021-10-20", parser.EST)
-
 	scheduleScraper := core.Factory[scraper.ScheduleScraper](c.Injector())
-	scheduleScraper.ScrapeDateRange(startDate, endDate)
-
+	standingsScraper := core.Factory[scraper.StandingScraper](c.Injector())
+	injuriesScraper := core.Factory[scraper.InjuryScraper](c.Injector())
 	gameScraper := core.Factory[scraper.GameScraper](c.Injector())
-	gameScraper.Scrape(scheduleScraper.GameIds)
-
 	teamScraper := core.Factory[scraper.TeamScraper](c.Injector())
-	teamScraper.Scrape(core.ConsolidateIdMaps(standingsScraper.TeamIds, injuriesScraper.TeamIds, gameScraper.TeamIds))
-
 	playerScraper := core.Factory[scraper.PlayerScraper](c.Injector())
+
+	standingsScraper.Scrape()
+	injuriesScraper.Scrape()
+
+	startDate, _ := time.ParseInLocation("2006-01-02", "2021-11-02", parser.EST)
+	endDate, _ := time.ParseInLocation("2006-01-02", "2021-11-19", parser.EST)
+
+	scheduleScraper.ScrapeDateRange(startDate, endDate)
+	gameScraper.Scrape(scheduleScraper.GameIds)
+	teamScraper.Scrape(core.ConsolidateIdMaps(standingsScraper.TeamIds, injuriesScraper.TeamIds, gameScraper.TeamIds))
 	playerScraper.Scrape(core.ConsolidateIdMaps(injuriesScraper.PlayerIds, gameScraper.PlayerIds, teamScraper.PlayerIds))
 
 	playerScraper.Persist()

@@ -16,15 +16,25 @@ const (
 )
 
 type PlayerScraper struct {
+	Config       *core.Config                               `Inject:""`
 	Colly        *colly.Collector                           `Inject:""`
 	PlayerParser *parser.PlayerParser                       `Inject:""`
 	Repository   *repository.SimpleRepository[model.Player] `Inject:""`
 	ScrapedData  []model.Player
 }
 
+func (s *PlayerScraper) ScrapeIds(ids ...string) {
+	s.scrape(core.IdArrayToMap(ids))
+}
+
 func (s *PlayerScraper) Scrape(idMap map[string]struct{}) {
 	core.Log.WithField("ids", len(idMap)).Info("Got Player ID(s) to scrape, checking for recently updated (for suppression)...")
 	s.suppressRecent(idMap)
+	s.scrape(idMap)
+}
+
+func (s *PlayerScraper) scrape(idMap map[string]struct{}) {
+	core.Log.WithField("ids", len(idMap)).Info("Scraping Player ID(s)...")
 
 	for id := range idMap {
 		player := s.parsePlayerPage(id)
@@ -43,7 +53,7 @@ func (s *PlayerScraper) Persist() {
 }
 
 func (s *PlayerScraper) suppressRecent(idMap map[string]struct{}) {
-	ids, _ := s.Repository.GetRecentlyUpdated(365, core.IdMapToArray(idMap), "Player")
+	ids, _ := s.Repository.GetRecentlyUpdated(s.Config.PlayerSuppressionDays, core.IdMapToArray(idMap), "Player")
 	if ids != nil && len(ids) > 0 {
 		core.SuppressIdMap(idMap, ids)
 	}

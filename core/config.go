@@ -13,10 +13,11 @@ const (
 var iniOptions = ini.LoadOptions{IgnoreInlineComment: true}
 
 type Config struct {
-	Season      int
-	Environment string
-	Debug       bool
-	Database    database
+	Season                                     int
+	Environment                                string
+	Debug                                      bool
+	TeamSuppressionDays, PlayerSuppressionDays int
+	Database                                   database
 }
 
 type database struct {

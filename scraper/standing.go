@@ -54,6 +54,6 @@ func (s *StandingScraper) Persist() {
 	}
 }
 
-func (t *StandingScraper) getUrl() string {
-	return fmt.Sprintf(standingPage, t.Config.Season)
+func (s *StandingScraper) getUrl() string {
+	return fmt.Sprintf(standingPage, s.Config.Season)
 }

@@ -29,10 +29,19 @@ type TeamScraper struct {
 	PlayerIds        map[string]struct{}
 }
 
+func (s *TeamScraper) ScrapeIds(ids ...string) {
+	s.scrape(core.IdArrayToMap(ids))
+}
+
 func (s *TeamScraper) Scrape(idMap map[string]struct{}) {
-	s.PlayerIds = make(map[string]struct{})
 	core.Log.WithField("ids", len(idMap)).Info("Got Team ID(s) to scrape, checking for recently updated (for suppression)...")
 	s.suppressRecent(idMap)
+	s.scrape(idMap)
+}
+
+func (s *TeamScraper) scrape(idMap map[string]struct{}) {
+	core.Log.WithField("ids", len(idMap)).Info("Scraping Team ID(s)...")
+	s.PlayerIds = make(map[string]struct{})
 
 	for _, id := range core.IdMapToArray(idMap) {
 		team := s.parseTeamPage(id)
@@ -51,7 +60,7 @@ func (s *TeamScraper) Persist() {
 }
 
 func (s *TeamScraper) suppressRecent(idMap map[string]struct{}) {
-	ids, _ := s.SimpleRepository.GetRecentlyUpdated(30, core.IdMapToArray(idMap), "Team")
+	ids, _ := s.SimpleRepository.GetRecentlyUpdated(s.Config.TeamSuppressionDays, core.IdMapToArray(idMap), "Team")
 	if ids != nil && len(ids) > 0 {
 		core.SuppressIdMap(idMap, ids)
 	}

@@ -33,6 +33,10 @@ type GameScraper struct {
 	TeamIds     map[string]struct{}
 }
 
+func (s *GameScraper) ScapeIds(ids ...string) {
+	s.Scrape(core.IdArrayToMap(ids))
+}
+
 func (s *GameScraper) Scrape(idMap map[string]struct{}) {
 	s.PlayerIds = make(map[string]struct{})
 	s.TeamIds = make(map[string]struct{})
