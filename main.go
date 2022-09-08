@@ -21,8 +21,8 @@ func main() {
 	standingsScraper.Scrape()
 	injuriesScraper.Scrape()
 
-	startDate, _ := time.ParseInLocation("2006-01-02", "2021-11-02", parser.EST)
-	endDate, _ := time.ParseInLocation("2006-01-02", "2021-11-19", parser.EST)
+	startDate, _ := time.ParseInLocation("2006-01-02", "2022-02-01", parser.EST)
+	endDate, _ := time.ParseInLocation("2006-01-02", "2022-03-31", parser.EST)
 
 	scheduleScraper.ScrapeDateRange(startDate, endDate)
 	gameScraper.Scrape(scheduleScraper.GameIds)

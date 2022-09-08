@@ -2,6 +2,7 @@ package scraper
 
 import (
 	"fmt"
+	"strings"
 
 	"github.com/gocolly/colly/v2"
 	"github.com/nschimek/nba-scraper/core"
@@ -37,8 +38,12 @@ func (s *PlayerScraper) scrape(idMap map[string]struct{}) {
 	core.Log.WithField("ids", len(idMap)).Info("Scraping Player ID(s)...")
 
 	for id := range idMap {
-		player := s.parsePlayerPage(id)
-		s.ScrapedData = append(s.ScrapedData, player)
+		if strings.HasPrefix(id, "tmp-") {
+			core.Log.WithField("id", id).Error("Encountered a known invalid temp Player ID, skipping...")
+		} else {
+			player := s.parsePlayerPage(id)
+			s.ScrapedData = append(s.ScrapedData, player)
+		}
 	}
 
 	core.Log.WithField("players", len(s.ScrapedData)).Info("Finished scraping Player page(s)!")

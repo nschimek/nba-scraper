@@ -65,7 +65,8 @@ func (*GamePlayerStatsParser) parseInactivePlayersList(box *colly.HTMLElement, g
 			teamId = strings.TrimSpace(t.Text)
 		}
 		// all players after that label therefore belong to that team
-		if teamId != "" && t.Attr("href") != "" {
+		// note we also check for link text but ignore it, thanks to an empty link pointing to an invalid player ID in 202202110BOS
+		if teamId != "" && t.Attr("href") != "" && t.Text != "" {
 			gp = append(gp, model.GamePlayer{
 				GameId:   gameId,
 				TeamId:   teamId,
