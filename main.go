@@ -25,9 +25,6 @@ func main() {
 	endDate, _ := time.ParseInLocation("2006-01-02", "2022-06-30", parser.EST)
 
 	scheduleScraper.ScrapeDateRange(startDate, endDate)
-	gameScraper.Scrape(scheduleScraper.GameIds)
-	teamScraper.Scrape(core.ConsolidateIdMaps(standingsScraper.TeamIds, injuriesScraper.TeamIds, gameScraper.TeamIds))
-	playerScraper.Scrape(core.ConsolidateIdMaps(injuriesScraper.PlayerIds, gameScraper.PlayerIds, teamScraper.PlayerIds))
 
 	playerScraper.Persist()
 	teamScraper.Persist()
