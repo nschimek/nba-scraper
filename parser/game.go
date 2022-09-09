@@ -74,7 +74,10 @@ func parseMetaScorebox(box *colly.HTMLElement) (startTime time.Time, location st
 }
 
 func parseTypeFromTitle(title string) string {
-	if strings.Contains(title, "NBA") {
+	// play-in games are weird...giving them a different type so they can be queried/excluded
+	if strings.HasPrefix(title, "Play-In Game") {
+		return "I"
+	} else if strings.Contains(title, "NBA") {
 		return "P"
 	} else {
 		return "R"

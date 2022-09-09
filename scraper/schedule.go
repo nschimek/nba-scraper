@@ -65,7 +65,7 @@ func (s *ScheduleScraper) Scrape(pageIds ...string) {
 
 func getMonths(startDate, endDate time.Time) ([]string, error) {
 	if endDate.Before(startDate) {
-		return nil, errors.New("end date is before start date")
+		return nil, errors.New("end date is before start date or invalid")
 	}
 
 	months := []string{}

@@ -148,7 +148,11 @@ func gamePlayerAdvancedStatsFromRow(rowMap map[string]*colly.HTMLElement) *model
 		gpas.UsagePct, _ = parseFloatStat(rowMap["usg_pct"].Text)
 		gpas.OffensiveRating, _ = strconv.Atoi(rowMap["off_rtg"].Text)
 		gpas.DefensiveRating, _ = strconv.Atoi(rowMap["def_rtg"].Text)
-		gpas.BoxPlusMinus, _ = parseFloatStat(rowMap["bpm"].Text)
+
+		if _, ok := rowMap["bpm"]; ok {
+			gpas.BoxPlusMinus, _ = parseFloatStat(rowMap["bpm"].Text)
+		}
+
 		return gpas
 	}
 

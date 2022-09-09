@@ -17,8 +17,10 @@ func (*GameStatsParser) parseScorebox(box *colly.HTMLElement) *model.GameTeam {
 	gt.Score, _ = strconv.Atoi(box.ChildText("div.scores div.score"))
 
 	wl := strings.Split(box.ChildText("div:nth-child(3)"), "-")
-	gt.Wins, _ = strconv.Atoi(wl[0])
-	gt.Losses, _ = strconv.Atoi(wl[1])
+	if len(wl) == 2 {
+		gt.Wins, _ = strconv.Atoi(wl[0])
+		gt.Losses, _ = strconv.Atoi(wl[1])
+	}
 
 	return gt
 }
