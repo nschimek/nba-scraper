@@ -5,7 +5,7 @@ services:
     cap_add:
       - SYS_NICE
     restart: always
-    env_file: ./conf/${ENV}.env
+    env_file: ./docker.env
     ports:
       - '3306:3306'
     volumes:

@@ -8,6 +8,10 @@
 conf/*
 !conf/core.ini
 
+config/*
+!config/sample.yaml
+
+docker.env
 
 # Test binary, built with `go test -c`
 *.test
