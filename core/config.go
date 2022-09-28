@@ -1,7 +1,9 @@
 package core
 
 import (
-	"gopkg.in/ini.v1"
+	"strings"
+
+	"github.com/spf13/viper"
 )
 
 const (
@@ -10,67 +12,40 @@ const (
 	core = "core"
 )
 
-var iniOptions = ini.LoadOptions{IgnoreInlineComment: true}
-
 type Config struct {
-	Season                                     int
-	Environment                                string
-	Debug                                      bool
-	TeamSuppressionDays, PlayerSuppressionDays int
-	Database                                   database
-}
-
-type database struct {
-	User, Password, Location, Name string
-}
-
-func createConfig() *Config {
-	cfg := new(Config)
-
-	coreName := getFullName(core)
-	cfg.loadAndMap(coreName, "")
-
-	if cfg.Environment == "" {
-		Log.Fatal("Could not determine Environment from core INI")
+	Season        int
+	Debug         bool
+	UseConfigFile bool `mapstructure:"use-config-file"`
+	Suppression   struct {
+		Team   int
+		Player int
 	}
-
-	cfg.loadAndMap(coreName, getFullName(cfg.Environment))
-
-	return cfg
+	Database struct {
+		User, Password, Location, Name string
+		Port                           int
+	}
 }
 
-func (c *Config) loadAndMap(core string, env string) {
-	i := c.loadFromIni(core, env)
-	c.mapFromIni(i)
-}
+func createConfig(configFile string) *Config {
+	viper.SetDefault("use-config-file", true) // overrideable with environment variables only
+	viper.SetEnvPrefix("ns")
+	viper.SetEnvKeyReplacer(strings.NewReplacer(".", "_", "-", "_"))
+	viper.AutomaticEnv()
 
-func (c *Config) loadFromIni(core string, env string) (i *ini.File) {
-	var err error
-
-	if env == "" {
-		Log.WithField("file", core).Info("Loading core config from INI...")
-		i, err = ini.LoadSources(iniOptions, core)
+	if viper.GetBool("use-config-file") == true {
+		viper.SetConfigFile(configFile)
+		if err := viper.ReadInConfig(); err == nil {
+			Log.Infof("Loaded config file: %s", viper.ConfigFileUsed())
+		} else {
+			Log.Fatalf("Could not load config file: %s!", configFile)
+		}
 	} else {
-		Log.WithField("file", env).Info("Loading environmental config from INI...")
-		i, err = ini.LoadSources(iniOptions, core, env)
+		Log.Info("Config file NOT being used...requiring NS_ENVIRONMENT_VARIABLES")
 	}
 
-	if err != nil {
-		Log.Fatal(err)
-		return nil
-	} else {
-		return i
+	config := &Config{}
+	if err := viper.Unmarshal(config); err != nil {
+		Log.Fatalf("Error decoding Config struct: %v", err)
 	}
-}
-
-func (c *Config) mapFromIni(i *ini.File) {
-	err := i.MapTo(c)
-
-	if err != nil {
-		Log.Fatal(err)
-	}
-}
-
-func getFullName(n string) string {
-	return dir + "/" + n + "." + ext
+	return config
 }

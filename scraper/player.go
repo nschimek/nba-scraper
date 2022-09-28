@@ -58,7 +58,7 @@ func (s *PlayerScraper) Persist() {
 }
 
 func (s *PlayerScraper) suppressRecent(idMap map[string]struct{}) {
-	ids, _ := s.Repository.GetRecentlyUpdated(s.Config.PlayerSuppressionDays, core.IdMapToArray(idMap), "Player")
+	ids, _ := s.Repository.GetRecentlyUpdated(s.Config.Suppression.Player, core.IdMapToArray(idMap), "Player")
 	if ids != nil && len(ids) > 0 {
 		core.SuppressIdMap(idMap, ids)
 	}

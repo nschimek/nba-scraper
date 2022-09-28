@@ -18,7 +18,7 @@ type Database struct {
 }
 
 const (
-	dsnFormat = "%s:%s@tcp(%s)/%s?charset=utf8mb4&parseTime=True&loc=Local"
+	dsnFormat = "%s:%s@tcp(%s:%d)/%s?charset=utf8mb4&parseTime=True&loc=Local"
 )
 
 func createDatabase() *Database {
@@ -26,8 +26,13 @@ func createDatabase() *Database {
 }
 
 func (db *Database) Connect() {
-	Log.WithFields(logrus.Fields{"name": db.Config.Database.Name, "location": db.Config.Database.Location}).Info("Connecting to database...")
-	dsn := fmt.Sprintf(dsnFormat, db.Config.Database.User, db.Config.Database.Password, db.Config.Database.Location, db.Config.Database.Name)
+	Log.WithFields(logrus.Fields{
+		"name":     db.Config.Database.Name,
+		"location": db.Config.Database.Location,
+		"port":     db.Config.Database.Port,
+	}).Info("Connecting to database...")
+	dsn := fmt.Sprintf(dsnFormat, db.Config.Database.User, db.Config.Database.Password,
+		db.Config.Database.Location, db.Config.Database.Port, db.Config.Database.Name)
 	gorm, err := gorm.Open(mysql.Open(dsn), db.getGormConfig())
 
 	if err != nil {

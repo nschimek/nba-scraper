@@ -8,21 +8,19 @@ type coreContext struct {
 
 var ctx *coreContext
 
-func Setup() *coreContext {
+func SetupContext(configFile string) {
 	if ctx != nil {
 		Log.Fatal("Core Context already setup")
 	}
 
 	ctx = &coreContext{
-		injector: setupInjector(),
+		injector: setupInjector(configFile),
 	}
 
 	ctx.initialize()
-
-	return ctx
 }
 
-func Get() *coreContext {
+func GetContext() *coreContext {
 	if ctx == nil {
 		Log.Fatal("Context not setup")
 		return nil
@@ -31,10 +29,10 @@ func Get() *coreContext {
 	}
 }
 
-func setupInjector() *Injector {
+func setupInjector(configFile string) *Injector {
 	i := createInjector()
 
-	i.AddInjectable(createConfig())
+	i.AddInjectable(createConfig(configFile))
 	i.AddInjectable(createColly())
 	i.AddInjectable(createDatabase())
 
