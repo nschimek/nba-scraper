@@ -10,6 +10,12 @@ conf/*
 
 config/*
 !config/sample.yaml
+ 
+# Compiled application
+nba-scraper
+nba-scraper.zip
+main
+main.zip
 
 docker.env
 

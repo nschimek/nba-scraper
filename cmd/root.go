@@ -1,6 +1,8 @@
 package cmd
 
 import (
+	"time"
+
 	"github.com/nschimek/nba-scraper/core"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
@@ -20,7 +22,8 @@ var (
 		Long: `A complete NBA data acquision solution capable of scraping games, 
 game team stats, game player stats, teams, team rosters, standings, injuries, and more.`,
 		Run: func(cmd *cobra.Command, args []string) {
-			core.Log.Warn("Coming soon: running without a command will trigger a Serverless run?")
+			core.Log.Info("Started without params, defaulting to Schedule with Injuries and Standings")
+			runGameScraperFromRange(time.Time{}, time.Time{}, true, true)
 		},
 	}
 )
