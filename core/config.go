@@ -47,5 +47,8 @@ func createConfig(configFile string) *Config {
 	if err := viper.Unmarshal(config); err != nil {
 		Log.Fatalf("Error decoding Config struct: %v", err)
 	}
+	if config.Season < 1947 { // unspecified is 0 and BR goes back to 1946-47 season!
+		Log.Fatalf("No or invalid Season specified!  Please specify a valid Season in YYYY format.  Use the finishing year (2021-22 would be 2022)")
+	}
 	return config
 }

@@ -31,7 +31,7 @@ func Execute() error {
 
 func init() {
 	rootCmd.PersistentFlags().StringVarP(&configFile, "config", "c", defaultConfig, "config file")
-	rootCmd.PersistentFlags().IntP("season", "n", 2022, "season, use finishing year (2021-22 season would be 2022)")
+	rootCmd.PersistentFlags().IntP("season", "n", 0, "optional override of season set in config file; use finishing year (2021-22 season would be 2022)")
 	rootCmd.PersistentFlags().BoolP("debug", "d", false, "debug mode - use for more detailed logging")
 
 	viper.BindPFlag("season", rootCmd.PersistentFlags().Lookup("season"))
