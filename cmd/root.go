@@ -22,7 +22,7 @@ var (
 		Long: `A complete NBA data acquision solution capable of scraping games, 
 game team stats, game player stats, teams, team rosters, standings, injuries, and more.`,
 		Run: func(cmd *cobra.Command, args []string) {
-			core.Log.Info("Started without params, defaulting to Schedule with Injuries and Standings")
+			core.Log.Info("Started without commands or parameters, defaulting to Schedule with Injuries and Standings")
 			runGameScraperFromRange(time.Time{}, time.Time{}, true, true)
 		},
 	}

@@ -16,10 +16,10 @@ var (
 This will also potentially cause scrapes of the corresponding Team and Player pages, depending on Suppression settings.  
 NOTE: Check that the Season parameter matches the season you are scraping games from as scraping across seasons is not supported.`,
 		RunE: func(cmd *cobra.Command, args []string) error {
-			if len(args) == 0 {
-				return errors.New("No game IDs specified!  Please enter game IDs, separated by spaces.  EX: 202202280BRK 202202280CLE")
-			} else {
+			if len(args) > 0 {
 				runGameScraperFromIds(core.IdArrayToMap(args), false, false)
+			} else {
+				return errors.New("No game IDs specified!  Please enter game IDs, separated by spaces.  EX: 202202280BRK 202202280CLE")
 			}
 			return nil
 		},
