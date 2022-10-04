@@ -12,7 +12,17 @@ const (
 	defaultConfig = "./config/default.yaml"
 )
 
+type results struct {
+	playerIds, teamIds, gameIds map[string]struct{}
+}
+
+type scrapers struct {
+	Injury, Standing, Game, Team, Player bool
+}
+
 var (
+	r          *results
+	s          *scrapers
 	configFile string
 	useConfig  bool
 
@@ -45,4 +55,13 @@ func init() {
 
 func setup() {
 	core.SetupContext(configFile)
+	r = new(results)
+	s = new(scrapers)
+}
+
+func appendIds(target, ids map[string]struct{}) map[string]struct{} {
+	for k, v := range ids {
+		target[k] = v
+	}
+	return target
 }

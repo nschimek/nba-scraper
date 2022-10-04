@@ -29,6 +29,10 @@ func GetContext() *coreContext {
 	}
 }
 
+func GetInjector() *Injector {
+	return GetContext().injector
+}
+
 func setupInjector(configFile string) *Injector {
 	i := createInjector()
 
@@ -37,10 +41,6 @@ func setupInjector(configFile string) *Injector {
 	i.AddInjectable(createDatabase())
 
 	return i
-}
-
-func (c *coreContext) Injector() *Injector {
-	return c.injector
 }
 
 func (c *coreContext) initialize() {

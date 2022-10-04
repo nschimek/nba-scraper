@@ -64,8 +64,7 @@ func stringToDate(dateString string) (time.Time, error) {
 }
 
 func runGameScraperFromRange(startDate, endDate time.Time, scrapeStandings, scrapeInjuries bool) {
-	c := core.GetContext()
-	scheduleScraper := core.Factory[scraper.ScheduleScraper](c.Injector())
+	scheduleScraper := core.Factory[scraper.ScheduleScraper](core.GetInjector())
 	scheduleScraper.ScrapeDateRange(startDate, endDate)
 	runGameScraperFromIds(scheduleScraper.GameIds, scrapeStandings, scrapeInjuries)
 }
