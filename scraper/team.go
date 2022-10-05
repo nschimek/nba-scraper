@@ -34,8 +34,10 @@ func (s *TeamScraper) ScrapeIds(ids ...string) {
 }
 
 func (s *TeamScraper) Scrape(idMap map[string]struct{}) {
-	core.Log.WithField("ids", len(idMap)).Info("Got Team ID(s) to scrape, checking for recently updated (for suppression)...")
-	s.suppressRecent(idMap)
+	core.Log.WithField("ids", len(idMap)).Info("Got Team ID(s) to scrape")
+	if s.Config.Suppression.Team > 0 {
+		s.suppressRecent(idMap)
+	}
 	s.scrape(idMap)
 }
 
@@ -60,6 +62,7 @@ func (s *TeamScraper) Persist() {
 }
 
 func (s *TeamScraper) suppressRecent(idMap map[string]struct{}) {
+	core.Log.Infof("Checking for teams updated in last %d days (for suppression)...", s.Config.Suppression.Team)
 	ids, _ := s.SimpleRepository.GetRecentlyUpdated(s.Config.Suppression.Team, core.IdMapToArray(idMap), "Team")
 	if ids != nil && len(ids) > 0 {
 		core.SuppressIdMap(idMap, ids)

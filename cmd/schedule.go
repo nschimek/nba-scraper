@@ -20,11 +20,13 @@ This will also potentially cause scrapes of the corresponding Team and Player pa
 Injuries and standings can also be optionally scraped; however, they have limited historical support (more info in help).
 NOTE: Check that the Season parameter matches the season you are scraping games from as scraping across seasons is not supported.`,
 		RunE: func(cmd *cobra.Command, args []string) error {
-			startDate, endDate, err := dateRangeFromStrings(startDateString, endDateString)
-			if err != nil {
+			if startDate, endDate, err := dateRangeFromStrings(startDateString, endDateString); err != nil {
 				return err
+			} else {
+				r.startDate = startDate
+				r.endDate = endDate
 			}
-			runGameScraperFromRange(startDate, endDate, scrapeStandings, scrapeInjuries)
+			s = &scrapers{schedule: true, game: true, team: true, player: true, standing: scrapeStandings, injury: scrapeInjuries}
 			return nil
 		},
 	}
@@ -63,8 +65,8 @@ func stringToDate(dateString string) (time.Time, error) {
 	}
 }
 
-func runGameScraperFromRange(startDate, endDate time.Time, scrapeStandings, scrapeInjuries bool) {
+func runScheduleScraper() {
 	scheduleScraper := core.Factory[scraper.ScheduleScraper](core.GetInjector())
-	scheduleScraper.ScrapeDateRange(startDate, endDate)
-	runGameScraperFromIds(scheduleScraper.GameIds, scrapeStandings, scrapeInjuries)
+	scheduleScraper.ScrapeDateRange(r.startDate, r.startDate)
+	r.gameIds = appendIds(r.gameIds, scheduleScraper.GameIds)
 }

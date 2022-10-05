@@ -4,6 +4,7 @@ import (
 	"errors"
 
 	"github.com/nschimek/nba-scraper/core"
+	"github.com/nschimek/nba-scraper/scraper"
 	"github.com/spf13/cobra"
 )
 
@@ -16,7 +17,7 @@ var (
 	Note: suppression settings are IGNORED for this command.`,
 		RunE: func(cmd *cobra.Command, args []string) error {
 			if len(args) > 0 {
-				s.Team = true
+				s = &scrapers{team: true, player: true}
 				r.teamIds = appendIds(r.teamIds, core.IdArrayToMap(args))
 			} else {
 				return errors.New("No team IDs specified!  Please enter team IDs, separated by spaces.  EX: CHI GSW BRK")
@@ -28,4 +29,11 @@ var (
 
 func init() {
 	rootCmd.AddCommand(teamsCmd)
+}
+
+// Gets conndtionally called by the rootCmd PersistentPostRun
+func runTeamScraper() {
+	teamScraper := core.Factory[scraper.TeamScraper](core.GetInjector())
+	teamScraper.Scrape(r.teamIds)
+	r.playerIds = appendIds(r.playerIds, teamScraper.PlayerIds)
 }

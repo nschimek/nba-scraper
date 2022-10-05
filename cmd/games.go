@@ -17,7 +17,8 @@ This will also potentially cause scrapes of the corresponding Team and Player pa
 NOTE: Check that the Season parameter matches the season you are scraping games from as scraping across seasons is not supported.`,
 		RunE: func(cmd *cobra.Command, args []string) error {
 			if len(args) > 0 {
-				runGameScraperFromIds(core.IdArrayToMap(args), false, false)
+				s = &scrapers{game: true, team: true, player: true}
+				r.gameIds = appendIds(r.gameIds, core.IdArrayToMap(args))
 			} else {
 				return errors.New("No game IDs specified!  Please enter game IDs, separated by spaces.  EX: 202202280BRK 202202280CLE")
 			}
@@ -30,27 +31,9 @@ func init() {
 	rootCmd.AddCommand(gamesCmd)
 }
 
-func runGameScraperFromIds(idMap map[string]struct{}, scrapeStandings, scrapeInjuries bool) {
-	standingsScraper := core.Factory[scraper.StandingScraper](core.GetInjector())
-	injuriesScraper := core.Factory[scraper.InjuryScraper](core.GetInjector())
+func runGameScraper() {
 	gameScraper := core.Factory[scraper.GameScraper](core.GetInjector())
-	teamScraper := core.Factory[scraper.TeamScraper](core.GetInjector())
-	playerScraper := core.Factory[scraper.PlayerScraper](core.GetInjector())
-
-	if scrapeStandings {
-		standingsScraper.Scrape()
-	}
-	if scrapeInjuries {
-		injuriesScraper.Scrape()
-	}
-
-	gameScraper.Scrape(idMap)
-	teamScraper.Scrape(core.ConsolidateIdMaps(standingsScraper.TeamIds, injuriesScraper.TeamIds, gameScraper.TeamIds))
-	playerScraper.Scrape(core.ConsolidateIdMaps(injuriesScraper.PlayerIds, gameScraper.PlayerIds, teamScraper.PlayerIds))
-
-	playerScraper.Persist()
-	teamScraper.Persist()
-	gameScraper.Persist()
-	standingsScraper.Persist()
-	injuriesScraper.Persist()
+	gameScraper.Scrape(r.gameIds)
+	r.teamIds = appendIds(r.teamIds, gameScraper.TeamIds)
+	r.playerIds = appendIds(r.playerIds, gameScraper.PlayerIds)
 }

@@ -11,9 +11,9 @@ type Config struct {
 	Debug         bool
 	UseConfigFile bool `mapstructure:"use-config-file"`
 	Suppression   struct {
-		Team   int `mapstructure:"team"`
+		Team   int
 		Player int
-	} `mapstructure:"suppression"`
+	}
 	Database struct {
 		User, Password, Location, Name string
 		Port                           int

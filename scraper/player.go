@@ -29,8 +29,10 @@ func (s *PlayerScraper) ScrapeIds(ids ...string) {
 }
 
 func (s *PlayerScraper) Scrape(idMap map[string]struct{}) {
-	core.Log.WithField("ids", len(idMap)).Info("Got Player ID(s) to scrape, checking for recently updated (for suppression)...")
-	s.suppressRecent(idMap)
+	core.Log.WithField("ids", len(idMap)).Info("Got Player ID(s) to scrape")
+	if s.Config.Suppression.Player > 0 {
+		s.suppressRecent(idMap)
+	}
 	s.scrape(idMap)
 }
 
@@ -58,6 +60,7 @@ func (s *PlayerScraper) Persist() {
 }
 
 func (s *PlayerScraper) suppressRecent(idMap map[string]struct{}) {
+	core.Log.Infof("Checking for players updated in last %d days (for suppression)...", s.Config.Suppression.Player)
 	ids, _ := s.Repository.GetRecentlyUpdated(s.Config.Suppression.Player, core.IdMapToArray(idMap), "Player")
 	if ids != nil && len(ids) > 0 {
 		core.SuppressIdMap(idMap, ids)

@@ -14,13 +14,15 @@ const (
 
 type results struct {
 	playerIds, teamIds, gameIds map[string]struct{}
+	startDate, endDate          time.Time
 }
 
 type scrapers struct {
-	Injury, Standing, Game, Team, Player bool
+	schedule, injury, standing, game, team, player bool
 }
 
 var (
+	config     = core.Factory[core.Config](core.GetInjector())
 	r          *results
 	s          *scrapers
 	configFile string
@@ -33,7 +35,15 @@ var (
 game team stats, game player stats, teams, team rosters, standings, injuries, and more.`,
 		Run: func(cmd *cobra.Command, args []string) {
 			core.Log.Info("Started without commands or parameters, defaulting to Schedule with Injuries and Standings")
-			runGameScraperFromRange(time.Time{}, time.Time{}, true, true)
+			s = &scrapers{standing: true, injury: true, schedule: true, game: true, team: true, player: true}
+		},
+		PersistentPostRun: func(cmd *cobra.Command, args []string) {
+			conditionallyRun(runStandingScraper, s.standing)
+			conditionallyRun(runInjuryScraper, s.injury)
+			conditionallyRun(runScheduleScraper, s.schedule)
+			conditionallyRun(runGameScraper, s.game)
+			conditionallyRun(runTeamScraper, s.team)
+			conditionallyRun(runPlayerScraper, s.player)
 		},
 	}
 )
@@ -55,8 +65,11 @@ func init() {
 
 func setup() {
 	core.SetupContext(configFile)
-	r = new(results)
-	s = new(scrapers)
+	r = &results{
+		playerIds: make(map[string]struct{}),
+		teamIds:   make(map[string]struct{}),
+		gameIds:   make(map[string]struct{}),
+	}
 }
 
 func appendIds(target, ids map[string]struct{}) map[string]struct{} {
@@ -64,4 +77,10 @@ func appendIds(target, ids map[string]struct{}) map[string]struct{} {
 		target[k] = v
 	}
 	return target
+}
+
+func conditionallyRun(runScraper func(), condition bool) {
+	if condition {
+		runScraper()
+	}
 }
