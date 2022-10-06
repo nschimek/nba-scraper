@@ -68,6 +68,6 @@ func stringToDate(dateString string) (time.Time, error) {
 // Gets conditionally called by the rootCmd PersistentPostRun
 func runScheduleScraper() {
 	scheduleScraper := core.Factory[scraper.ScheduleScraper](core.GetInjector())
-	scheduleScraper.ScrapeDateRange(r.startDate, r.startDate)
+	scheduleScraper.ScrapeDateRange(r.startDate, r.endDate)
 	r.gameIds = appendIds(r.gameIds, scheduleScraper.GameIds)
 }
