@@ -22,7 +22,7 @@ type scrapers struct {
 }
 
 var (
-	config     = core.Factory[core.Config](core.GetInjector())
+	config     *core.Config
 	r          *results
 	s          *scrapers
 	configFile string
@@ -65,6 +65,7 @@ func init() {
 
 func setup() {
 	core.SetupContext(configFile)
+	config = core.Factory[core.Config](core.GetInjector())
 	r = &results{
 		playerIds: make(map[string]struct{}),
 		teamIds:   make(map[string]struct{}),

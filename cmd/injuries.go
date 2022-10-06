@@ -24,7 +24,7 @@ func init() {
 	rootCmd.AddCommand(injuriesCmd)
 }
 
-// Gets conndtionally called by the rootCmd PersistentPostRun
+// Gets conditionally called by the rootCmd PersistentPostRun
 func runInjuryScraper() {
 	injuriesScraper := core.Factory[scraper.InjuryScraper](core.GetInjector())
 	injuriesScraper.Scrape()

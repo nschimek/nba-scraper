@@ -31,6 +31,7 @@ func init() {
 	rootCmd.AddCommand(gamesCmd)
 }
 
+// Gets conditionally called by the rootCmd PersistentPostRun
 func runGameScraper() {
 	gameScraper := core.Factory[scraper.GameScraper](core.GetInjector())
 	gameScraper.Scrape(r.gameIds)

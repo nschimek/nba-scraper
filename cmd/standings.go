@@ -23,7 +23,7 @@ func init() {
 	rootCmd.AddCommand(standingsCmd)
 }
 
-// Gets conndtionally called by the rootCmd PersistentPostRun
+// Gets conditionally called by the rootCmd PersistentPostRun
 func runStandingScraper() {
 	standingsScraper := core.Factory[scraper.StandingScraper](core.GetInjector())
 	standingsScraper.Scrape()

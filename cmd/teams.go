@@ -31,7 +31,7 @@ func init() {
 	rootCmd.AddCommand(teamsCmd)
 }
 
-// Gets conndtionally called by the rootCmd PersistentPostRun
+// Gets conditionally called by the rootCmd PersistentPostRun
 func runTeamScraper() {
 	teamScraper := core.Factory[scraper.TeamScraper](core.GetInjector())
 	teamScraper.Scrape(r.teamIds)

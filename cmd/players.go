@@ -10,7 +10,7 @@ import (
 
 var (
 	playersCmd = &cobra.Command{
-		Use:   "teams",
+		Use:   "players",
 		Short: "Scrape NBA players(s) by ID",
 		Long: `Scrape players by player IDs.  Player IDs must match the Basketball Reference player ID.  
 	Separate with spaces such as: curryst01 lavinza01 jamesle01. 
@@ -32,7 +32,7 @@ func init() {
 	rootCmd.AddCommand(playersCmd)
 }
 
-// Gets conndtionally called by the rootCmd PersistentPostRun
+// Gets conditionally called by the rootCmd PersistentPostRun
 func runPlayerScraper() {
 	playerScraper := core.Factory[scraper.PlayerScraper](core.GetInjector())
 	playerScraper.Scrape(r.playerIds)
