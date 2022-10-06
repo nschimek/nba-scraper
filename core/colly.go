@@ -35,6 +35,5 @@ func onRequestVisit(r *colly.Request) {
 }
 
 func onError(r *colly.Response, err error) {
-	Log.Info(string(r.Body))
 	Log.Fatalf("Scraping resulted in error: %s", err)
 }
