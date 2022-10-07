@@ -10,6 +10,7 @@ import (
 
 	"github.com/PuerkitoBio/goquery"
 	"github.com/gocolly/colly/v2"
+	"github.com/nschimek/nba-scraper/core"
 )
 
 // reusable parser utilities
@@ -18,7 +19,12 @@ var EST, _ = time.LoadLocation("America/New_York")
 var CST, _ = time.LoadLocation("America/Chicago")
 
 func parseLink(e *colly.HTMLElement) string {
-	return e.ChildAttr("a", "href")
+	if e != nil {
+		return e.ChildAttr("a", "href")
+	} else {
+		core.Log.Error("Could not parse link!")
+		return ""
+	}
 }
 
 // for URLs where the last part of the URL (*.html)
@@ -85,4 +91,13 @@ func RegexParamMap(regEx, target string) (rpm map[string]string) {
 	}
 
 	return
+}
+
+func getColumnText(rowMap map[string]*colly.HTMLElement, column string) string {
+	if col, ok := rowMap[column]; ok {
+		return col.Text
+	} else {
+		core.Log.Errorf("Could not get expected column '%s'! Will be default value.", column)
+		return ""
+	}
 }

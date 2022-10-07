@@ -29,7 +29,7 @@ func (s *StandingScraper) GetData() []model.TeamStanding {
 }
 
 // we this has a static URL, so we have no use for the IDs...but leaving it for a future interface
-func (s *StandingScraper) Scrape(pageIds ...string) {
+func (s *StandingScraper) Scrape() {
 	c := core.CloneColly(s.Colly)
 	s.TeamIds = make(map[string]struct{})
 

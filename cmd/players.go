@@ -36,4 +36,5 @@ func init() {
 func runPlayerScraper() {
 	playerScraper := core.Factory[scraper.PlayerScraper](core.GetInjector())
 	playerScraper.Scrape(r.playerIds)
+	s.persist = append(s.persist, playerScraper)
 }

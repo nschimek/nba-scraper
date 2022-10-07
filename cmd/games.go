@@ -37,4 +37,5 @@ func runGameScraper() {
 	gameScraper.Scrape(r.gameIds)
 	r.teamIds = appendIds(r.teamIds, gameScraper.TeamIds)
 	r.playerIds = appendIds(r.playerIds, gameScraper.PlayerIds)
+	s.persist = append(s.persist, gameScraper)
 }

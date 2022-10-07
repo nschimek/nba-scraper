@@ -29,10 +29,6 @@ type TeamScraper struct {
 	PlayerIds        map[string]struct{}
 }
 
-func (s *TeamScraper) ScrapeIds(ids ...string) {
-	s.scrape(core.IdArrayToMap(ids))
-}
-
 func (s *TeamScraper) Scrape(idMap map[string]struct{}) {
 	core.Log.WithField("ids", len(idMap)).Info("Got Team ID(s) to scrape")
 	if s.Config.Suppression.Team > 0 {

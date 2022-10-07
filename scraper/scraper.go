@@ -10,6 +10,10 @@ import (
 	"github.com/nschimek/nba-scraper/core"
 )
 
+type Scraper interface {
+	Persist()
+}
+
 var exists = struct{}{}
 
 func transformHtmlElement(element *colly.HTMLElement, query string, transform func(html string) string) (*colly.HTMLElement, error) {

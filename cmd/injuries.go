@@ -26,8 +26,9 @@ func init() {
 
 // Gets conditionally called by the rootCmd PersistentPostRun
 func runInjuryScraper() {
-	injuriesScraper := core.Factory[scraper.InjuryScraper](core.GetInjector())
-	injuriesScraper.Scrape()
-	r.teamIds = appendIds(r.teamIds, injuriesScraper.TeamIds)
-	r.playerIds = appendIds(r.playerIds, injuriesScraper.PlayerIds)
+	injuryScraper := core.Factory[scraper.InjuryScraper](core.GetInjector())
+	injuryScraper.Scrape()
+	r.teamIds = appendIds(r.teamIds, injuryScraper.TeamIds)
+	r.playerIds = appendIds(r.playerIds, injuryScraper.PlayerIds)
+	s.persist = append(s.persist, injuryScraper)
 }

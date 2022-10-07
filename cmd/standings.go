@@ -25,7 +25,8 @@ func init() {
 
 // Gets conditionally called by the rootCmd PersistentPostRun
 func runStandingScraper() {
-	standingsScraper := core.Factory[scraper.StandingScraper](core.GetInjector())
-	standingsScraper.Scrape()
-	r.teamIds = appendIds(r.teamIds, standingsScraper.TeamIds)
+	standingScraper := core.Factory[scraper.StandingScraper](core.GetInjector())
+	standingScraper.Scrape()
+	r.teamIds = appendIds(r.teamIds, standingScraper.TeamIds)
+	s.persist = append(s.persist, standingScraper)
 }

@@ -4,6 +4,7 @@ import (
 	"time"
 
 	"github.com/nschimek/nba-scraper/core"
+	"github.com/nschimek/nba-scraper/scraper"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 )
@@ -19,6 +20,7 @@ type results struct {
 
 type scrapers struct {
 	schedule, injury, standing, game, team, player bool
+	persist                                        []scraper.Scraper
 }
 
 var (
@@ -44,6 +46,11 @@ game team stats, game player stats, teams, team rosters, standings, injuries, an
 			conditionallyRun(runGameScraper, s.game)
 			conditionallyRun(runTeamScraper, s.team)
 			conditionallyRun(runPlayerScraper, s.player)
+
+			// need to persist in the reverse order the scrapers were added to the list
+			for i := len(s.persist) - 1; i >= 0; i-- {
+				s.persist[i].Persist()
+			}
 		},
 	}
 )

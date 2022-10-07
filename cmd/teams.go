@@ -36,4 +36,5 @@ func runTeamScraper() {
 	teamScraper := core.Factory[scraper.TeamScraper](core.GetInjector())
 	teamScraper.Scrape(r.teamIds)
 	r.playerIds = appendIds(r.playerIds, teamScraper.PlayerIds)
+	s.persist = append(s.persist, teamScraper)
 }

@@ -24,10 +24,6 @@ type PlayerScraper struct {
 	ScrapedData  []model.Player
 }
 
-func (s *PlayerScraper) ScrapeIds(ids ...string) {
-	s.scrape(core.IdArrayToMap(ids))
-}
-
 func (s *PlayerScraper) Scrape(idMap map[string]struct{}) {
 	core.Log.WithField("ids", len(idMap)).Info("Got Player ID(s) to scrape")
 	if s.Config.Suppression.Player > 0 {
