@@ -56,6 +56,11 @@ nba-scraper [-n|-d] [schedule|games|teams|players|injuries|standings]
 
 For example, `nba-scraper injuries` would scrape the injuires page.  
 
+### Help
+You can always get help with either the entire application or a specific command by using the `--help` parameter.
+
+For example, `nba-scraper --help` will display help for the entire application, whereas `nba-scraper schedule --help` will display help for the schedule command.
+
 ### Global Parameters
 These global parameters can be applied to any command and are strictly optional.  If they are not specified, the value from the configuration file will be used.
 | Parameter | Flag | Description | Example |
