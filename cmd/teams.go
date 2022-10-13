@@ -17,6 +17,7 @@ var (
 	Note: suppression settings are IGNORED for this command.`,
 		RunE: func(cmd *cobra.Command, args []string) error {
 			if len(args) > 0 {
+				config.Suppression.Team = 0
 				s = &scrapers{team: true, player: true}
 				r.teamIds = appendIds(r.teamIds, core.IdArrayToMap(args))
 			} else {
