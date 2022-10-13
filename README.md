@@ -18,7 +18,7 @@ By default, the application expects a file called `default.yaml` in a `config` f
 By default, the application will look for a file called `config/default.yaml` for configuration.  There is a parameter to override this file if you wish.  The file must contain the following entries:
 
 | Section | Attribute | Default | Description |
-| --------|-----------|-------------|
+| --------|-----------|---------|-------------|
 | (root) | season | 2023 | The NBA season you are scraping in YYYY format.  Note that this should be the *finishing* year of the season (ex: the 2021-22 season would be entered as 2022) |
 | (root) | debug | false | Enable or disable debug logging, which will output addtional log entries for troubleshooting |
 | database | user | username | The username for connecting to your database |
@@ -58,8 +58,8 @@ For example, `nba-scraper injuries` would scrape the injuires page.
 
 ### Global Parameters
 These global parameters can be applied to any command and are strictly optional.  If they are not specified, the value from the configuration file will be used.
-| Parameter | Flag | Description | Example usage |
-| --------- | :--: | ----------- | ------------- |
+| Parameter | Flag | Description | Example |
+| --------- | :--: | :---------- | :------------ |
 | season | `-n` | Override the season in the configuration file for this run | `nba-scraper -n 2022 <command>` |
 | debug | `-d` | Enable debug mode | `nba-scraper -d <command>` |
 | config | `-c` | Specify a different configuration file | `nba-scraper -c config/dev.yaml <command>` |
@@ -67,14 +67,26 @@ These global parameters can be applied to any command and are strictly optional.
 ### Commands
 Commands are generally what you will use to run the scraper.  Each command is dedicated to a different page.  Given the relational nature of the statistics, most commands will result in additional scrapes occuring to support the foreign key relationships.
 
-| Command | Arguments/Flags | Description | Example | Additional Scrapes |
-| ------- | --------------- | ----------- | ------- | ------------------ |
-| schedule | <ul><li>`-s` Start Date in YYYY-MM-DD format</li><li>`-e` End Date in YYYY-MM-DD format</li><li>`-t` Also scrape the standings page for the current season</li><li>`-j` Also scrape the injuries page and load it for the current season</ul></ul> | Scrape games via the NBA schedule by a provided date range.  If no date range is provided, it defaults to yesterday. | <ul><li>`nba-scraper schedule -s 2021-11-01 -e 2021-11-30 -t -j` *(with injuries and standings)*</li><li>`nba-scraper schedule -s 2021-12-01 -e 2022-02-28` *(without injuries and standings)*</li></ul> | <ul><li>games</li><li>teams</li><li>players</li></ul> |
+| Command | Arguments/Flags | Description | Example |
+| :------ | --------------- | :---------- | :------ | 
+| schedule | <ul><li>`-s` Start Date in YYYY-MM-DD format</li><li>`-e` End Date in YYYY-MM-DD format</li><li>`-t` Also scrape the standings page for the current season</li><li>`-j` Also scrape the injuries page and load it for the current season</ul></ul> | Scrape games via the NBA schedule by a provided date range.  If no date range is provided, it defaults to yesterday. | <ul><li>`nba-scraper schedule -s 2021-11-01 -e 2021-11-30 -t -j` *(with injuries and standings)*</li><li>`nba-scraper schedule -s 2021-12-01 -e 2022-02-28` *(without injuries and standings)*</li></ul> | 
 | games | (space-delimited BR game IDs) | Scrape individual games by BR IDs.  | `nba-scraper games 202102040LAL 202103150DEN`
-| teams | (space-delimited BR team IDs) | Scrape individual teams by BR IDs. *Note: team suppression settings are ignored when using this command.* | `nba-scraper teams CHI GSW LAL` | <ul><li>teams</li><li>players</li></ul> |
-| players | (space-delimited BR player IDs) | Scrape individual players by BR IDs. *Note: player suppression settings are ignored when using this command.* | `nba-scraper players lavinza01 jamesle01 curryst01` | *(none)* |
-| standings | *(none)* | Scrape the standings page for the currently configured season. *Note: historical seasons will be as of the last day of the saeason.* | `nba-scraper standings` | <ul><li>teams</li><li>players</li></ul> |
-| injuries | *(none)* | Scrape the injuries page and load it for the current season. *Note: BR only shows the current injuries and no historical are available.* | `nba-scraper injuries` | <ul><li>teams</li><li>players</li></ul> |
+| teams | (space-delimited BR team IDs) | Scrape individual teams by BR IDs. *Note: team suppression settings are ignored when using this command.* | `nba-scraper teams CHI GSW LAL` | 
+| players | (space-delimited BR player IDs) | Scrape individual players by BR IDs. *Note: player suppression settings are ignored when using this command.* | `nba-scraper players lavinza01 jamesle01 curryst01` | 
+| standings | *(none)* | Scrape the standings page for the currently configured season. | `nba-scraper standings` |
+| injuries | *(none)* | Scrape the injuries page and load it for the current season. | `nba-scraper injuries` |
+
+ > **Special Note on Standings**: standings for historical seasons are as of the last day of the season.
+ > **Special Note on Injuries**: there are no historical injuires available, and only the current injuries can be scraped at any given time.  Take care when scraping historical seasons to avoid this page.
+
+### Additional Scrapes
+Due to the relational nature of the statistics, additional scrapes will occur for some commands in support of the foriegn keys:
+
+ - *schedule*: games, teams, players, standings^if enabled^, injuries^if enabled^ 
+ - *games*: teams, players
+ - *teams*: players
+ - *standings:* teams, players
+ - *injuries:* teams, players
 
 ### Running Without Commands
 Running the scraper without commands will result in the `schedule` command being run with yesterday's date, along with the current standings and injuries.
