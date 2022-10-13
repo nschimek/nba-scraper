@@ -77,16 +77,17 @@ Commands are generally what you will use to run the scraper.  Each command is de
 | injuries | *(none)* | Scrape the injuries page and load it for the current season. | `nba-scraper injuries` |
 
  > **Special Note on Standings**: standings for historical seasons are as of the last day of the season.
+
  > **Special Note on Injuries**: there are no historical injuires available, and only the current injuries can be scraped at any given time.  Take care when scraping historical seasons to avoid this page.
 
 ### Additional Scrapes
 Due to the relational nature of the statistics, additional scrapes will occur for some commands in support of the foriegn keys:
 
- - *schedule*: games, teams, players, standings^if enabled^, injuries^if enabled^ 
- - *games*: teams, players
- - *teams*: players
- - *standings:* teams, players
- - *injuries:* teams, players
+ - `schedule`: games, teams, players, standings^if enabled^, injuries^if enabled^ 
+ - `games`: teams, players
+ - `teams`: players
+ - `standings`: teams, players
+ - `injuries`: teams, players
 
 ### Running Without Commands
 Running the scraper without commands will result in the `schedule` command being run with yesterday's date, along with the current standings and injuries.
