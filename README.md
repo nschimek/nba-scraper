@@ -7,7 +7,7 @@ This command-line application will scrape NBA data from [Basketball Reference (B
 This application requires a MySQL database to run.  Simply run the `sql/init.sql` file to create the required tables and keys.  Take note of your connection information as it will be needed next.
 
 ### Default Configuration File
-In the `config` folder, there is a file called `default.yaml`.  You should update this file with your database connection information, among other settings.  They are explainted below.
+In the `config` folder, there is a file called `sample.yaml`.  You should create a copy of this file and rename it `default.yaml`, then update it with your database connection information, among other settings.  They are explainted below.
 
 ## Configuration
 The application can be configured via a YAML file or environment variables.  Some configuration settings can also be overriden at run-time by command-line parameters (described below).  

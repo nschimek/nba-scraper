@@ -1,0 +1,11 @@
+season: 2023
+debug: false
+database:
+  user: go
+  password: 
+  location: localhost
+  port: 3306
+  name: nba
+suppression:
+  team: 30
+  player: 365
