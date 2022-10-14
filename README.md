@@ -18,7 +18,7 @@ By default, the application expects a file called `default.yaml` in a `config` f
 By default, the application will look for a file called `config/default.yaml` for configuration.  There is a parameter to override this file if you wish.  The file must contain the following entries:
 
 | Section | Attribute | Default | Description |
-| --------|-----------|---------|-------------|
+| :------ | :-------- | :-----: | :---------- |
 | (root) | season | 2023 | The NBA season you are scraping in YYYY format.  Note that this should be the *finishing* year of the season (ex: the 2021-22 season would be entered as 2022) |
 | (root) | debug | false | Enable or disable debug logging, which will output addtional log entries for troubleshooting |
 | database | user | username | The username for connecting to your database |
@@ -89,7 +89,7 @@ Commands are generally what you will use to run the scraper.  Each command is de
 ### Additional Scrapes
 Due to the relational nature of the statistics, additional scrapes will occur for some commands in support of the foriegn keys:
 
- - `schedule`: games, teams, players, standings<sup>if enabled</sup>, injuries<sup>if enabled</sup> 
+ - `schedule`: games, teams, players, standings <sup>(if enabled)</sup>, injuries <sup>(if enabled)</sup> 
  - `games`: teams, players
  - `teams`: players
  - `standings`: teams, players
