@@ -51,10 +51,10 @@ Coming soon.
 ## Running and Scraping
 The scraper is run via the command line (Command Prompt in Windows).  Generally, you use the following format:
 ```
-nba-scraper [-n|-d] [schedule|games|teams|players|injuries|standings]
+nba-scraper [-n|-d|-c] [schedule|games|teams|players|injuries|standings]
 ```
 
-For example, `nba-scraper injuries` would scrape the injuires page.  
+For example, `nba-scraper injuries` would scrape the injuires page.  **Note**: in Windows, `nba-scraper` will need to be `nba-scraper.exe`.
 
 ### Help
 You can always get help with either the entire application or a specific command by using the `--help` parameter.
@@ -64,7 +64,7 @@ For example, `nba-scraper --help` will display help for the entire application, 
 ### Global Parameters
 These global parameters can be applied to any command and are strictly optional.  If they are not specified, the value from the configuration file will be used.
 | Parameter | Flag | Description | Example |
-| --------- | :--: | :---------- | :------------ |
+| :-------- | :--: | :---------- | :------------ |
 | season | `-n` | Override the season in the configuration file for this run | `nba-scraper -n 2022 <command>` |
 | debug | `-d` | Enable debug mode | `nba-scraper -d <command>` |
 | config | `-c` | Specify a different configuration file | `nba-scraper -c config/dev.yaml <command>` |
@@ -80,6 +80,7 @@ Commands are generally what you will use to run the scraper.  Each command is de
 | players | (space-delimited BR player IDs) | Scrape individual players by BR IDs. *Note: player suppression settings are ignored when using this command.* | `nba-scraper players lavinza01 jamesle01 curryst01` | 
 | standings | *(none)* | Scrape the standings page for the currently configured season. | `nba-scraper standings` |
 | injuries | *(none)* | Scrape the injuries page and load it for the current season. | `nba-scraper injuries` |
+| version | *(none)* | Displays the current version.  Will also test DB connectivity and configured season. | `nba-scraper version` |
 
  > **Special Note on Standings**: standings for historical seasons are as of the last day of the season.
 
@@ -88,7 +89,7 @@ Commands are generally what you will use to run the scraper.  Each command is de
 ### Additional Scrapes
 Due to the relational nature of the statistics, additional scrapes will occur for some commands in support of the foriegn keys:
 
- - `schedule`: games, teams, players, standings^if enabled^, injuries^if enabled^ 
+ - `schedule`: games, teams, players, standings<sup>if enabled</sup>, injuries<sup>if enabled</sup> 
  - `games`: teams, players
  - `teams`: players
  - `standings`: teams, players
