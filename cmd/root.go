@@ -1,6 +1,7 @@
 package cmd
 
 import (
+	"os"
 	"time"
 
 	"github.com/nschimek/nba-scraper/core"
@@ -40,6 +41,10 @@ game team stats, game player stats, teams, team rosters, standings, injuries, an
 			s = &scrapers{standing: true, injury: true, schedule: true, game: true, team: true, player: true}
 		},
 		PersistentPostRun: func(cmd *cobra.Command, args []string) {
+			if cmd.Use == "version" {
+				os.Exit(0) // the version command should do nothing more
+			}
+
 			conditionallyRun(runStandingScraper, s.standing)
 			conditionallyRun(runInjuryScraper, s.injury)
 			conditionallyRun(runScheduleScraper, s.schedule)

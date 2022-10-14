@@ -1,5 +1,7 @@
 package core
 
+// The current version of the Scraper
+var Version = "v1.0"
 var exists = struct{}{}
 
 func IdMapToArray(idMap map[string]struct{}) (ids []string) {
