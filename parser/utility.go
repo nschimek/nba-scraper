@@ -97,7 +97,7 @@ func getColumnText(rowMap map[string]*colly.HTMLElement, column string) string {
 	if col, ok := rowMap[column]; ok {
 		return col.Text
 	} else {
-		core.Log.Errorf("Could not get expected column '%s'! Will be default value.", column)
+		core.Log.Warnf("Could not get expected column '%s'! Will be default value.", column)
 		return ""
 	}
 }
