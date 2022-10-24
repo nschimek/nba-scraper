@@ -15,7 +15,8 @@ var (
 	scheduleCmd                     = &cobra.Command{
 		Use:   "schedule",
 		Short: "Scrape NBA game(s) data by the schedule",
-		Long: `Scrape game, game stats, and player game stats data via the schedule, using an optional date range (defaults to yesterday).  
+		Long: `Scrape game, game stats, and player game stats data via the schedule, using an optional date range.
+If no date range is specified, it uses the date of the last game loaded for the current season until today.
 This will also potentially cause scrapes of the corresponding Team and Player pages, depending on Suppression settings.  
 Injuries and standings can also be optionally scraped; however, they have limited historical support (more info in help).
 NOTE: Check that the Season parameter matches the season you are scraping games from as scraping across seasons is not supported.`,

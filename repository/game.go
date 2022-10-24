@@ -5,6 +5,7 @@ import (
 
 	"github.com/nschimek/nba-scraper/core"
 	"github.com/nschimek/nba-scraper/model"
+	"github.com/nschimek/nba-scraper/parser"
 	"github.com/sirupsen/logrus"
 	"gorm.io/gorm"
 )
@@ -72,8 +73,8 @@ func (r *GameRepository) GetMostRecentGame() (time.Time, error) {
 			core.Log.Infof("Most recent game for season %d in DB was %s at %s", r.Config.Season, id, st.Format(core.DateRangeFormat))
 			return st, nil
 		} else {
-			core.Log.Warnf("No games for season %d, so could not get most recent; defaulting to yesterday...", r.Config.Season)
-			return time.Now().AddDate(0, 0, -1), nil
+			core.Log.Warnf("No games for season %d, so could not get most recent; defaulting to October 1st...", r.Config.Season)
+			return time.Date(r.Config.Season-1, 10, 1, 0, 0, 0, 0, parser.EST), nil
 		}
 	} else {
 		return time.Time{}, result.Error

@@ -74,7 +74,7 @@ Commands are generally what you will use to run the scraper.  Each command is de
 
 | Command | Arguments/Flags | Description | Example |
 | :------ | --------------- | :---------- | :------ | 
-| schedule | <ul><li>`-s` Start Date in YYYY-MM-DD format</li><li>`-e` End Date in YYYY-MM-DD format</li><li>`-t` Also scrape the standings page for the current season</li><li>`-j` Also scrape the injuries page and load it for the current season</ul></ul> | Scrape games via the NBA schedule by a provided date range.  If no date range is provided, it defaults to yesterday. | <ul><li>`nba-scraper schedule -s 2021-11-01 -e 2021-11-30 -t -j` *(with injuries and standings)*</li><li>`nba-scraper schedule -s 2021-12-01 -e 2022-02-28` *(without injuries and standings)*</li></ul> | 
+| schedule | <ul><li>`-s` Start Date in YYYY-MM-DD format</li><li>`-e` End Date in YYYY-MM-DD format</li><li>`-t` Also scrape the standings page for the current season</li><li>`-j` Also scrape the injuries page and load it for the current season</ul></ul> | Scrape games via the NBA schedule by a provided date range.  If no date range is provided, it uses the date of the last game loaded for the current season until today.  If there are no games loaded for the current season, it uses October 1st <sup>(of the starting year of the season)</sup> until today. | <ul><li>`nba-scraper schedule -s 2021-11-01 -e 2021-11-30 -t -j` *(with injuries and standings)*</li><li>`nba-scraper schedule -s 2021-12-01 -e 2022-02-28` *(without injuries and standings)*</li></ul> | 
 | games | (space-delimited BR game IDs) | Scrape individual games by BR IDs.  | `nba-scraper games 202102040LAL 202103150DEN`
 | teams | (space-delimited BR team IDs) | Scrape individual teams by BR IDs. *Note: team suppression settings are ignored when using this command.* | `nba-scraper teams CHI GSW LAL` | 
 | players | (space-delimited BR player IDs) | Scrape individual players by BR IDs. *Note: player suppression settings are ignored when using this command.* | `nba-scraper players lavinza01 jamesle01 curryst01` | 
@@ -96,7 +96,7 @@ Due to the relational nature of the statistics, additional scrapes will occur fo
  - `injuries`: teams, players
 
 ### Running Without Commands
-Running the scraper without commands will result in the `schedule` command being run with yesterday's date, along with the current standings and injuries.
+Running the scraper without commands will result in the `schedule` command being run without a date range (so it use set the range using the date of the last game loaded for the current season until today), along with the current standings and injuries.
 
 ## Special Note: Scraping a Historical Season
 To scrape a historical season, you should do the following: 

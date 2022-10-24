@@ -7,7 +7,7 @@ import (
 	"strconv"
 	"strings"
 	"time"
-	_ "time/tzdata" // resolve tzdata issues for windows binary on systems without go ()
+	_ "time/tzdata" // resolve timezone database issues for windows binary on systems without Go installed
 
 	"github.com/PuerkitoBio/goquery"
 	"github.com/gocolly/colly/v2"
