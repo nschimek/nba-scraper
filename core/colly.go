@@ -32,7 +32,6 @@ func (t *transport) RoundTrip(r *http.Request) (*http.Response, error) {
 		Body:      "",
 		Ja3:       ja3,
 		UserAgent: userAgent,
-		// Proxy:     "http://scraper:ARN5xw6qcY7s@168.91.250.25:8080",
 	}, "GET")
 	if err != nil {
 		return nil, err
