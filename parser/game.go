@@ -1,6 +1,7 @@
 package parser
 
 import (
+	"errors"
 	"math"
 	"strconv"
 	"strings"
@@ -17,8 +18,9 @@ type GameParser struct {
 	GPS    *GamePlayerStatsParser `Inject:""`
 }
 
-func (*GameParser) GameTitle(g *model.Game, div *colly.HTMLElement) {
-	g.Type = parseTypeFromTitle(div.ChildText("h1"))
+func (*GameParser) GameTitle(g *model.Game, div *colly.HTMLElement) (err error) {
+	g.Type, err = parseTypeFromTitle(div.ChildText("h1"))
+	return
 }
 
 func (p *GameParser) Scorebox(g *model.Game, box *colly.HTMLElement, index int) {
@@ -73,14 +75,17 @@ func parseMetaScorebox(box *colly.HTMLElement) (startTime time.Time, location st
 	return
 }
 
-func parseTypeFromTitle(title string) string {
-	// play-in games are weird...giving them a different type so they can be queried/excluded
-	if strings.HasPrefix(title, "Play-In Game") {
-		return "I"
-	} else if strings.Contains(title, "NBA") {
-		return "P"
+func parseTypeFromTitle(title string) (string, error) {
+	if title != "" { // play-in games are weird...giving them a different type so they can be queried/excluded
+		if strings.HasPrefix(title, "Play-In Game") {
+			return "I", nil
+		} else if strings.Contains(title, "NBA") {
+			return "P", nil
+		} else {
+			return "R", nil
+		}
 	} else {
-		return "R"
+		return "", errors.New("Could not get Game page title")
 	}
 }
 

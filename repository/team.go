@@ -26,6 +26,8 @@ func (tr *TeamRepository) UpsertTeams(teams []model.Team) {
 					"players":  r2.RowsAffected,
 					"salaries": r3.RowsAffected,
 				}).Infof("Successfully create/updated team %s along with players and salaries", team.ID)
+			} else {
+				core.Log.Errorf("Error(s) occurred while loading %s", team.ID)
 			}
 		}
 	}

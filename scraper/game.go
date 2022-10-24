@@ -24,6 +24,7 @@ const (
 )
 
 type GameScraper struct {
+	Scraper     Scraper
 	Config      *core.Config               `Inject:""`
 	Colly       *colly.Collector           `Inject:""`
 	GameParser  *parser.GameParser         `Inject:""`
@@ -31,6 +32,7 @@ type GameScraper struct {
 	ScrapedData []model.Game
 	PlayerIds   map[string]struct{}
 	TeamIds     map[string]struct{}
+	Errors      []error
 }
 
 func (s *GameScraper) Scrape(idMap map[string]struct{}) {
@@ -65,7 +67,7 @@ func (s *GameScraper) parseGamePage(id string) (game model.Game) {
 	game.Season = s.Config.Season
 
 	c.OnHTML(baseContentElement, func(div *colly.HTMLElement) {
-		s.GameParser.GameTitle(&game, div)
+		s.Scraper.runAndCapture(s.GameParser.GameTitle(&game, div))
 
 		div.ForEach(scoreboxElements, func(i int, box *colly.HTMLElement) {
 			s.GameParser.Scorebox(&game, box, i)

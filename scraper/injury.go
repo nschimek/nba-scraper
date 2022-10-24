@@ -43,7 +43,7 @@ func (s *InjuryScraper) Scrape() {
 
 func (s *InjuryScraper) Persist() {
 	if len(s.ScrapedData) > 0 {
-		s.Repository.Upsert(s.ScrapedData, "player_injuries")
+		s.Repository.Upsert(s.ScrapedData, "Player Injuries")
 	} else {
 		core.Log.Warn("No Player Injuries scraped to persist! Skipping...")
 	}

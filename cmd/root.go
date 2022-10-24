@@ -21,7 +21,7 @@ type results struct {
 
 type scrapers struct {
 	schedule, injury, standing, game, team, player bool
-	persist                                        []scraper.Scraper
+	persist                                        []scraper.PeristableScraper
 }
 
 var (

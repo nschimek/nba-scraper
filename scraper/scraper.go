@@ -10,7 +10,17 @@ import (
 	"github.com/nschimek/nba-scraper/core"
 )
 
-type Scraper interface {
+type Scraper struct {
+	Errors []error
+}
+
+func (s *Scraper) runAndCapture(err error) {
+	if err != nil {
+		s.Errors = append(s.Errors, err)
+	}
+}
+
+type PeristableScraper interface {
 	Persist()
 }
 

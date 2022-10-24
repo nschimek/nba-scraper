@@ -1,5 +1,9 @@
 package core
 
+const (
+	DateRangeFormat = "2006-01-02 15:04:05 MST"
+)
+
 // This will be set by -ldflags at build time
 var Version = "v0.0.0"
 var exists = struct{}{}

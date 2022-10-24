@@ -10,19 +10,20 @@ import (
 	"github.com/nschimek/nba-scraper/core"
 	"github.com/nschimek/nba-scraper/model"
 	"github.com/nschimek/nba-scraper/parser"
+	"github.com/nschimek/nba-scraper/repository"
 )
 
 const (
 	baseScheduleTableElement = "body #wrap #content #all_schedule #div_schedule table tbody" // targets the main schedule table
-	dateRangeFormat          = "2006-01-02 15:04:05 MST"
 )
 
 var yesterday = time.Now().AddDate(0, 0, -1)
 
 type ScheduleScraper struct {
-	Config         *core.Config           `Inject:""`
-	Colly          *colly.Collector       `Inject:""`
-	ScheduleParser *parser.ScheduleParser `Inject:""`
+	Config         *core.Config               `Inject:""`
+	Colly          *colly.Collector           `Inject:""`
+	ScheduleParser *parser.ScheduleParser     `Inject:""`
+	GameRepository *repository.GameRepository `Inject:""`
 	dateRange      *DateRange
 	ScrapedData    []model.Schedule
 	GameIds        map[string]struct{}
@@ -34,15 +35,16 @@ type DateRange struct {
 
 func (s *ScheduleScraper) ScrapeDateRange(startDate, endDate time.Time) {
 	if startDate.IsZero() {
-		startDate = time.Date(yesterday.Year(), yesterday.Month(), yesterday.Day(), 0, 0, 0, 0, parser.EST)
+		startDate, _ = s.GameRepository.GetMostRecentGame()
 	}
 	if endDate.IsZero() {
-		endDate = time.Date(yesterday.Year(), yesterday.Month(), yesterday.Day(), 23, 59, 0, 0, parser.EST)
+		endDate = time.Now()
 	} else {
 		endDate = time.Date(endDate.Year(), endDate.Month(), endDate.Day(), 23, 59, 59, 0, parser.EST)
 	}
 
-	core.Log.Infof("Schedule Scraper started with date range: %s - %s", startDate.Format(dateRangeFormat), endDate.Format(dateRangeFormat))
+	core.Log.Infof("Schedule Scraper started with date range: %s - %s",
+		startDate.Format(core.DateRangeFormat), endDate.Format(core.DateRangeFormat))
 
 	months, err := getMonths(startDate, endDate)
 
