@@ -18,19 +18,22 @@ type GameParser struct {
 	GPS    *GamePlayerStatsParser `Inject:""`
 }
 
-func (*GameParser) GameTitle(g *model.Game, div *colly.HTMLElement) (err error) {
+func (p *GameParser) GameTitle(g *model.Game, div *colly.HTMLElement) {
+	var err error
 	g.Type, err = parseTypeFromTitle(div.ChildText("h1"))
-	return
+	g.CaptureError(err)
 }
 
 func (p *GameParser) Scorebox(g *model.Game, box *colly.HTMLElement, index int) {
+	var err error
 	if index == 0 { // away team is first
-		g.Away = *p.GS.parseScorebox(box)
+		g.Away, err = p.GS.parseScorebox(box)
 	} else if index == 1 { // home team is second
-		g.Home = *p.GS.parseScorebox(box)
+		g.Home, err = p.GS.parseScorebox(box)
 	} else if index == 2 && box.Attr("class") == "scorebox_meta" {
-		g.StartTime, g.Location = parseMetaScorebox(box)
+		g.StartTime, g.Location, err = parseMetaScorebox(box)
 	}
+	g.CaptureError(err)
 }
 
 func (p *GameParser) LineScoreTable(g *model.Game, tbl *colly.HTMLElement) {
@@ -69,9 +72,12 @@ func (p *GameParser) CheckScheduleLinkSeason(a *colly.HTMLElement) {
 	}
 }
 
-func parseMetaScorebox(box *colly.HTMLElement) (startTime time.Time, location string) {
-	startTime, _ = time.ParseInLocation("3:04 PM, January 2, 2006", box.ChildText("div:first-child"), EST)
+func parseMetaScorebox(box *colly.HTMLElement) (startTime time.Time, location string, err error) {
+	startTime, err = time.ParseInLocation("3:04 PM, January 2, 2006", box.ChildText("div:first-child"), EST)
 	location = box.ChildText("div:nth-child(2)")
+	if err != nil {
+		err = errors.New("could not parse game start time from scorebox") // re-write error to help pinpoint the issue
+	}
 	return
 }
 

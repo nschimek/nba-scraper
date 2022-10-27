@@ -1,6 +1,7 @@
 package parser
 
 import (
+	"errors"
 	"strconv"
 	"strings"
 
@@ -10,19 +11,32 @@ import (
 
 type GameStatsParser struct{}
 
-func (*GameStatsParser) parseScorebox(box *colly.HTMLElement) *model.GameTeam {
-	gt := new(model.GameTeam)
+func (*GameStatsParser) parseScorebox(box *colly.HTMLElement) (model.GameTeam, error) {
+	var err error
+	gt := &model.GameTeam{}
 
 	gt.TeamId = ParseTeamId(box.ChildAttr("div:first-child strong a", "href"))
-	gt.Score, _ = strconv.Atoi(box.ChildText("div.scores div.score"))
+	gt.Score, err = strconv.Atoi(box.ChildText("div.scores div.score"))
+
+	if err != nil {
+		return model.GameTeam{}, errors.New("could not parse score from scorebox")
+	}
 
 	wl := strings.Split(box.ChildText("div:nth-child(3)"), "-")
 	if len(wl) == 2 {
-		gt.Wins, _ = strconv.Atoi(wl[0])
-		gt.Losses, _ = strconv.Atoi(wl[1])
+		gt.Wins, err = strconv.Atoi(wl[0])
+		if err != nil {
+			return model.GameTeam{}, errors.New("could not parse wins from scorebox")
+		}
+		gt.Losses, err = strconv.Atoi(wl[1])
+		if err != nil {
+			return model.GameTeam{}, errors.New("could not parse losses from scorebox")
+		}
+	} else {
+		return model.GameTeam{}, errors.New("could not parse win-loss record from scorebox")
 	}
 
-	return gt
+	return *gt, nil
 }
 
 func (*GameStatsParser) parseLineScoreTable(tbl *colly.HTMLElement, gameId string) (home, visitor []model.GameLineScore) {
