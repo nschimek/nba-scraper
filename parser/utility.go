@@ -34,9 +34,18 @@ func ParseLastId(link string) string {
 	return strings.Replace(s[len(s)-1], ".html", "", 1)
 }
 
-func ParseTeamId(link string) string {
+func ParseTeamId(link string) (string, error) {
 	s := strings.Split(link, "/")
-	return s[len(s)-2]
+
+	if len(s) != 4 {
+		return "", errors.New("team link not in expected format")
+	}
+
+	if id := s[len(s)-2]; len(id) != 3 {
+		return "", errors.New("team ID not in expected format")
+	} else {
+		return id, nil
+	}
 }
 
 func parseDuration(duration string) (int, error) {

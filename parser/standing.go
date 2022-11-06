@@ -33,7 +33,7 @@ func standingFromRow(rowMap map[string]*colly.HTMLElement) *model.TeamStanding {
 	standing := new(model.TeamStanding)
 
 	standing.Rank, _ = strconv.Atoi(getColumnText(rowMap, "ranker"))
-	standing.TeamId = ParseTeamId(parseLink(rowMap["team_name"]))
+	standing.TeamId, _ = ParseTeamId(parseLink(rowMap["team_name"]))
 	standing.Overall = parseWinLoss(getColumnText(rowMap, "Overall"))
 	standing.Home = parseWinLoss(getColumnText(rowMap, "Home"))
 	standing.Road = parseWinLoss(getColumnText(rowMap, "Road"))

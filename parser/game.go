@@ -37,12 +37,16 @@ func (p *GameParser) Scorebox(g *model.Game, box *colly.HTMLElement, index int) 
 }
 
 func (p *GameParser) LineScoreTable(g *model.Game, tbl *colly.HTMLElement) {
-	g.HomeLineScores, g.AwayLineScores = p.GS.parseLineScoreTable(tbl, g.ID)
+	var err error
+	g.HomeLineScores, g.AwayLineScores, err = p.GS.parseLineScoreTable(tbl, g.ID)
 	g.Quarters = len(g.HomeLineScores)
+	g.CaptureError(err)
 }
 
 func (p *GameParser) FourFactorsTable(g *model.Game, tbl *colly.HTMLElement) {
-	g.HomeFourFactors, g.AwayFourFactors = p.GS.parseFourFactorsTable(tbl, g.ID)
+	var err error
+	g.HomeFourFactors, g.AwayFourFactors, err = p.GS.parseFourFactorsTable(tbl, g.ID)
+	g.CaptureError(err)
 }
 
 func (p *GameParser) ScoreboxStatTable(g *model.Game, box *colly.HTMLElement) {

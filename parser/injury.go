@@ -28,7 +28,7 @@ func injuryFromRow(rowMap map[string]*colly.HTMLElement) *model.PlayerInjury {
 	inj := new(model.PlayerInjury)
 
 	inj.PlayerId = ParseLastId(parseLink(rowMap["player"]))
-	inj.TeamId = ParseTeamId(parseLink(rowMap["team_name"]))
+	inj.TeamId, _ = ParseTeamId(parseLink(rowMap["team_name"]))
 	inj.SourceUpdateDate, _ = time.ParseInLocation("Mon, Jan 2, 2006", rowMap["date_update"].Text, CST)
 	inj.Description = rowMap["note"].Text
 
