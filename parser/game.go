@@ -50,16 +50,20 @@ func (p *GameParser) FourFactorsTable(g *model.Game, tbl *colly.HTMLElement) {
 }
 
 func (p *GameParser) ScoreboxStatTable(g *model.Game, box *colly.HTMLElement) {
-	teamId, boxType, quarter := parseBoxScoreTableProperties(box.Attr("id"))
-	box.ForEach("tbody", func(_ int, tbl *colly.HTMLElement) {
-		if boxType == "basic" && quarter > 0 && quarter < math.MaxInt {
-			g.GamePlayersBasicStats = append(g.GamePlayersBasicStats, p.GPS.parseBasicBoxScoreTable(tbl, g.ID, teamId, quarter)...)
-		} else if boxType == "basic" && quarter == math.MaxInt {
-			g.GamePlayers = append(g.GamePlayers, p.GPS.parseBasicBoxScoreGameTable(tbl, g.ID, teamId)...)
-		} else if boxType == "advanced" {
-			g.GamePlayersAdvancedStats = append(g.GamePlayersAdvancedStats, p.GPS.parseAdvancedBoxScoreTable(tbl, g.ID, teamId)...)
-		}
-	})
+	teamId, boxType, quarter, err := parseBoxScoreTableProperties(box.Attr("id"))
+	if err == nil {
+		box.ForEach("tbody", func(_ int, tbl *colly.HTMLElement) {
+			if boxType == "basic" && quarter > 0 && quarter < math.MaxInt {
+				g.GamePlayersBasicStats = append(g.GamePlayersBasicStats, p.GPS.parseBasicBoxScoreTable(tbl, g.ID, teamId, quarter)...)
+			} else if boxType == "basic" && quarter == math.MaxInt {
+				g.GamePlayers = append(g.GamePlayers, p.GPS.parseBasicBoxScoreGameTable(tbl, g.ID, teamId)...)
+			} else if boxType == "advanced" {
+				g.GamePlayersAdvancedStats = append(g.GamePlayersAdvancedStats, p.GPS.parseAdvancedBoxScoreTable(tbl, g.ID, teamId)...)
+			}
+		})
+	} else {
+		core.Log.Warnf("error encountered while parsing box scores: %s", err.Error())
+	}
 }
 
 func (p *GameParser) InactivePlayersList(g *model.Game, box *colly.HTMLElement) {
@@ -68,19 +72,29 @@ func (p *GameParser) InactivePlayersList(g *model.Game, box *colly.HTMLElement) 
 	}
 }
 
-func (p *GameParser) CheckScheduleLinkSeason(a *colly.HTMLElement) {
+func (p *GameParser) CheckScheduleLinkSeason(a *colly.HTMLElement) error {
+	var err error
+	var season int
 	// link format: /leagues/NBA_2022_games.html (we want the 2022 obviously)
-	var season, _ = strconv.Atoi(strings.Split(a.Attr("href"), "_")[1])
-	if season != p.Config.Season {
-		core.Log.Fatalf("Scraped season (%d) is different from configured season (%d)!  This is a bad idea.", season, p.Config.Season)
+	parts := strings.Split(a.Attr("href"), "_")
+
+	if len(parts) < 2 {
+		err = errors.New("unexpected format of league season link, so could not validate season")
 	}
+
+	season, err = strconv.Atoi(strings.Split(a.Attr("href"), "_")[1])
+	if season != p.Config.Season && err != nil {
+		err = errors.New("scraped season is different from configured season!")
+	}
+
+	return err
 }
 
 func parseMetaScorebox(box *colly.HTMLElement) (startTime time.Time, location string, err error) {
 	startTime, err = time.ParseInLocation("3:04 PM, January 2, 2006", box.ChildText("div:first-child"), EST)
 	location = box.ChildText("div:nth-child(2)")
 	if err != nil {
-		err = errors.New("could not parse game start time from scorebox") // re-write error to help pinpoint the issue
+		err = errors.New("could not parse game start time from scorebox")
 	}
 	return
 }
@@ -95,7 +109,7 @@ func parseTypeFromTitle(title string) (string, error) {
 			return "R", nil
 		}
 	} else {
-		return "", errors.New("Could not get Game page title")
+		return "", errors.New("could not get game title, so could not determine game type")
 	}
 }
 

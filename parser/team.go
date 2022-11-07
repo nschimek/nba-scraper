@@ -41,7 +41,7 @@ func teamPlayerFromRow(rowMap map[string]*colly.HTMLElement) *model.TeamPlayer {
 	tp := new(model.TeamPlayer)
 
 	tp.Number, _ = strconv.Atoi(rowMap["number"].Text)
-	tp.PlayerId = ParseLastId(parseLink(rowMap["player"]))
+	tp.PlayerId, _ = ParseLastId(parseLink(rowMap["player"]))
 	tp.Position = rowMap["pos"].Text
 
 	return tp
@@ -63,7 +63,7 @@ func (p *TeamParser) parseTeamSalariesTable(tbl *colly.HTMLElement, teamId strin
 func teamSalaryFromRow(rowMap map[string]*colly.HTMLElement) *model.TeamPlayerSalary {
 	tps := new(model.TeamPlayerSalary)
 
-	tps.PlayerId = ParseLastId(parseLink(rowMap["player"]))
+	tps.PlayerId, _ = ParseLastId(parseLink(rowMap["player"]))
 	tps.Salary, _ = strconv.Atoi(rowMap["salary"].Attr("csk"))
 	tps.Rank, _ = strconv.Atoi(rowMap["ranker"].Text)
 

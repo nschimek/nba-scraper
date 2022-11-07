@@ -6,11 +6,14 @@ import (
 	"strings"
 
 	"github.com/gocolly/colly/v2"
+	"github.com/nschimek/nba-scraper/core"
 	"github.com/nschimek/nba-scraper/model"
 )
 
 type GameStatsParser struct{}
 
+// Parse the Scorebox - if we can't get a team ID or score, this will return an error.
+// Any issues with parsing the win-loss record will instead log warnings.
 func (*GameStatsParser) parseScorebox(box *colly.HTMLElement) (model.GameTeam, error) {
 	var err error
 	gt := &model.GameTeam{}
@@ -29,14 +32,14 @@ func (*GameStatsParser) parseScorebox(box *colly.HTMLElement) (model.GameTeam, e
 	if len(wl) == 2 {
 		gt.Wins, err = strconv.Atoi(wl[0])
 		if err != nil {
-			return model.GameTeam{}, errors.New("could not parse wins from scorebox")
+			core.Log.Warnf("could not parse wins from scorebox for team %s", gt.TeamId)
 		}
 		gt.Losses, err = strconv.Atoi(wl[1])
 		if err != nil {
-			return model.GameTeam{}, errors.New("could not parse losses from scorebox")
+			core.Log.Warnf("could not parse losses from scorebox for team %s", gt.TeamId)
 		}
 	} else {
-		return model.GameTeam{}, errors.New("could not parse win-loss record from scorebox")
+		core.Log.Warnf("could not parse win-loss record from scorebox for team %s", gt.TeamId)
 	}
 
 	return *gt, nil

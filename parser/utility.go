@@ -28,10 +28,15 @@ func parseLink(e *colly.HTMLElement) string {
 	}
 }
 
-// for URLs where the last part of the URL (*.html)
-func ParseLastId(link string) string {
+// for URLs where we want last part of the URL (*.html)
+func ParseLastId(link string) (string, error) {
 	s := strings.Split(link, "/")
-	return strings.Replace(s[len(s)-1], ".html", "", 1)
+
+	if len(s) == 0 {
+		return "", errors.New("link not in expected format for getting last ID")
+	}
+
+	return strings.Replace(s[len(s)-1], ".html", "", 1), nil
 }
 
 func ParseTeamId(link string) (string, error) {

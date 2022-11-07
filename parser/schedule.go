@@ -37,7 +37,7 @@ func mapScheduleRow(r map[string]*colly.HTMLElement) *model.Schedule {
 	gameUrl := parseLink(r["box_score_text"])
 
 	if gameUrl != "" {
-		s.GameId = ParseLastId(gameUrl)
+		s.GameId, _ = ParseLastId(gameUrl)
 		s.Played = true
 	}
 

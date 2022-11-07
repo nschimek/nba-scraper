@@ -96,7 +96,9 @@ func (s *GameScraper) parseGamePage(id string) (game model.Game) {
 	})
 
 	c.OnHTML(seasonLinkElement, func(li *colly.HTMLElement) {
-		s.GameParser.CheckScheduleLinkSeason(li)
+		if err := s.GameParser.CheckScheduleLinkSeason(li); err != nil {
+			game.CaptureError(err)
+		}
 	})
 
 	c.Visit(s.getUrl(id))
