@@ -76,7 +76,7 @@ func lineScoreFromRow(rowMap map[string]*colly.HTMLElement, gameId string) (scor
 		// loop through all non-team and total columns; those that remain are the quarters
 		if key != "team" && key != "T" {
 			score, e := strconv.Atoi(cell.Text)
-			if e != nil {
+			if e == nil {
 				scores = append(scores, model.GameLineScore{
 					GameId:  gameId,
 					TeamId:  teamId,

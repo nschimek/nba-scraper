@@ -6,9 +6,11 @@ type ModelError struct {
 	Errors []error `gorm:"-"` // ignore this field in persistence
 }
 
-func (m *ModelError) CaptureError(err ...error) {
-	if err != nil {
-		m.Errors = append(m.Errors, err...)
+func (m *ModelError) CaptureError(errs ...error) {
+	for _, err := range errs {
+		if err != nil {
+			m.Errors = append(m.Errors, err)
+		}
 	}
 }
 

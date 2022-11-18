@@ -61,7 +61,7 @@ func (*GamePlayerStatsParser) parseBasicBoxScoreGameTable(tbl *colly.HTMLElement
 
 	for i, rowMap := range Table(tbl) {
 		player, err := gamePlayerFromRow(rowMap, i)
-		if err != nil {
+		if err == nil {
 			player.GameId = gameId
 			player.TeamId = teamId
 			players = append(players, player)
@@ -90,7 +90,7 @@ func (*GamePlayerStatsParser) parseInactivePlayersList(box *colly.HTMLElement, g
 		// note we also check for link text but ignore it, thanks to an empty link pointing to an invalid player ID in 202202110BOS
 		if teamId != "" && t.Attr("href") != "" && t.Text != "" {
 			playerId, err := ParseLastId(t.Attr("href"))
-			if err != nil {
+			if err == nil {
 				gp = append(gp, model.GamePlayer{
 					GameId:   gameId,
 					TeamId:   teamId,
@@ -201,6 +201,10 @@ func gamePlayerFromRow(rowMap map[string]*colly.HTMLElement, index int) (model.G
 	gp := new(model.GamePlayer)
 	gp.PlayerId, err = ParseLastId(parseLink(rowMap["player"]))
 
+	if err != nil {
+		return model.GamePlayer{}, err
+	}
+
 	if _, ok := rowMap["reason"]; !ok { // a "reason" column indicates the player did not play
 		if index < 5 { // the first 5 players are the starters
 			gp.Status = "S"
@@ -211,5 +215,5 @@ func gamePlayerFromRow(rowMap map[string]*colly.HTMLElement, index int) (model.G
 		gp.Status = "D"
 	}
 
-	return *gp, err
+	return *gp, nil
 }

@@ -10,6 +10,7 @@ type Player struct {
 	BirthDate        time.Time
 	Height, Weight   int
 	Audit
+	ModelError
 }
 
 type PlayerInjury struct {
@@ -19,4 +20,5 @@ type PlayerInjury struct {
 	SourceUpdateDate time.Time `gorm:"primaryKey"`
 	Description      string
 	Audit
+	ModelError
 }

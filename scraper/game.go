@@ -47,8 +47,7 @@ func (s *GameScraper) Scrape(idMap map[string]struct{}) {
 			s.TeamIds[game.Home.TeamId] = exists
 			s.TeamIds[game.Away.TeamId] = exists
 		} else {
-			core.Log.Errorf("game %s has the following critical parsing errors:", game.ID)
-			game.LogErrors()
+			handleModelErrors("game", game.ID, game.ModelError)
 		}
 	}
 
