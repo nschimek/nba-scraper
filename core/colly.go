@@ -61,7 +61,7 @@ func createColly() *colly.Collector {
 func CloneColly(colly *colly.Collector) *colly.Collector {
 	c := colly.Clone()
 	c.OnRequest(onRequestVisit)
-	c.OnError(onError)
+	// c.OnError(onError)
 	return c
 }
 
@@ -70,6 +70,5 @@ func onRequestVisit(r *colly.Request) {
 }
 
 func onError(r *colly.Response, err error) {
-	Log.Info(string(r.Body))
 	Log.Fatalf("Scraping resulted in error: %s", err)
 }
