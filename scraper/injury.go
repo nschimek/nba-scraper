@@ -30,10 +30,18 @@ func (s *InjuryScraper) Scrape() {
 
 	c.OnHTML(injuriesTableBaseElement, func(tbl *colly.HTMLElement) {
 		for _, pi := range s.InjuryParser.InjuriesTable(tbl) {
-			s.ScrapedData = append(s.ScrapedData, pi)
-			s.PlayerIds[pi.PlayerId] = exists
-			s.TeamIds[pi.TeamId] = exists
+			if !pi.HasErrors() {
+				s.ScrapedData = append(s.ScrapedData, pi)
+				s.PlayerIds[pi.PlayerId] = exists
+				s.TeamIds[pi.TeamId] = exists
+			} else {
+				pi.LogErrors(pi.PlayerId)
+			}
 		}
+	})
+
+	c.OnError(func(r *colly.Response, err error) {
+		core.Log.Errorf("scraping error: %s", err.Error())
 	})
 
 	c.Visit(injuriesUrl)

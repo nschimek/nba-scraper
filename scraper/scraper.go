@@ -8,13 +8,7 @@ import (
 	"github.com/PuerkitoBio/goquery"
 	"github.com/gocolly/colly/v2"
 	"github.com/nschimek/nba-scraper/core"
-	"github.com/nschimek/nba-scraper/model"
 )
-
-func handleModelErrors(label string, id string, model model.ModelError) {
-	core.Log.Errorf("%s %s has the following critical parsing errors:", label, id)
-	model.LogErrors()
-}
 
 type PeristableScraper interface {
 	Persist()

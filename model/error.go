@@ -18,7 +18,8 @@ func (m *ModelError) HasErrors() bool {
 	return len(m.Errors) > 0
 }
 
-func (m *ModelError) LogErrors() {
+func (m *ModelError) LogErrors(prefix string) {
+	core.Log.Errorf("%s has the following critical parsing errors and will not be persisted:", prefix)
 	for _, err := range m.Errors {
 		core.Log.Errorf(" - %s", err.Error())
 	}

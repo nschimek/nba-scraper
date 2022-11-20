@@ -61,7 +61,6 @@ func createColly() *colly.Collector {
 func CloneColly(colly *colly.Collector) *colly.Collector {
 	c := colly.Clone()
 	c.OnRequest(onRequestVisit)
-	// c.OnError(onError)
 	return c
 }
 
