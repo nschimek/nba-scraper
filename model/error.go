@@ -1,6 +1,8 @@
 package model
 
-import "github.com/nschimek/nba-scraper/core"
+import (
+	"github.com/nschimek/nba-scraper/core"
+)
 
 type ModelError struct {
 	Errors []error `gorm:"-"` // ignore this field in persistence

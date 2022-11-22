@@ -40,7 +40,11 @@ func (s *PlayerScraper) scrape(idMap map[string]struct{}) {
 			core.Log.WithField("id", id).Error("Encountered a known invalid temp Player ID, skipping...")
 		} else {
 			player := s.parsePlayerPage(id)
-			s.ScrapedData = append(s.ScrapedData, player)
+			if !player.HasErrors() {
+				s.ScrapedData = append(s.ScrapedData, player)
+			} else {
+				player.LogErrors(fmt.Sprintf("player %s", player.ID))
+			}
 		}
 	}
 

@@ -94,6 +94,8 @@ func removeCommentsSyntax(html string) string {
 	return strings.ReplaceAll(strings.ReplaceAll(html, "<!--", ""), "-->", "")
 }
 
+// Given a regular expression with named capture group(s) [P<name> in Golang],
+// this will store the match results in a map where the key is equal to the capture name.
 func RegexParamMap(regEx, target string) (rpm map[string]string) {
 	r := regexp.MustCompile(regEx)
 	m := r.FindStringSubmatch(target)

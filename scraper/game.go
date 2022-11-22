@@ -47,7 +47,7 @@ func (s *GameScraper) Scrape(idMap map[string]struct{}) {
 			s.TeamIds[game.Home.TeamId] = exists
 			s.TeamIds[game.Away.TeamId] = exists
 		} else {
-			game.LogErrors(game.ID)
+			game.LogErrors(fmt.Sprintf("game %s", game.ID))
 		}
 	}
 
@@ -106,7 +106,7 @@ func (s *GameScraper) parseGamePage(id string) (game model.Game) {
 	})
 
 	c.OnError(func(r *colly.Response, err error) {
-		game.CaptureError(err)
+		game.CaptureError(NewScraperError(err, r.Request.URL.String()))
 	})
 
 	c.Visit(s.getUrl(id))
