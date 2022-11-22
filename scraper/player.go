@@ -76,6 +76,10 @@ func (s *PlayerScraper) parsePlayerPage(id string) (player model.Player) {
 		s.PlayerParser.PlayerInfoBox(&player, div)
 	})
 
+	c.OnError(func(r *colly.Response, err error) {
+		player.CaptureError(NewScraperError(err, r.Request.URL.String()))
+	})
+
 	c.Visit(s.getUrl(id))
 
 	return
