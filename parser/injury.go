@@ -22,10 +22,6 @@ func (p *InjuryParser) InjuriesTable(tbl *colly.HTMLElement) []model.PlayerInjur
 		injuries = append(injuries, inj)
 	}
 
-	if len(injuries) == 0 {
-		core.Log.Warn("did not scrape any player injuries...")
-	}
-
 	return injuries
 }
 

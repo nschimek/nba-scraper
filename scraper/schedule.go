@@ -49,11 +49,11 @@ func (s *ScheduleScraper) ScrapeDateRange(startDate, endDate time.Time) {
 	months, err := getMonths(startDate, endDate)
 
 	if err != nil {
-		core.Log.Fatal(err)
+		core.Log.Error(err)
+	} else {
+		s.dateRange = &DateRange{startDate: startDate, endDate: endDate}
+		s.Scrape(months...)
 	}
-
-	s.dateRange = &DateRange{startDate: startDate, endDate: endDate}
-	s.Scrape(months...)
 }
 
 func (s *ScheduleScraper) Scrape(pageIds ...string) {
@@ -62,14 +62,22 @@ func (s *ScheduleScraper) Scrape(pageIds ...string) {
 
 	c.OnHTML(baseScheduleTableElement, func(tbl *colly.HTMLElement) {
 		for _, ps := range s.ScheduleParser.ScheduleTable(tbl, s.dateRange.startDate, s.dateRange.endDate) {
-			s.ScrapedData = append(s.ScrapedData, ps)
-			s.GameIds[ps.GameId] = exists
+			if !ps.HasErrors() {
+				s.ScrapedData = append(s.ScrapedData, ps)
+				s.GameIds[ps.GameId] = exists
+			} else {
+				ps.LogErrors("schedule")
+			}
 		}
 	})
 
 	for _, id := range pageIds {
 		c.Visit(s.getUrl(id))
 	}
+
+	c.OnError(func(r *colly.Response, err error) {
+		core.Log.Error(NewScraperError(err, r.Request.URL.String()))
+	})
 
 	if len(s.GameIds) > 0 {
 		core.Log.WithField("gameIds", len(s.GameIds)).Info("Successfully scraped game IDs from Schedule!")
