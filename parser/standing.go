@@ -21,19 +21,21 @@ func (p *StandingParser) StandingsTable(tbl *colly.HTMLElement) []model.TeamStan
 	standings := []model.TeamStanding{}
 
 	for _, rowMap := range Table(tbl) {
-		standing := standingFromRow(rowMap)
+		standing, err := standingFromRow(rowMap)
+		standing.CaptureError(err)
 		standing.Season = p.Config.Season
-		standings = append(standings, *standing)
+		standings = append(standings, standing)
 	}
 
 	return standings
 }
 
-func standingFromRow(rowMap map[string]*colly.HTMLElement) *model.TeamStanding {
+func standingFromRow(rowMap map[string]*colly.HTMLElement) (model.TeamStanding, error) {
+	var err error
 	standing := new(model.TeamStanding)
 
 	standing.Rank, _ = strconv.Atoi(getColumnText(rowMap, "ranker"))
-	standing.TeamId, _ = ParseTeamId(parseLink(rowMap["team_name"]))
+	standing.TeamId, err = ParseTeamId(parseLink(rowMap["team_name"]))
 	standing.Overall = parseWinLoss(getColumnText(rowMap, "Overall"))
 	standing.Home = parseWinLoss(getColumnText(rowMap, "Home"))
 	standing.Road = parseWinLoss(getColumnText(rowMap, "Road"))
@@ -57,18 +59,17 @@ func standingFromRow(rowMap map[string]*colly.HTMLElement) *model.TeamStanding {
 	standing.March = parseWinLoss(getColumnText(rowMap, "Mar"))
 	standing.April = parseWinLoss(getColumnText(rowMap, "Apr"))
 
-	return standing
+	return *standing, err
 }
 
 func parseWinLoss(s string) model.WinLoss {
 	wl := new(model.WinLoss)
 
-	if s != "" {
-		p := strings.Split(s, "-")
-
+	if p := strings.Split(s, "-"); s != "" && len(p) == 2 {
 		wl.Wins, _ = strconv.Atoi(p[0])
 		wl.Losses, _ = strconv.Atoi(p[1])
 	} else {
+		core.Log.Warn("could not parse win/loss record, using 0-0")
 		wl.Wins, wl.Losses = 0, 0
 	}
 

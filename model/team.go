@@ -6,6 +6,7 @@ type Team struct {
 	TeamPlayers        []TeamPlayer
 	TeamPlayerSalaries []TeamPlayerSalary
 	Audit
+	ModelError
 }
 
 type TeamPlayer struct {
@@ -52,6 +53,7 @@ type TeamStanding struct {
 	March           WinLoss `gorm:"embedded;embeddedPrefix:mar_"`
 	April           WinLoss `gorm:"embedded;embeddedPrefix:apr_"`
 	Audit
+	ModelError
 }
 
 type WinLoss struct {

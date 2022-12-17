@@ -71,13 +71,13 @@ func (s *ScheduleScraper) Scrape(pageIds ...string) {
 		}
 	})
 
-	for _, id := range pageIds {
-		c.Visit(s.getUrl(id))
-	}
-
 	c.OnError(func(r *colly.Response, err error) {
 		core.Log.Error(NewScraperError(err, r.Request.URL.String()))
 	})
+
+	for _, id := range pageIds {
+		c.Visit(s.getUrl(id))
+	}
 
 	if len(s.GameIds) > 0 {
 		core.Log.WithField("gameIds", len(s.GameIds)).Info("Successfully scraped game IDs from Schedule!")
