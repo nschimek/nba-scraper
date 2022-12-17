@@ -39,7 +39,7 @@ func (s *StandingScraper) Scrape() {
 				s.ScrapedData = append(s.ScrapedData, ts)
 				s.TeamIds[ts.TeamId] = exists
 			} else {
-				ts.LogErrors("standing")
+				ts.LogErrors()
 			}
 		}
 	})

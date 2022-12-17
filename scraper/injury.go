@@ -1,8 +1,6 @@
 package scraper
 
 import (
-	"fmt"
-
 	"github.com/gocolly/colly/v2"
 	"github.com/nschimek/nba-scraper/core"
 	"github.com/nschimek/nba-scraper/model"
@@ -37,7 +35,7 @@ func (s *InjuryScraper) Scrape() {
 				s.PlayerIds[pi.PlayerId] = exists
 				s.TeamIds[pi.TeamId] = exists
 			} else {
-				pi.LogErrors(fmt.Sprintf("injured player %s", pi.PlayerId))
+				pi.LogErrors()
 			}
 		}
 	})

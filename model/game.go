@@ -1,6 +1,9 @@
 package model
 
-import "time"
+import (
+	"fmt"
+	"time"
+)
 
 type Game struct {
 	ID, Location                     string
@@ -16,6 +19,10 @@ type Game struct {
 	GamePlayersAdvancedStats         []GamePlayerAdvancedStat
 	Audit
 	ModelError
+}
+
+func (g *Game) LogErrors() {
+	g.logErrors(fmt.Sprintf("game %s", g.ID))
 }
 
 type GameTeam struct {

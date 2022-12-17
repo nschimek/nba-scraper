@@ -47,7 +47,7 @@ func (s *GameScraper) Scrape(idMap map[string]struct{}) {
 			s.TeamIds[game.Home.TeamId] = exists
 			s.TeamIds[game.Away.TeamId] = exists
 		} else {
-			game.LogErrors(fmt.Sprintf("game %s", game.ID))
+			game.LogErrors()
 		}
 	}
 

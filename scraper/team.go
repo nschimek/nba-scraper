@@ -46,7 +46,7 @@ func (s *TeamScraper) scrape(idMap map[string]struct{}) {
 		if !team.HasErrors() {
 			s.ScrapedData = append(s.ScrapedData, team)
 		} else {
-			team.LogErrors(fmt.Sprintf("team %s", team.ID))
+			team.LogErrors()
 		}
 	}
 

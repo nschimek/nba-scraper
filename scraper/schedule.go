@@ -66,7 +66,7 @@ func (s *ScheduleScraper) Scrape(pageIds ...string) {
 				s.ScrapedData = append(s.ScrapedData, ps)
 				s.GameIds[ps.GameId] = exists
 			} else {
-				ps.LogErrors("schedule")
+				ps.LogErrors()
 			}
 		}
 	})

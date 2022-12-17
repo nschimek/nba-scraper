@@ -8,3 +8,7 @@ type Schedule struct {
 	Played                            bool
 	ModelError
 }
+
+func (s *Schedule) LogErrors() {
+	s.logErrors("schedule")
+}

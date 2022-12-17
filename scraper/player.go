@@ -43,7 +43,7 @@ func (s *PlayerScraper) scrape(idMap map[string]struct{}) {
 			if !player.HasErrors() {
 				s.ScrapedData = append(s.ScrapedData, player)
 			} else {
-				player.LogErrors(fmt.Sprintf("player %s", player.ID))
+				player.LogErrors()
 			}
 		}
 	}

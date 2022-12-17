@@ -8,6 +8,10 @@ type ModelError struct {
 	Errors []error `gorm:"-"` // ignore this field in persistence
 }
 
+type ModelWithErrors interface {
+	LogErrors()
+}
+
 func (m *ModelError) CaptureError(errs ...error) {
 	for _, err := range errs {
 		if err != nil {
@@ -20,7 +24,7 @@ func (m *ModelError) HasErrors() bool {
 	return len(m.Errors) > 0
 }
 
-func (m *ModelError) LogErrors(prefix string) {
+func (m *ModelError) logErrors(prefix string) {
 	core.Log.Errorf("%s has the following critical parsing errors and will not be persisted:", prefix)
 	for _, err := range m.Errors {
 		core.Log.Errorf(" - %s", err.Error())
