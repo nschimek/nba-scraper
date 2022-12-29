@@ -4,6 +4,7 @@ import (
 	"github.com/nschimek/nba-scraper/core"
 	"github.com/nschimek/nba-scraper/model"
 	"github.com/sirupsen/logrus"
+	"gorm.io/gorm"
 )
 
 type TeamRepository struct {
@@ -16,15 +17,17 @@ func (tr *TeamRepository) UpsertTeams(teams []model.Team) {
 		r1 := tr.DB.Gorm.Clauses(updateAll).Omit("TeamPlayers", "TeamPlayerSalaries").Create(&team)
 
 		if r1.Error == nil {
-			tr.DB.Gorm.Delete(&model.TeamPlayer{}, &model.TeamPlayer{TeamId: team.ID, Season: team.Season})
-			r2 := tr.DB.Gorm.Create(&team.TeamPlayers)
-			tr.DB.Gorm.Delete(&model.TeamPlayerSalary{}, &model.TeamPlayerSalary{TeamId: team.ID, Season: team.Season})
-			r3 := tr.DB.Gorm.Create(&team.TeamPlayerSalaries)
+			var results [2]*gorm.DB
 
-			if r2.Error == nil && r3.Error == nil {
+			tr.DB.Gorm.Delete(&model.TeamPlayer{}, &model.TeamPlayer{TeamId: team.ID, Season: team.Season})
+			results[0] = tr.DB.Gorm.Create(&team.TeamPlayers)
+			tr.DB.Gorm.Delete(&model.TeamPlayerSalary{}, &model.TeamPlayerSalary{TeamId: team.ID, Season: team.Season})
+			results[1] = tr.DB.Gorm.Create(&team.TeamPlayerSalaries)
+
+			if results[0].Error == nil && results[1].Error == nil {
 				core.Log.WithFields(logrus.Fields{
-					"players":  r2.RowsAffected,
-					"salaries": r3.RowsAffected,
+					"players":  results[0].RowsAffected,
+					"salaries": results[1].RowsAffected,
 				}).Infof("Successfully create/updated team %s along with players and salaries", team.ID)
 			} else {
 				core.Log.Errorf("Error(s) occurred while loading %s", team.ID)

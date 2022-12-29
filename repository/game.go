@@ -31,13 +31,13 @@ func (r *GameRepository) UpsertGames(games []model.Game) {
 			var results [7]*gorm.DB
 			var errors int
 
-			results[0] = r.DB.Gorm.Clauses(updateAll).Create(&game.HomeLineScores)
-			results[1] = r.DB.Gorm.Clauses(updateAll).Create(&game.AwayLineScores)
+			results[0] = runQueryIfNotEmpty(len(game.HomeLineScores), r.DB.Gorm.Clauses(updateAll).Create(&game.HomeLineScores))
+			results[1] = runQueryIfNotEmpty(len(game.AwayLineScores), r.DB.Gorm.Clauses(updateAll).Create(&game.AwayLineScores))
 			results[2] = r.DB.Gorm.Clauses(updateAll).Create(&game.HomeFourFactors)
 			results[3] = r.DB.Gorm.Clauses(updateAll).Create(&game.AwayFourFactors)
-			results[4] = r.DB.Gorm.Clauses(updateAll).Create(&game.GamePlayers)
-			results[5] = r.DB.Gorm.Clauses(updateAll).Create(&game.GamePlayersBasicStats)
-			results[6] = r.DB.Gorm.Clauses(updateAll).Create(&game.GamePlayersAdvancedStats)
+			results[4] = runQueryIfNotEmpty(len(game.GamePlayers), r.DB.Gorm.Clauses(updateAll).Create(&game.GamePlayers))
+			results[5] = runQueryIfNotEmpty(len(game.GamePlayersBasicStats), r.DB.Gorm.Clauses(updateAll).Create(&game.GamePlayersBasicStats))
+			results[6] = runQueryIfNotEmpty(len(game.GamePlayersAdvancedStats), r.DB.Gorm.Clauses(updateAll).Create(&game.GamePlayersAdvancedStats))
 
 			for _, r := range results {
 				if r.Error != nil {
