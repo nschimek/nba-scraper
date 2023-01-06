@@ -86,6 +86,8 @@ Commands are generally what you will use to run the scraper.  Each command is de
 
  > **Special Note on Injuries**: there are no historical injuires available, and only the current injuries can be scraped at any given time.  Take care when scraping historical seasons to avoid this page.
 
+ > **Special Note on Schedule (for the 2020 season)**: the COVID-impacted 2020 season resulted in the NBA playing games in both October 2019 and October 2020 for the same season.  The scraper can handle this, but each month must be scraped separately of each other (i.e. scrape 2019-10-01 to 2019-10-31, *then* 2020-10-01 to 2020-10-31).
+
 ### Additional Scrapes
 Due to the relational nature of the statistics, additional scrapes will occur for some commands in support of the foriegn keys:
 

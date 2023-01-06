@@ -76,7 +76,12 @@ func (s *ScheduleScraper) Scrape(pageIds ...string) {
 	})
 
 	for _, id := range pageIds {
-		c.Visit(s.getUrl(id))
+		url := s.getUrl(id)
+		// really ugly covid hack...the NBA played games in both October 2019 and October 2020 this season!
+		if s.Config.Season == 2020 && id == "october" {
+			url = strings.Replace(url, ".html", fmt.Sprintf("-%d.html", s.dateRange.endDate.Year()), 1)
+		}
+		c.Visit(url)
 	}
 
 	if len(s.GameIds) > 0 {

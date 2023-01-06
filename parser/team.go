@@ -33,7 +33,7 @@ func (p *TeamParser) parseTeamRosterTable(tbl *colly.HTMLElement, teamId string)
 
 	for _, rowMap := range Table(tbl) {
 		tp, err := teamPlayerFromRow(rowMap)
-		if err != nil {
+		if err == nil {
 			tp.TeamId = teamId
 			tp.Season = p.Config.Season
 			roster = append(roster, tp)
@@ -53,8 +53,13 @@ func teamPlayerFromRow(rowMap map[string]*colly.HTMLElement) (model.TeamPlayer, 
 	var err error
 	tp := new(model.TeamPlayer)
 
-	tp.Number, _ = strconv.Atoi(getColumnText(rowMap, "number"))
 	tp.PlayerId, err = ParseLastId(parseLink(rowMap["player"]))
+
+	if tp.PlayerId == "" {
+		return model.TeamPlayer{}, errors.New("player ID is blank!")
+	}
+
+	tp.Number, _ = strconv.Atoi(getColumnText(rowMap, "number"))
 	tp.Position = getColumnText(rowMap, "pos")
 
 	return *tp, err
@@ -86,6 +91,11 @@ func teamSalaryFromRow(rowMap map[string]*colly.HTMLElement) (model.TeamPlayerSa
 	tps := new(model.TeamPlayerSalary)
 
 	tps.PlayerId, err = ParseLastId(parseLink(rowMap["player"]))
+
+	if tps.PlayerId == "" {
+		return model.TeamPlayerSalary{}, errors.New("player ID is blank!")
+	}
+
 	tps.Salary, _ = strconv.Atoi(rowMap["salary"].Attr("csk"))
 	tps.Rank, _ = strconv.Atoi(getColumnText(rowMap, "ranker"))
 
