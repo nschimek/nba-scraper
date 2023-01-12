@@ -64,7 +64,7 @@ func (s *TeamScraper) Persist() {
 func (s *TeamScraper) suppressRecent(idMap map[string]struct{}) {
 	core.Log.Infof("Checking for teams updated in last %d days (for suppression)...", s.Config.Suppression.Team)
 	ids, _ := s.SimpleRepository.GetRecentlyUpdated(s.Config.Suppression.Team, core.IdMapToArray(idMap), "Team")
-	if ids != nil && len(ids) > 0 {
+	if len(ids) > 0 {
 		core.SuppressIdMap(idMap, ids)
 	}
 }

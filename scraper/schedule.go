@@ -17,8 +17,6 @@ const (
 	baseScheduleTableElement = "body #wrap #content #all_schedule #div_schedule table tbody" // targets the main schedule table
 )
 
-var yesterday = time.Now().AddDate(0, 0, -1)
-
 type ScheduleScraper struct {
 	Config         *core.Config               `Inject:""`
 	Colly          *colly.Collector           `Inject:""`
