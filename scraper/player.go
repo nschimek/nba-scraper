@@ -40,7 +40,11 @@ func (s *PlayerScraper) scrape(idMap map[string]struct{}) {
 			core.Log.WithField("id", id).Error("Encountered a known invalid temp Player ID, skipping...")
 		} else {
 			player := s.parsePlayerPage(id)
-			s.ScrapedData = append(s.ScrapedData, player)
+			if !player.HasErrors() {
+				s.ScrapedData = append(s.ScrapedData, player)
+			} else {
+				player.LogErrors()
+			}
 		}
 	}
 
@@ -58,7 +62,7 @@ func (s *PlayerScraper) Persist() {
 func (s *PlayerScraper) suppressRecent(idMap map[string]struct{}) {
 	core.Log.Infof("Checking for players updated in last %d days (for suppression)...", s.Config.Suppression.Player)
 	ids, _ := s.Repository.GetRecentlyUpdated(s.Config.Suppression.Player, core.IdMapToArray(idMap), "Player")
-	if ids != nil && len(ids) > 0 {
+	if len(ids) > 0 {
 		core.SuppressIdMap(idMap, ids)
 	}
 }
@@ -70,6 +74,10 @@ func (s *PlayerScraper) parsePlayerPage(id string) (player model.Player) {
 
 	c.OnHTML(playerInfoElement, func(div *colly.HTMLElement) {
 		s.PlayerParser.PlayerInfoBox(&player, div)
+	})
+
+	c.OnError(func(r *colly.Response, err error) {
+		player.CaptureError(NewScraperError(err, r.Request.URL.String()))
 	})
 
 	c.Visit(s.getUrl(id))

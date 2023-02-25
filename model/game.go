@@ -1,20 +1,28 @@
 package model
 
-import "time"
+import (
+	"fmt"
+	"time"
+)
 
 type Game struct {
 	ID, Location                     string
 	Type                             string `gorm:"type:enum('R', 'P');default:'P'"`
 	Season, Quarters                 int
 	StartTime                        time.Time
-	Home                             GameTeam        `gorm:"embedded;embeddedPrefix:home_"`
-	Away                             GameTeam        `gorm:"embedded;embeddedPrefix:away_"`
-	HomeLineScores, AwayLineScores   []GameLineScore // these will end up in their own table due to the possiblity of OT
+	Home                             GameTeam `gorm:"embedded;embeddedPrefix:home_"`
+	Away                             GameTeam `gorm:"embedded;embeddedPrefix:away_"`
+	HomeLineScores, AwayLineScores   []GameLineScore
 	HomeFourFactors, AwayFourFactors GameFourFactor
 	GamePlayers                      []GamePlayer
 	GamePlayersBasicStats            []GamePlayerBasicStat
 	GamePlayersAdvancedStats         []GamePlayerAdvancedStat
 	Audit
+	ModelError
+}
+
+func (g *Game) LogErrors() {
+	g.logErrors(fmt.Sprintf("game %s", g.ID))
 }
 
 type GameTeam struct {

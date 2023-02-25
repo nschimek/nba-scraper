@@ -1,6 +1,9 @@
 package model
 
-import "time"
+import (
+	"fmt"
+	"time"
+)
 
 type Player struct {
 	ID, Name         string
@@ -10,6 +13,11 @@ type Player struct {
 	BirthDate        time.Time
 	Height, Weight   int
 	Audit
+	ModelError
+}
+
+func (p *Player) LogErrors() {
+	p.logErrors(fmt.Sprintf("player %s", p.ID))
 }
 
 type PlayerInjury struct {
@@ -19,4 +27,9 @@ type PlayerInjury struct {
 	SourceUpdateDate time.Time `gorm:"primaryKey"`
 	Description      string
 	Audit
+	ModelError
+}
+
+func (pi *PlayerInjury) LogErrors() {
+	pi.logErrors(fmt.Sprintf("injured player %s", pi.PlayerId))
 }

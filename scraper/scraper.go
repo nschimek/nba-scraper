@@ -3,22 +3,13 @@ package scraper
 import (
 	"bytes"
 	"errors"
+	"html"
 	"strings"
 
 	"github.com/PuerkitoBio/goquery"
 	"github.com/gocolly/colly/v2"
 	"github.com/nschimek/nba-scraper/core"
 )
-
-type Scraper struct {
-	Errors []error
-}
-
-func (s *Scraper) runAndCapture(err error) {
-	if err != nil {
-		s.Errors = append(s.Errors, err)
-	}
-}
 
 type PeristableScraper interface {
 	Persist()
@@ -27,11 +18,12 @@ type PeristableScraper interface {
 var exists = struct{}{}
 
 func transformHtmlElement(element *colly.HTMLElement, query string, transform func(html string) string) (*colly.HTMLElement, error) {
-	html, _ := element.DOM.Html()
-	doc, _ := goquery.NewDocumentFromReader(bytes.NewBufferString(transform(html)))
+	h, _ := element.DOM.Html()
+	// call the transform function passed in on the html string, but first unescape - the new version of Colly seems to require this
+	doc, _ := goquery.NewDocumentFromReader(bytes.NewBufferString(transform(html.UnescapeString(h))))
 	sel := doc.Find(query)
 
-	if len(sel.Nodes) == 0 {
+	if len(sel.Nodes) == 0 || sel == nil {
 		return nil, errors.New("could not find any search elements in transformed table")
 	}
 
@@ -42,9 +34,9 @@ func removeCommentsSyntax(html string) string {
 	return strings.ReplaceAll(strings.ReplaceAll(html, "<!--", ""), "-->", "")
 }
 
-func persistIfPopulated[T any](persist func(scrapedData []T), scrapedData []T, label string) {
+func persistIfPopulated[T any](persist func(scrapedData []T, label string), scrapedData []T, label string) {
 	if len(scrapedData) > 0 {
-		persist(scrapedData)
+		persist(scrapedData, label)
 	} else {
 		core.Log.Warnf("No %s(s) scraped to persist, skipping!")
 	}

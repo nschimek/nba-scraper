@@ -1,11 +1,13 @@
 package parser
 
 import (
+	"errors"
 	"strconv"
 	"strings"
 	"time"
 
 	"github.com/gocolly/colly/v2"
+	"github.com/nschimek/nba-scraper/core"
 	"github.com/nschimek/nba-scraper/model"
 )
 
@@ -26,17 +28,27 @@ func parseShootsPosition(p *model.Player, rm map[string]string) {
 	p.Shoots = strings.ToUpper(string(rm["shoots"][0]))
 }
 
-func parseHeightWeight(m *model.Player, rm map[string]string) {
-	ft, _ := strconv.Atoi(rm["ft"])
-	in, _ := strconv.Atoi(rm["in"])
-	m.Height = (ft * 12) + in
-	m.Weight, _ = strconv.Atoi(rm["lb"])
+func parseHeightWeight(p *model.Player, rm map[string]string) {
+	var err error
+	ft, err := strconv.Atoi(rm["ft"])
+	in, err := strconv.Atoi(rm["in"])
+	p.Height = (ft * 12) + in
+	p.Weight, err = strconv.Atoi(rm["lb"])
+
+	if err != nil {
+		core.Log.Warnf("issue parsing height or weight for player %s: %v", p.ID, err)
+	}
 }
 
 func parseBirthInfo(p *model.Player, rm map[string]string) {
-	p.BirthDate, _ = time.ParseInLocation("January 2 2006", rm["birthMonth"]+" "+rm["birthDay"]+" "+rm["birthYear"], CST)
+	var err error
+	p.BirthDate, err = time.ParseInLocation("January 2 2006", rm["birthMonth"]+" "+rm["birthDay"]+" "+rm["birthYear"], CST)
 	p.BirthPlace = strings.TrimSpace(rm["birthPlace"])
 	p.BirthCountryCode = strings.ToUpper(rm["birthCountry"])
+
+	if err != nil {
+		core.Log.Warnf("issue parsing birthday for player %s: %v", p.ID, err)
+	}
 }
 
 var regexParsers = [...]regexParser{
@@ -48,13 +60,17 @@ var regexParsers = [...]regexParser{
 func (p *PlayerParser) PlayerInfoBox(m *model.Player, div *colly.HTMLElement) {
 	m.Name = div.ChildText("h1")
 
+	if m.Name == "" {
+		m.CaptureError(errors.New("could not parse player name"))
+	}
+
 	crp := 0 // current regex parser starts at 0
 
 	div.ForEach("p", func(i int, e *colly.HTMLElement) {
 		line := strings.TrimSpace(removeNewlines(e.Text))
 		if crp < len(regexParsers) {
 			rm := RegexParamMap(regexParsers[crp].regex, line)
-			// if there's a hit with this regex, we want to run the parser function and increment cra
+			// if there's a hit with this regex, we want to run the parser function and increment crp
 			if len(rm) > 0 {
 				regexParsers[crp].parser(m, rm)
 				crp++

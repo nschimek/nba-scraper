@@ -43,7 +43,11 @@ func (s *TeamScraper) scrape(idMap map[string]struct{}) {
 
 	for _, id := range core.IdMapToArray(idMap) {
 		team := s.parseTeamPage(id)
-		s.ScrapedData = append(s.ScrapedData, team)
+		if !team.HasErrors() {
+			s.ScrapedData = append(s.ScrapedData, team)
+		} else {
+			team.LogErrors()
+		}
 	}
 
 	core.Log.WithField("teams", len(s.ScrapedData)).Info("Finished scraping Team page(s)!")
@@ -60,7 +64,7 @@ func (s *TeamScraper) Persist() {
 func (s *TeamScraper) suppressRecent(idMap map[string]struct{}) {
 	core.Log.Infof("Checking for teams updated in last %d days (for suppression)...", s.Config.Suppression.Team)
 	ids, _ := s.SimpleRepository.GetRecentlyUpdated(s.Config.Suppression.Team, core.IdMapToArray(idMap), "Team")
-	if ids != nil && len(ids) > 0 {
+	if len(ids) > 0 {
 		core.SuppressIdMap(idMap, ids)
 	}
 }
@@ -90,6 +94,10 @@ func (s *TeamScraper) parseTeamPage(id string) (team model.Team) {
 		for _, p := range team.TeamPlayerSalaries {
 			s.PlayerIds[p.PlayerId] = exists
 		}
+	})
+
+	c.OnError(func(r *colly.Response, err error) {
+		team.CaptureError(NewScraperError(err, r.Request.URL.String()))
 	})
 
 	c.Visit(s.getUrl(id))

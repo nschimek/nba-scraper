@@ -1,11 +1,13 @@
 package parser
 
 import (
+	"errors"
 	"math"
 	"strconv"
 	"strings"
 
 	"github.com/gocolly/colly/v2"
+	"github.com/nschimek/nba-scraper/core"
 	"github.com/nschimek/nba-scraper/model"
 )
 
@@ -15,13 +17,19 @@ func (*GamePlayerStatsParser) parseBasicBoxScoreTable(tbl *colly.HTMLElement, ga
 	stats := []model.GamePlayerBasicStat{}
 
 	for _, rowMap := range Table(tbl) {
-		gpbs := gamePlayerBasicStatsFromRow(rowMap)
-		if gpbs != nil {
+		gpbs, err := gamePlayerBasicStatsFromRow(rowMap)
+		if (gpbs != model.GamePlayerBasicStat{} && err == nil) {
 			gpbs.GameId = gameId
 			gpbs.TeamId = teamId
 			gpbs.Quarter = quarter
-			stats = append(stats, *gpbs)
+			stats = append(stats, gpbs)
+		} else if err != nil {
+			core.Log.Warnf("error encountered parsing player basic stats for team %s (quarter %d): %s", teamId, quarter, err.Error())
 		}
+	}
+
+	if len(stats) == 0 {
+		core.Log.Warnf("did parse any player basic stats for team %s (quarter %d)", teamId, quarter)
 	}
 
 	return stats
@@ -31,12 +39,18 @@ func (*GamePlayerStatsParser) parseAdvancedBoxScoreTable(tbl *colly.HTMLElement,
 	stats := []model.GamePlayerAdvancedStat{}
 
 	for _, rowMap := range Table(tbl) {
-		gpas := gamePlayerAdvancedStatsFromRow(rowMap)
-		if gpas != nil {
+		gpas, err := gamePlayerAdvancedStatsFromRow(rowMap)
+		if (gpas != model.GamePlayerAdvancedStat{} && err == nil) {
 			gpas.GameId = gameId
 			gpas.TeamId = teamId
-			stats = append(stats, *gpas)
+			stats = append(stats, gpas)
+		} else if err != nil {
+			core.Log.Warnf("error encountered parsing player advanced stats for team %s: %s", teamId, err.Error())
 		}
+	}
+
+	if len(stats) == 0 {
+		core.Log.Warnf("did parse any player advanced stats for team %s", teamId)
 	}
 
 	return stats
@@ -46,10 +60,18 @@ func (*GamePlayerStatsParser) parseBasicBoxScoreGameTable(tbl *colly.HTMLElement
 	players := []model.GamePlayer{}
 
 	for i, rowMap := range Table(tbl) {
-		player := *gamePlayerFromRow(rowMap, i)
-		player.GameId = gameId
-		player.TeamId = teamId
-		players = append(players, player)
+		player, err := gamePlayerFromRow(rowMap, i)
+		if err == nil {
+			player.GameId = gameId
+			player.TeamId = teamId
+			players = append(players, player)
+		} else {
+			core.Log.Warnf("error encountered parsing player list from basic box score for team %s: %s", teamId, err.Error())
+		}
+	}
+
+	if len(players) == 0 {
+		core.Log.Warnf("did parse any players who played from basic box score for team %s", teamId)
 	}
 
 	return players
@@ -67,20 +89,30 @@ func (*GamePlayerStatsParser) parseInactivePlayersList(box *colly.HTMLElement, g
 		// all players after that label therefore belong to that team
 		// note we also check for link text but ignore it, thanks to an empty link pointing to an invalid player ID in 202202110BOS
 		if teamId != "" && t.Attr("href") != "" && t.Text != "" {
-			gp = append(gp, model.GamePlayer{
-				GameId:   gameId,
-				TeamId:   teamId,
-				PlayerId: ParseLastId(t.Attr("href")),
-				Status:   "I",
-			})
+			playerId, err := ParseLastId(t.Attr("href"))
+			if err == nil {
+				gp = append(gp, model.GamePlayer{
+					GameId:   gameId,
+					TeamId:   teamId,
+					PlayerId: playerId,
+					Status:   "I",
+				})
+			} else {
+				core.Log.Warnf("could not get player ID of inactive player for team %s, ignoring...", teamId)
+			}
 		}
 	})
 
 	return gp
 }
 
-func parseBoxScoreTableProperties(id string) (team, boxType string, quarter int) {
+func parseBoxScoreTableProperties(id string) (team, boxType string, quarter int, err error) {
 	parts := strings.Split(id, "-") // expected format: box-TEAM-q/ot#-basic
+
+	if len(parts) != 4 {
+		return "", "", 0, errors.New("box score ID not in expected format")
+	}
+
 	team = parts[1]
 	boxType = parts[3]
 
@@ -100,68 +132,78 @@ func parseBoxScoreTableProperties(id string) (team, boxType string, quarter int)
 	return
 }
 
-func gamePlayerBasicStatsFromRow(rowMap map[string]*colly.HTMLElement) *model.GamePlayerBasicStat {
-	if _, ok := rowMap["reason"]; !ok {
+func gamePlayerBasicStatsFromRow(rowMap map[string]*colly.HTMLElement) (model.GamePlayerBasicStat, error) {
+	var err error
+
+	if _, ok := rowMap["reason"]; !ok { // a "reason" column indicates a player did not play
 		gpbs := new(model.GamePlayerBasicStat)
-		gpbs.PlayerId = ParseLastId(parseLink(rowMap["player"])) // a "reason" column indicates the player did not play
-		gpbs.TimePlayed, _ = parseDuration(rowMap["mp"].Text)
-		gpbs.FieldGoals, _ = strconv.Atoi(rowMap["fg"].Text)
-		gpbs.FieldGoalsAttempted, _ = strconv.Atoi(rowMap["fga"].Text)
-		gpbs.FieldGoalPct, _ = parseFloatStat(rowMap["fg_pct"].Text)
-		gpbs.ThreePointers, _ = strconv.Atoi(rowMap["fg3"].Text)
-		gpbs.ThreePointersAttempted, _ = strconv.Atoi(rowMap["fg3a"].Text)
-		gpbs.ThreePointersPct, _ = parseFloatStat(rowMap["fg3_pct"].Text)
-		gpbs.FreeThrows, _ = strconv.Atoi(rowMap["ft"].Text)
-		gpbs.FreeThrowsAttempted, _ = strconv.Atoi(rowMap["fta"].Text)
-		gpbs.FreeThrowsPct, _ = parseFloatStat(rowMap["ft_pct"].Text)
-		gpbs.OffensiveRB, _ = strconv.Atoi(rowMap["orb"].Text)
-		gpbs.DefensiveRB, _ = strconv.Atoi(rowMap["drb"].Text)
-		gpbs.TotalRB, _ = strconv.Atoi(rowMap["trb"].Text)
-		gpbs.Assists, _ = strconv.Atoi(rowMap["ast"].Text)
-		gpbs.Steals, _ = strconv.Atoi(rowMap["stl"].Text)
-		gpbs.Blocks, _ = strconv.Atoi(rowMap["blk"].Text)
-		gpbs.Turnovers, _ = strconv.Atoi(rowMap["tov"].Text)
-		gpbs.PersonalFouls, _ = strconv.Atoi(rowMap["pf"].Text)
-		gpbs.Points, _ = strconv.Atoi(rowMap["pts"].Text)
-		gpbs.PlusMinus, _ = strconv.Atoi(strings.Replace(rowMap["plus_minus"].Text, "+", "", 1))
-		return gpbs
+		gpbs.PlayerId, err = ParseLastId(parseLink(rowMap["player"]))
+		gpbs.TimePlayed, _ = parseDuration(getColumnText(rowMap, "mp"))
+		gpbs.FieldGoals, _ = strconv.Atoi(getColumnText(rowMap, "fg"))
+		gpbs.FieldGoalsAttempted, _ = strconv.Atoi(getColumnText(rowMap, "fga"))
+		gpbs.FieldGoalPct, _ = parseFloatStat(getColumnText(rowMap, "fg_pct"))
+		gpbs.ThreePointers, _ = strconv.Atoi(getColumnText(rowMap, "fg3"))
+		gpbs.ThreePointersAttempted, _ = strconv.Atoi(getColumnText(rowMap, "fg3a"))
+		gpbs.ThreePointersPct, _ = parseFloatStat(getColumnText(rowMap, "fg3_pct"))
+		gpbs.FreeThrows, _ = strconv.Atoi(getColumnText(rowMap, "ft"))
+		gpbs.FreeThrowsAttempted, _ = strconv.Atoi(getColumnText(rowMap, "fta"))
+		gpbs.FreeThrowsPct, _ = parseFloatStat(getColumnText(rowMap, "ft_pct"))
+		gpbs.OffensiveRB, _ = strconv.Atoi(getColumnText(rowMap, "orb"))
+		gpbs.DefensiveRB, _ = strconv.Atoi(getColumnText(rowMap, "drb"))
+		gpbs.TotalRB, _ = strconv.Atoi(getColumnText(rowMap, "trb"))
+		gpbs.Assists, _ = strconv.Atoi(getColumnText(rowMap, "ast"))
+		gpbs.Steals, _ = strconv.Atoi(getColumnText(rowMap, "stl"))
+		gpbs.Blocks, _ = strconv.Atoi(getColumnText(rowMap, "blk"))
+		gpbs.Turnovers, _ = strconv.Atoi(getColumnText(rowMap, "tov"))
+		gpbs.PersonalFouls, _ = strconv.Atoi(getColumnText(rowMap, "pf"))
+		gpbs.Points, _ = strconv.Atoi(getColumnText(rowMap, "pts"))
+		gpbs.PlusMinus, _ = strconv.Atoi(strings.Replace(getColumnText(rowMap, "plus_minus"), "+", "", 1))
+		return *gpbs, err
 	}
 
-	return nil
+	return model.GamePlayerBasicStat{}, nil
 }
 
-func gamePlayerAdvancedStatsFromRow(rowMap map[string]*colly.HTMLElement) *model.GamePlayerAdvancedStat {
+func gamePlayerAdvancedStatsFromRow(rowMap map[string]*colly.HTMLElement) (model.GamePlayerAdvancedStat, error) {
+	var err error
+
 	if _, ok := rowMap["reason"]; !ok { // a "reason" column indicates the player did not play
 		gpas := new(model.GamePlayerAdvancedStat)
-		gpas.PlayerId = ParseLastId(parseLink(rowMap["player"]))
-		gpas.TrueShootingPct, _ = parseFloatStat(rowMap["ts_pct"].Text)
-		gpas.EffectiveFgPct, _ = parseFloatStat(rowMap["efg_pct"].Text)
-		gpas.ThreePtAttemptRate, _ = parseFloatStat(rowMap["fg3a_per_fga_pct"].Text)
-		gpas.FreeThrowAttemptRate, _ = parseFloatStat(rowMap["fta_per_fga_pct"].Text)
-		gpas.OffensiveRbPct, _ = parseFloatStat(rowMap["orb_pct"].Text)
-		gpas.DefensiveRbPct, _ = parseFloatStat(rowMap["drb_pct"].Text)
-		gpas.TotalRbPct, _ = parseFloatStat(rowMap["trb_pct"].Text)
-		gpas.AssistPct, _ = parseFloatStat(rowMap["ast_pct"].Text)
-		gpas.StealPct, _ = parseFloatStat(rowMap["stl_pct"].Text)
-		gpas.BlockPct, _ = parseFloatStat(rowMap["blk_pct"].Text)
-		gpas.TurnoverPct, _ = parseFloatStat(rowMap["tov_pct"].Text)
-		gpas.UsagePct, _ = parseFloatStat(rowMap["usg_pct"].Text)
-		gpas.OffensiveRating, _ = strconv.Atoi(rowMap["off_rtg"].Text)
-		gpas.DefensiveRating, _ = strconv.Atoi(rowMap["def_rtg"].Text)
+		gpas.PlayerId, err = ParseLastId(parseLink(rowMap["player"]))
+		gpas.TrueShootingPct, _ = parseFloatStat(getColumnText(rowMap, "ts_pct"))
+		gpas.EffectiveFgPct, _ = parseFloatStat(getColumnText(rowMap, "efg_pct"))
+		gpas.ThreePtAttemptRate, _ = parseFloatStat(getColumnText(rowMap, "fg3a_per_fga_pct"))
+		gpas.FreeThrowAttemptRate, _ = parseFloatStat(getColumnText(rowMap, "fta_per_fga_pct"))
+		gpas.OffensiveRbPct, _ = parseFloatStat(getColumnText(rowMap, "orb_pct"))
+		gpas.DefensiveRbPct, _ = parseFloatStat(getColumnText(rowMap, "drb_pct"))
+		gpas.TotalRbPct, _ = parseFloatStat(getColumnText(rowMap, "trb_pct"))
+		gpas.AssistPct, _ = parseFloatStat(getColumnText(rowMap, "ast_pct"))
+		gpas.StealPct, _ = parseFloatStat(getColumnText(rowMap, "stl_pct"))
+		gpas.BlockPct, _ = parseFloatStat(getColumnText(rowMap, "blk_pct"))
+		gpas.TurnoverPct, _ = parseFloatStat(getColumnText(rowMap, "tov_pct"))
+		gpas.UsagePct, _ = parseFloatStat(getColumnText(rowMap, "usg_pct"))
+		gpas.OffensiveRating, _ = strconv.Atoi(getColumnText(rowMap, "off_rtg"))
+		gpas.DefensiveRating, _ = strconv.Atoi(getColumnText(rowMap, "def_rtg"))
 
 		if bpm, ok := rowMap["bpm"]; ok {
 			gpas.BoxPlusMinus, _ = parseFloatStat(bpm.Text)
 		}
 
-		return gpas
+		return *gpas, err
 	}
 
-	return nil
+	return model.GamePlayerAdvancedStat{}, nil
 }
 
-func gamePlayerFromRow(rowMap map[string]*colly.HTMLElement, index int) *model.GamePlayer {
+func gamePlayerFromRow(rowMap map[string]*colly.HTMLElement, index int) (model.GamePlayer, error) {
+	var err error
+
 	gp := new(model.GamePlayer)
-	gp.PlayerId = ParseLastId(parseLink(rowMap["player"]))
+	gp.PlayerId, err = ParseLastId(parseLink(rowMap["player"]))
+
+	if err != nil {
+		return model.GamePlayer{}, err
+	}
 
 	if _, ok := rowMap["reason"]; !ok { // a "reason" column indicates the player did not play
 		if index < 5 { // the first 5 players are the starters
@@ -173,5 +215,5 @@ func gamePlayerFromRow(rowMap map[string]*colly.HTMLElement, index int) *model.G
 		gp.Status = "D"
 	}
 
-	return gp
+	return *gp, nil
 }

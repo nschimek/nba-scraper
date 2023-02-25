@@ -17,8 +17,6 @@ const (
 	baseScheduleTableElement = "body #wrap #content #all_schedule #div_schedule table tbody" // targets the main schedule table
 )
 
-var yesterday = time.Now().AddDate(0, 0, -1)
-
 type ScheduleScraper struct {
 	Config         *core.Config               `Inject:""`
 	Colly          *colly.Collector           `Inject:""`
@@ -49,11 +47,11 @@ func (s *ScheduleScraper) ScrapeDateRange(startDate, endDate time.Time) {
 	months, err := getMonths(startDate, endDate)
 
 	if err != nil {
-		core.Log.Fatal(err)
+		core.Log.Error(err)
+	} else {
+		s.dateRange = &DateRange{startDate: startDate, endDate: endDate}
+		s.Scrape(months...)
 	}
-
-	s.dateRange = &DateRange{startDate: startDate, endDate: endDate}
-	s.Scrape(months...)
 }
 
 func (s *ScheduleScraper) Scrape(pageIds ...string) {
@@ -62,13 +60,26 @@ func (s *ScheduleScraper) Scrape(pageIds ...string) {
 
 	c.OnHTML(baseScheduleTableElement, func(tbl *colly.HTMLElement) {
 		for _, ps := range s.ScheduleParser.ScheduleTable(tbl, s.dateRange.startDate, s.dateRange.endDate) {
-			s.ScrapedData = append(s.ScrapedData, ps)
-			s.GameIds[ps.GameId] = exists
+			if !ps.HasErrors() {
+				s.ScrapedData = append(s.ScrapedData, ps)
+				s.GameIds[ps.GameId] = exists
+			} else {
+				ps.LogErrors()
+			}
 		}
 	})
 
+	c.OnError(func(r *colly.Response, err error) {
+		core.Log.Error(NewScraperError(err, r.Request.URL.String()))
+	})
+
 	for _, id := range pageIds {
-		c.Visit(s.getUrl(id))
+		url := s.getUrl(id)
+		// really ugly covid hack...the NBA played games in both October 2019 and October 2020 this season!
+		if s.Config.Season == 2020 && id == "october" {
+			url = strings.Replace(url, ".html", fmt.Sprintf("-%d.html", s.dateRange.endDate.Year()), 1)
+		}
+		c.Visit(url)
 	}
 
 	if len(s.GameIds) > 0 {

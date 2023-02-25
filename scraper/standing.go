@@ -28,7 +28,6 @@ func (s *StandingScraper) GetData() []model.TeamStanding {
 	return s.ScrapedData
 }
 
-// we this has a static URL, so we have no use for the IDs...but leaving it for a future interface
 func (s *StandingScraper) Scrape() {
 	c := core.CloneColly(s.Colly)
 	s.TeamIds = make(map[string]struct{})
@@ -36,9 +35,17 @@ func (s *StandingScraper) Scrape() {
 	c.OnHTML(expandedStandingsTableElementBase, func(div *colly.HTMLElement) {
 		tbl, _ := transformHtmlElement(div, expandedStandingsTableElement, removeCommentsSyntax)
 		for _, ts := range s.Parser.StandingsTable(tbl) {
-			s.ScrapedData = append(s.ScrapedData, ts)
-			s.TeamIds[ts.TeamId] = exists
+			if !ts.HasErrors() {
+				s.ScrapedData = append(s.ScrapedData, ts)
+				s.TeamIds[ts.TeamId] = exists
+			} else {
+				ts.LogErrors()
+			}
 		}
+	})
+
+	c.OnError(func(r *colly.Response, err error) {
+		core.Log.Error(NewScraperError(err, r.Request.URL.String()))
 	})
 
 	c.Visit(s.getUrl())

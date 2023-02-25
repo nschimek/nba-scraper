@@ -1,11 +1,18 @@
 package model
 
+import "fmt"
+
 type Team struct {
 	ID, Name           string
 	Season             int `gorm:"-"`
 	TeamPlayers        []TeamPlayer
 	TeamPlayerSalaries []TeamPlayerSalary
 	Audit
+	ModelError
+}
+
+func (t *Team) LogErrors() {
+	t.logErrors(fmt.Sprintf("team %s", t.ID))
 }
 
 type TeamPlayer struct {
@@ -52,6 +59,11 @@ type TeamStanding struct {
 	March           WinLoss `gorm:"embedded;embeddedPrefix:mar_"`
 	April           WinLoss `gorm:"embedded;embeddedPrefix:apr_"`
 	Audit
+	ModelError
+}
+
+func (ts *TeamStanding) LogErrors() {
+	ts.logErrors(fmt.Sprintf("team %s standing", ts.TeamId))
 }
 
 type WinLoss struct {

@@ -5,6 +5,7 @@ import (
 
 	"github.com/nschimek/nba-scraper/core"
 	"github.com/nschimek/nba-scraper/model"
+	"gorm.io/gorm"
 	"gorm.io/gorm/clause"
 )
 
@@ -45,5 +46,14 @@ func (r *SimpleRepository[T]) GetRecentlyUpdated(days int, ids []string, label s
 		return m_ids, nil
 	} else {
 		return nil, result.Error
+	}
+}
+
+func runQueryIfNotEmpty(length int, query *gorm.DB) *gorm.DB {
+	if length > 0 {
+		return query
+	} else {
+		core.Log.Warn("there were no records to add, so the query was skipped (check stats)...")
+		return new(gorm.DB)
 	}
 }

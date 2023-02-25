@@ -24,7 +24,6 @@ const (
 )
 
 type GameScraper struct {
-	Scraper     Scraper
 	Config      *core.Config               `Inject:""`
 	Colly       *colly.Collector           `Inject:""`
 	GameParser  *parser.GameParser         `Inject:""`
@@ -32,7 +31,6 @@ type GameScraper struct {
 	ScrapedData []model.Game
 	PlayerIds   map[string]struct{}
 	TeamIds     map[string]struct{}
-	Errors      []error
 }
 
 func (s *GameScraper) Scrape(idMap map[string]struct{}) {
@@ -41,12 +39,16 @@ func (s *GameScraper) Scrape(idMap map[string]struct{}) {
 
 	for _, id := range core.IdMapToArray(idMap) {
 		game := s.parseGamePage(id)
-		s.ScrapedData = append(s.ScrapedData, game)
-		for _, gp := range game.GamePlayers {
-			s.PlayerIds[gp.PlayerId] = exists
+		if !game.HasErrors() {
+			s.ScrapedData = append(s.ScrapedData, game)
+			for _, gp := range game.GamePlayers {
+				s.PlayerIds[gp.PlayerId] = exists
+			}
+			s.TeamIds[game.Home.TeamId] = exists
+			s.TeamIds[game.Away.TeamId] = exists
+		} else {
+			game.LogErrors()
 		}
-		s.TeamIds[game.Home.TeamId] = exists
-		s.TeamIds[game.Away.TeamId] = exists
 	}
 
 	core.Log.WithField("games", len(s.ScrapedData)).Info("Finished scraping Game page(s)!")
@@ -67,7 +69,7 @@ func (s *GameScraper) parseGamePage(id string) (game model.Game) {
 	game.Season = s.Config.Season
 
 	c.OnHTML(baseContentElement, func(div *colly.HTMLElement) {
-		s.Scraper.runAndCapture(s.GameParser.GameTitle(&game, div))
+		s.GameParser.GameTitle(&game, div)
 
 		div.ForEach(scoreboxElements, func(i int, box *colly.HTMLElement) {
 			s.GameParser.Scorebox(&game, box, i)
@@ -98,7 +100,13 @@ func (s *GameScraper) parseGamePage(id string) (game model.Game) {
 	})
 
 	c.OnHTML(seasonLinkElement, func(li *colly.HTMLElement) {
-		s.GameParser.CheckScheduleLinkSeason(li)
+		if err := s.GameParser.CheckScheduleLinkSeason(li); err != nil {
+			game.CaptureError(err)
+		}
+	})
+
+	c.OnError(func(r *colly.Response, err error) {
+		game.CaptureError(NewScraperError(err, r.Request.URL.String()))
 	})
 
 	c.Visit(s.getUrl(id))

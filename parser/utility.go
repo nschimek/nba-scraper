@@ -28,15 +28,29 @@ func parseLink(e *colly.HTMLElement) string {
 	}
 }
 
-// for URLs where the last part of the URL (*.html)
-func ParseLastId(link string) string {
+// for URLs where we want last part of the URL (*.html)
+func ParseLastId(link string) (string, error) {
 	s := strings.Split(link, "/")
-	return strings.Replace(s[len(s)-1], ".html", "", 1)
+
+	if len(s) == 0 {
+		return "", errors.New("link not in expected format for getting last ID")
+	}
+
+	return strings.Replace(s[len(s)-1], ".html", "", 1), nil
 }
 
-func ParseTeamId(link string) string {
+func ParseTeamId(link string) (string, error) {
 	s := strings.Split(link, "/")
-	return s[len(s)-2]
+
+	if len(s) != 4 {
+		return "", errors.New("team link not in expected format")
+	}
+
+	if id := s[len(s)-2]; len(id) != 3 {
+		return "", errors.New("team ID not in expected format")
+	} else {
+		return id, nil
+	}
 }
 
 func parseDuration(duration string) (int, error) {
@@ -80,6 +94,8 @@ func removeCommentsSyntax(html string) string {
 	return strings.ReplaceAll(strings.ReplaceAll(html, "<!--", ""), "-->", "")
 }
 
+// Given a regular expression with named capture group(s) [P<name> in Golang],
+// this will store the match results in a map where the key is equal to the capture name.
 func RegexParamMap(regEx, target string) (rpm map[string]string) {
 	r := regexp.MustCompile(regEx)
 	m := r.FindStringSubmatch(target)
