@@ -1,7 +1,6 @@
 package parser
 
 import (
-	"bytes"
 	"errors"
 	"regexp"
 	"strconv"
@@ -9,7 +8,6 @@ import (
 	"time"
 	_ "time/tzdata" // resolve timezone database issues for windows binary on systems without Go installed
 
-	"github.com/PuerkitoBio/goquery"
 	"github.com/gocolly/colly/v2"
 	"github.com/nschimek/nba-scraper/core"
 )
@@ -68,30 +66,9 @@ func parseFloatStat(s string) (float64, error) {
 	}
 }
 
-// simply remove the $ and , from the currency string and parse as an int
-func parseCurrency(s string) (int, error) {
-	return strconv.Atoi(strings.ReplaceAll(strings.ReplaceAll(s, ",", ""), "$", ""))
-}
-
 // removes newlines and strips extra whitespace from a string
 func removeNewlines(s string) string {
 	return strings.ReplaceAll(strings.TrimSpace(s), "\n", "")
-}
-
-func transformHtmlElement(element *colly.HTMLElement, query string, transform func(html string) string) (*colly.HTMLElement, error) {
-	html, _ := element.DOM.Html()
-	doc, _ := goquery.NewDocumentFromReader(bytes.NewBufferString(transform(html)))
-	sel := doc.Find(query)
-
-	if len(sel.Nodes) == 0 {
-		return nil, errors.New("could not find any search elements in transformed table")
-	}
-
-	return colly.NewHTMLElementFromSelectionNode(element.Response, sel, sel.Get(0), 0), nil
-}
-
-func removeCommentsSyntax(html string) string {
-	return strings.ReplaceAll(strings.ReplaceAll(html, "<!--", ""), "-->", "")
 }
 
 // Given a regular expression with named capture group(s) [P<name> in Golang],

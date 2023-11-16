@@ -30,7 +30,15 @@ func injuryFromRow(rowMap map[string]*colly.HTMLElement) (model.PlayerInjury, er
 	inj := new(model.PlayerInjury)
 
 	inj.PlayerId, err = ParseLastId(parseLink(rowMap["player"]))
+	if err != nil {
+		return model.PlayerInjury{}, err
+	}
+	
 	inj.TeamId, err = ParseTeamId(parseLink(rowMap["team_name"]))
+	if err != nil {
+		return model.PlayerInjury{}, err
+	}
+
 	inj.SourceUpdateDate, _ = time.ParseInLocation("Mon, Jan 2, 2006", rowMap["date_update"].Text, CST)
 	inj.Description = rowMap["note"].Text
 

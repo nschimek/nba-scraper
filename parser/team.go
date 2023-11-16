@@ -56,7 +56,7 @@ func teamPlayerFromRow(rowMap map[string]*colly.HTMLElement) (model.TeamPlayer, 
 	tp.PlayerId, err = ParseLastId(parseLink(rowMap["player"]))
 
 	if tp.PlayerId == "" {
-		return model.TeamPlayer{}, errors.New("player ID is blank!")
+		return model.TeamPlayer{}, errors.New("player ID is blank")
 	}
 
 	tp.Number, _ = strconv.Atoi(getColumnText(rowMap, "number"))
@@ -93,7 +93,7 @@ func teamSalaryFromRow(rowMap map[string]*colly.HTMLElement) (model.TeamPlayerSa
 	tps.PlayerId, err = ParseLastId(parseLink(rowMap["player"]))
 
 	if tps.PlayerId == "" {
-		return model.TeamPlayerSalary{}, errors.New("player ID is blank!")
+		return model.TeamPlayerSalary{}, errors.New("player ID is blank")
 	}
 
 	tps.Salary, _ = strconv.Atoi(rowMap["salary"].Attr("csk"))
