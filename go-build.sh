@@ -1,9 +1,9 @@
 #!/usr/bin/env bash
-if [ -z "$0" ]; then 
-  echo "Usage: $0 <version>"
+if [ -z "$1" ]; then 
+  echo "Usage: $0 <version> (do not prefix with v)"
   exit 1
 fi
-VERSION=$0
+VERSION=v$1
 echo "Creating git tag ${VERSION}..."
 git tag ${VERSION}
 echo "Building and zipping Linux binary ${VERSION}..."
