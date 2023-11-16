@@ -1,5 +1,11 @@
 #!/usr/bin/env bash
-VERSION=$(git tag --sort=-version:refname | head -n 1)
+if [ -z "$0" ]; then 
+  echo "Usage: $0 <version>"
+  exit 1
+fi
+VERSION=$0
+echo "Creating git tag ${VERSION}..."
+git tag ${VERSION}
 echo "Building and zipping Linux binary ${VERSION}..."
 GOOS=linux GOARCH=amd64 go build -ldflags "-X 'github.com/nschimek/nba-scraper/core.Version=${VERSION}'"
 zip -r nba-scraper-linux-${VERSION}.zip nba-scraper config/sample.yaml

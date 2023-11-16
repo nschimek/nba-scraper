@@ -9,6 +9,7 @@ import (
 
 func main() {
 	core.SetupViper()
+	core.Log.Info("Started NBA Scraper " + core.Version)
 	if viper.GetBool("serverless") {
 		lambda.Start(LambdaHandler)
 	} else {

@@ -36,40 +36,40 @@ func standingFromRow(rowMap map[string]*colly.HTMLElement) (model.TeamStanding, 
 
 	standing.Rank, _ = strconv.Atoi(getColumnText(rowMap, "ranker"))
 	standing.TeamId, err = ParseTeamId(parseLink(rowMap["team_name"]))
-	standing.Overall = parseWinLoss(getColumnText(rowMap, "Overall"))
-	standing.Home = parseWinLoss(getColumnText(rowMap, "Home"))
-	standing.Road = parseWinLoss(getColumnText(rowMap, "Road"))
-	standing.East = parseWinLoss(getColumnText(rowMap, "E"))
-	standing.West = parseWinLoss(getColumnText(rowMap, "W"))
-	standing.Atlantic = parseWinLoss(getColumnText(rowMap, "A"))
-	standing.Central = parseWinLoss(getColumnText(rowMap, "C"))
-	standing.Southeast = parseWinLoss(getColumnText(rowMap, "SE"))
-	standing.Northwest = parseWinLoss(getColumnText(rowMap, "NW"))
-	standing.Pacific = parseWinLoss(getColumnText(rowMap, "P"))
-	standing.Southwest = parseWinLoss(getColumnText(rowMap, "SW"))
-	standing.PreAllStar = parseWinLoss(getColumnText(rowMap, "Pre"))
-	standing.PostAllStar = parseWinLoss(getColumnText(rowMap, "Post"))
-	standing.MarginLess3 = parseWinLoss(getColumnText(rowMap, "3"))
-	standing.MarginGreater10 = parseWinLoss(getColumnText(rowMap, "10"))
-	standing.October = parseWinLoss(getColumnText(rowMap, "Oct"))
-	standing.November = parseWinLoss(getColumnText(rowMap, "Nov"))
-	standing.December = parseWinLoss(getColumnText(rowMap, "Dec"))
-	standing.January = parseWinLoss(getColumnText(rowMap, "Jan"))
-	standing.February = parseWinLoss(getColumnText(rowMap, "Feb"))
-	standing.March = parseWinLoss(getColumnText(rowMap, "Mar"))
-	standing.April = parseWinLoss(getColumnText(rowMap, "Apr"))
+	standing.Overall = parseWinLoss(getColumnText(rowMap, "Overall"), "overall")
+	standing.Home = parseWinLoss(getColumnText(rowMap, "Home"), "home")
+	standing.Road = parseWinLoss(getColumnText(rowMap, "Road"), "road")
+	standing.East = parseWinLoss(getColumnText(rowMap, "E"), "east")
+	standing.West = parseWinLoss(getColumnText(rowMap, "W"), "west")
+	standing.Atlantic = parseWinLoss(getColumnText(rowMap, "A"), "atlantic")
+	standing.Central = parseWinLoss(getColumnText(rowMap, "C"), "central")
+	standing.Southeast = parseWinLoss(getColumnText(rowMap, "SE"), "southeast")
+	standing.Northwest = parseWinLoss(getColumnText(rowMap, "NW"), "northwest")
+	standing.Pacific = parseWinLoss(getColumnText(rowMap, "P"), "pacific")
+	standing.Southwest = parseWinLoss(getColumnText(rowMap, "SW"), "southwest")
+	standing.PreAllStar = parseWinLoss(getColumnText(rowMap, "Pre"), "pre-allstar")
+	standing.PostAllStar = parseWinLoss(getColumnText(rowMap, "Post"), "post-allstar")
+	standing.MarginLess3 = parseWinLoss(getColumnText(rowMap, "3"), "marginLess3")
+	standing.MarginGreater10 = parseWinLoss(getColumnText(rowMap, "10"), "marginGreater10")
+	standing.October = parseWinLoss(getColumnText(rowMap, "Oct"), "october")
+	standing.November = parseWinLoss(getColumnText(rowMap, "Nov"), "november")
+	standing.December = parseWinLoss(getColumnText(rowMap, "Dec"), "december")
+	standing.January = parseWinLoss(getColumnText(rowMap, "Jan"), "january")
+	standing.February = parseWinLoss(getColumnText(rowMap, "Feb"), "february")
+	standing.March = parseWinLoss(getColumnText(rowMap, "Mar"), "march")
+	standing.April = parseWinLoss(getColumnText(rowMap, "Apr"), "april")
 
 	return *standing, err
 }
 
-func parseWinLoss(s string) model.WinLoss {
+func parseWinLoss(s string, label string) model.WinLoss {
 	wl := new(model.WinLoss)
 
 	if p := strings.Split(s, "-"); s != "" && len(p) == 2 {
 		wl.Wins, _ = strconv.Atoi(p[0])
 		wl.Losses, _ = strconv.Atoi(p[1])
 	} else {
-		core.Log.Warn("could not parse win/loss record, using 0-0")
+		core.Log.WithField("column", label).Warn("could not parse win/loss record (probably blank), using 0-0")
 		wl.Wins, wl.Losses = 0, 0
 	}
 
