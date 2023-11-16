@@ -38,6 +38,6 @@ func persistIfPopulated[T any](persist func(scrapedData []T, label string), scra
 	if len(scrapedData) > 0 {
 		persist(scrapedData, label)
 	} else {
-		core.Log.Warnf("No %s(s) scraped to persist, skipping!")
+		core.Log.Warnf("No %s(s) scraped to persist, skipping!", label)
 	}
 }

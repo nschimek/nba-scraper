@@ -30,13 +30,22 @@ func parseShootsPosition(p *model.Player, rm map[string]string) {
 
 func parseHeightWeight(p *model.Player, rm map[string]string) {
 	var err error
+
 	ft, err := strconv.Atoi(rm["ft"])
+	if err != nil {
+		core.Log.Warnf("issue parsing height for player %s: %v", p.ID, err)
+	}
+
 	in, err := strconv.Atoi(rm["in"])
+	if err != nil {
+		core.Log.Warnf("issue parsing height for player %s: %v", p.ID, err)
+	}
+
 	p.Height = (ft * 12) + in
 	p.Weight, err = strconv.Atoi(rm["lb"])
 
 	if err != nil {
-		core.Log.Warnf("issue parsing height or weight for player %s: %v", p.ID, err)
+		core.Log.Warnf("issue parsing weight for player %s: %v", p.ID, err)
 	}
 }
 

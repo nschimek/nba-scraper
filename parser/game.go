@@ -2,6 +2,7 @@ package parser
 
 import (
 	"errors"
+	"fmt"
 	"math"
 	"strconv"
 	"strings"
@@ -80,20 +81,31 @@ func (p *GameParser) CheckScheduleLinkSeason(a *colly.HTMLElement) error {
 
 	if len(parts) < 2 {
 		err = errors.New("unexpected format of league season link, so could not validate season")
+		return err
 	}
 
 	season, err = strconv.Atoi(strings.Split(a.Attr("href"), "_")[1])
 	if season != p.Config.Season && err != nil {
-		err = errors.New("scraped season is different from configured season!")
+		err = errors.New("scraped season is different from configured season")
+		return err
 	}
 
-	return err
+	return nil
 }
 
 func parseMetaScorebox(box *colly.HTMLElement) (startTime time.Time, location string, err error) {
-	startTime, err = time.ParseInLocation("3:04 PM, January 2, 2006", box.ChildText("div:first-child"), EST)
-	location = box.ChildText("div:nth-child(2)")
-	if err != nil {
+	// BR now puts "In-Season Tournament" as the top DIV for this box for tournament games (but not regular games)
+	box.ForEachWithBreak("div", func(i int, div *colly.HTMLElement) bool {
+		// look the start date; once we find it, the next div will be the location
+		startTime, err = time.ParseInLocation("3:04 PM, January 2, 2006", div.Text, EST)
+		if err == nil {
+			location = box.ChildText(fmt.Sprintf("div:nth-child(%d)", i + 2))
+			return false
+		} else {
+			return true
+		}
+	})
+	if err != nil  {
 		err = errors.New("could not parse game start time from scorebox")
 	}
 	return

@@ -49,6 +49,11 @@ func (*GameStatsParser) parseLineScoreTable(tbl *colly.HTMLElement, gameId strin
 	tableMaps := Table(tbl) // row 0 will be away, row 1 will be home
 
 	visitor, err = lineScoreFromRow(tableMaps[0], gameId)
+
+	if err != nil {
+		return nil, nil, err
+	}
+
 	home, err = lineScoreFromRow(tableMaps[1], gameId)
 
 	return
@@ -62,6 +67,11 @@ func (*GameStatsParser) parseFourFactorsTable(tbl *colly.HTMLElement, gameId str
 	}
 
 	visitor, err = gameFourFactorsFromRow(tableMaps[0])
+
+	if err != nil {
+		return model.GameFourFactor{}, model.GameFourFactor{}, err
+	}
+
 	visitor.GameId = gameId
 	home, err = gameFourFactorsFromRow(tableMaps[1])
 	home.GameId = gameId
